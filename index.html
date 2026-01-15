@@ -921,4 +921,629 @@
 
     function openModalEdit(origin, itemId){
       const it=findItem(origin,itemId);
-      if(!it) return
+      if(!it) return;
+      modalContext={mode:'edit',dest:null,dayKey:null,origin,itemId};
+
+      modalTitle.textContent='Düzenle';
+      modalWhere.textContent = origin.from==='inbox' ? 'Brain Dump' : origin.dayKey;
+
+      quickAddSection.style.display='block';
+      tagSettingsSection.style.display='none';
+      overlay.style.display='flex';
+
+      rebuildTagDropdowns();
+      mText.value = it.text || '';
+      mTime.value = it.time || '';
+      mType.value = it.type || 'gorev';
+      mTag.value = it.tag ? it.tag : '__none__';
+
+      modalDelete.style.display='inline-block';
+      modalSave.textContent='Kaydet';
+      setTimeout(()=>mText.focus(),0);
+    }
+
+    modalSave.addEventListener('click', ()=>{
+      const txt=(mText.value||'').trim();
+      if(!txt) return;
+
+      if(modalContext.mode==='add'){
+        addItemTo(modalContext.dest, modalContext.dayKey, {
+          text:txt,
+          time:mTime.value||'',
+          type:mType.value,
+          tag:(mTag.value==='__none__'?'':mTag.value),
+          done:false,
+          created:Date.now()
+        });
+        closeModal();
+        render();
+      } else if(modalContext.mode==='edit'){
+        const it=findItem(modalContext.origin, modalContext.itemId);
+        if(!it){ closeModal(); return; }
+        it.text=txt;
+        it.time=mTime.value||'';
+        it.type=mType.value;
+        it.tag=(mTag.value==='__none__'?'':mTag.value);
+        saveDB(db);
+        closeModal();
+        render();
+      }
+    });
+
+    modalDelete.addEventListener('click', ()=>{
+      if(modalContext.mode==='edit' && confirm('Sil?')){
+        deleteItem(modalContext.origin, modalContext.itemId);
+        closeModal();
+      }
+    });
+
+    function renderTagManager(){
+      tagManager.innerHTML='';
+
+      const row=document.createElement('div');
+      row.className='tagItem';
+      row.innerHTML = `
+        <input id="nT" type="text" placeholder="Yeni tag (örn: kompozit)" />
+        <input id="nC" type="color" value="#7dd3fc" />
+        <button id="nB" class="btn" type="button">Ekle</button>
+      `;
+      tagManager.appendChild(row);
+
+      row.querySelector('#nB').addEventListener('click', ()=>{
+        const n = normalizeTagName(row.querySelector('#nT').value);
+        if(!n) return;
+        if(db.tags.some(x=>x.name===n)) return;
+        const ord=Math.max(0, ...db.tags.map(x=>x.order||0));
+        db.tags.push({name:n, color: row.querySelector('#nC').value || '#7dd3fc', order: ord+1});
+        saveDB(db);
+        rebuildTagDropdowns();
+        render();
+        renderTagManager();
+      });
+
+      db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
+      let dragName=null;
+
+      db.tags.forEach(t=>{
+        const r=document.createElement('div');
+        r.className='tagItem';
+        r.draggable=true;
+        r.dataset.tag=t.name;
+        r.innerHTML = `
+          <div class="tagName">
+            <span class="dot" style="background:${t.color}"></span>
+            <span>${t.name}</span>
+          </div>
+          <input type="color" value="${t.color}">
+          <button class="iconBtn" type="button">🗑</button>
+        `;
+
+        r.querySelector('input').addEventListener('input', (e)=>{
+          t.color = e.target.value;
+          saveDB(db);
+          render();
+        });
+
+        r.querySelector('.iconBtn').addEventListener('click', ()=>{
+          if(!confirm(`"${t.name}" silinsin mi?`)) return;
+          db.tags = db.tags.filter(x=>x.name!==t.name);
+          Object.keys(db.days||{}).forEach(k=>{
+            (db.days[k]||[]).forEach(it=>{ if(it.tag===t.name) it.tag=''; });
+          });
+          (db.inbox||[]).forEach(it=>{ if(it.tag===t.name) it.tag=''; });
+          saveDB(db);
+          rebuildTagDropdowns();
+          render();
+          renderTagManager();
+        });
+
+        r.addEventListener('dragstart', ()=>{ dragName=t.name; });
+        r.addEventListener('dragover', (e)=>{ e.preventDefault(); r.classList.add('dragOver'); });
+        r.addEventListener('dragleave', ()=>r.classList.remove('dragOver'));
+        r.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          r.classList.remove('dragOver');
+          const target=r.dataset.tag;
+          if(!dragName||!target||dragName===target) return;
+
+          const names = db.tags.slice().sort((a,b)=>(a.order??9999)-(b.order??9999)).map(x=>x.name);
+          const from = names.indexOf(dragName);
+          const to = names.indexOf(target);
+          names.splice(from,1);
+          names.splice(to,0,dragName);
+          names.forEach((nm,i)=>{
+            const m=db.tags.find(x=>x.name===nm);
+            if(m) m.order=i+1;
+          });
+
+          saveDB(db);
+          rebuildTagDropdowns();
+          render();
+          renderTagManager();
+        });
+
+        tagManager.appendChild(r);
+      });
+    }
+
+    function makeCard(item, origin){
+      const meta=tagMeta(item.tag);
+      const col=meta?.color || null;
+
+      const c=document.createElement('div');
+      c.className='card' + (item.done?' done':'');
+      c.draggable=true;
+
+      c.style.setProperty('--frameColor', typeFrameColor(item.type));
+      c.style.setProperty('--fillColor', col ? hexToRgba(col,0.22) : 'rgba(255,255,255,0.04)');
+
+      const more=document.createElement('button');
+      more.className='moreBtn';
+      more.type='button';
+      more.textContent='⋯';
+      more.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openModalEdit(origin, item.id);
+      });
+
+      const row=document.createElement('div');
+      row.className='cardRow';
+
+      const cb=document.createElement('button');
+      cb.className='checkBtn';
+      cb.type='button';
+      cb.textContent=item.done?'↩':'✓';
+      cb.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        item.done=!item.done;
+        saveDB(db);
+        render();
+      });
+
+      const body=document.createElement('div');
+      body.className='cardBody';
+
+      const title=document.createElement('div');
+      title.className='titleText';
+      title.textContent=item.text||'';
+      body.appendChild(title);
+
+      if(item.time){
+        const tm=document.createElement('div');
+        tm.className='timeText';
+        tm.textContent=item.time;
+        body.appendChild(tm);
+      }
+
+      row.appendChild(cb);
+      row.appendChild(body);
+      c.appendChild(more);
+      c.appendChild(row);
+
+      c.addEventListener('dragstart', (e)=>{
+        dragPayload={...origin, itemId:item.id};
+        e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
+        e.dataTransfer.effectAllowed='move';
+      });
+
+      return c;
+    }
+
+    function adjustMonthCellHeight(totalCells){
+      const rows = Math.max(5, Math.min(6, Math.ceil(totalCells/7)));
+      const areaH = calendarArea.clientHeight;
+      const dowH = dowRow.getBoundingClientRect().height || 18;
+      const gaps = (rows - 1) * 10 + 10;
+      const topPadding = 14;
+      const cellH = Math.floor((areaH - dowH - gaps - topPadding) / rows);
+      const clamped = Math.max(100, Math.min(185, cellH));
+      document.documentElement.style.setProperty('--monthCellH', clamped + 'px');
+    }
+
+    // ✅ Month: bottom panel sağa taşınsın, week: geri alta gelsin
+    function applyLayoutForMode(){
+      if(mode==='week'){
+        document.body.classList.add('weekMode');
+        document.body.classList.remove('monthMode');
+
+        // bottom panel sol kolonun altında
+        if(bottomEl.parentElement !== leftCol) leftCol.appendChild(bottomEl);
+
+        // inbox haftada altta slot'a dock
+        if(bottomInboxSlot && inbox.parentElement !== bottomInboxSlot) bottomInboxSlot.appendChild(inbox);
+
+        // inbox seçeneği aktif
+        const opt = whereInput.querySelector('option[value="inbox"]');
+        if(opt) opt.disabled=false;
+
+      } else {
+        document.body.classList.remove('weekMode');
+        document.body.classList.add('monthMode');
+
+        // bottom panel sağ kolona taşınsın (side)
+        if(bottomEl.parentElement !== sideCol) sideCol.insertBefore(bottomEl, sideCol.firstChild);
+
+        // inbox sağ panelde dursun (bottom slot yerine)
+        if(inbox.parentElement !== sideCol) sideCol.insertBefore(inbox, bottomEl.nextSibling);
+
+        // ay görünümünde input "selected" olsun
+        whereInput.value='selected';
+        const opt = whereInput.querySelector('option[value="inbox"]');
+        if(opt) opt.disabled=true;
+      }
+    }
+
+    function render(){
+      ensureHabitReset();
+
+      // normalize
+      Object.keys(db.days||{}).forEach(k=>{
+        db.days[k] = (db.days[k]||[]).map(fixItem);
+      });
+      db.inbox = (db.inbox||[]).map(fixItem);
+
+      rebuildTagDropdowns();
+
+      // DOW
+      dowRow.innerHTML='';
+      dowRow.className='grid ' + (mode==='month'?'month':'week');
+      DOW.forEach(d=>{
+        const e=document.createElement('div');
+        e.className='dow';
+        e.textContent=d;
+        dowRow.appendChild(e);
+      });
+
+      applyLayoutForMode();
+
+      // grid
+      grid.className='grid ' + (mode==='month'?'month':'week');
+      grid.innerHTML='';
+
+      let cells=[];
+      if(mode==='week'){
+        const s=startOfWeek(anchor);
+        const e=addDays(s,6);
+        rangeTitle.textContent=fmtRange(s,e);
+        for(let i=0;i<7;i++) cells.push({ date:addDays(s,i), out:false });
+      } else {
+        const first=startOfMonth(anchor);
+        const last=endOfMonth(anchor);
+        const s=startOfWeek(first);
+        const e=addDays(startOfWeek(last),6);
+        rangeTitle.textContent = anchor.toLocaleDateString('tr-TR', {month:'long',year:'numeric'});
+        const totalDays = Math.round((e - s) / (24*3600*1000)) + 1;
+        for(let i=0;i<totalDays;i++){
+          const d=addDays(s,i);
+          cells.push({ date:d, out: d.getMonth() !== anchor.getMonth() });
+        }
+        adjustMonthCellHeight(cells.length);
+      }
+
+      const selK = dayKey(selected);
+
+      cells.forEach(c=>{
+        const k=dayKey(c.date);
+        const items=(db.days[k]||[]).filter(passesFilters).sort(itemSort);
+        const openCount = items.filter(x=>!x.done).length;
+
+        const cell=document.createElement('div');
+        cell.className = 'cell ' + (mode==='month'?'monthCell':'weekCell') + (c.out?' out':'') + (k===selK?' sel':'');
+        cell.dataset.key = k;
+
+        const top=document.createElement('div');
+        top.className='dateRow';
+
+        const left=document.createElement('div');
+        left.className='dateLeft';
+
+        const dateEl=document.createElement('div');
+        dateEl.className='date';
+        dateEl.textContent=String(c.date.getDate()).padStart(2,'0');
+
+        const plus=document.createElement('button');
+        plus.className='plusBtn';
+        plus.type='button';
+        plus.textContent='+';
+        plus.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          openModalAdd({dest:'day', dayKey:k});
+        });
+
+        left.appendChild(dateEl);
+        left.appendChild(plus);
+
+        const count=document.createElement('div');
+        count.className='count';
+        count.textContent = openCount ? String(openCount) : '';
+
+        top.appendChild(left);
+        top.appendChild(count);
+
+        const cards=document.createElement('div');
+        cards.className='cards';
+        items.forEach(it=>{
+          cards.appendChild(makeCard(it, {from:'day', dayKey:k}));
+        });
+
+        cell.appendChild(top);
+        cell.appendChild(cards);
+
+        cell.addEventListener('click', ()=>{
+          selected=c.date;
+          if(mode==='month' && c.out){
+            anchor=new Date(c.date.getFullYear(), c.date.getMonth(), 1);
+          }
+          render();
+        });
+
+        // drag drop to day
+        cell.addEventListener('dragover', (e)=>{
+          e.preventDefault();
+          cell.classList.add('dragOver');
+          e.dataTransfer.dropEffect='move';
+        });
+        cell.addEventListener('dragleave', ()=>cell.classList.remove('dragOver'));
+        cell.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          cell.classList.remove('dragOver');
+
+          if(!dragPayload?.itemId) return;
+
+          if(dragPayload.from==='inbox'){
+            const idx = (db.inbox||[]).findIndex(x=>x.id===dragPayload.itemId);
+            if(idx<0) return;
+            const [moved] = db.inbox.splice(idx,1);
+            db.days[k]=db.days[k]||[];
+            db.days[k].push(moved);
+          } else if(dragPayload.from==='day'){
+            const fromK=dragPayload.dayKey;
+            if(!fromK || fromK===k) return;
+            const arr=db.days[fromK]||[];
+            const idx=arr.findIndex(x=>x.id===dragPayload.itemId);
+            if(idx<0) return;
+            const [moved]=arr.splice(idx,1);
+            if(!arr.length) delete db.days[fromK];
+            db.days[k]=db.days[k]||[];
+            db.days[k].push(moved);
+          }
+
+          saveDB(db);
+          dragPayload=null;
+          selected=c.date;
+          render();
+        });
+
+        grid.appendChild(cell);
+      });
+
+      // ✅ Inbox render (tek “boş”)
+      inboxList.innerHTML='';
+      const inb=(db.inbox||[]).filter(passesFilters).sort(itemSort);
+      if(inb.length){
+        inboxCount.textContent = `Açık: ${inb.filter(x=>!x.done).length} / ${inb.length}`;
+        inb.forEach(it=>inboxList.appendChild(makeCard(it,{from:'inbox'})));
+      } else {
+        inboxCount.textContent = '';
+        inboxList.innerHTML = '<div class="muted">Inbox boş. + ile hızlı ekle.</div>';
+      }
+
+      // Habits
+      habitsList.innerHTML='';
+      const doneSet=new Set(db.habitState?.doneIds||[]);
+      habitsSub.textContent = db.habits.length ? `Bugün: ${doneSet.size}/${db.habits.length}` : 'Her gün sıfırlanır';
+
+      if(!db.habits.length){
+        const empty=document.createElement('div');
+        empty.className='muted';
+        empty.textContent='Alışkanlık eklemek için +';
+        habitsList.appendChild(empty);
+      } else {
+        db.habits.forEach(h=>{
+          const r=document.createElement('div');
+          r.className='habitRow';
+          r.innerHTML = `<label><input type="checkbox"><span>${h.name}</span></label><button class="iconBtn" type="button">🗑</button>`;
+          const cb=r.querySelector('input');
+          cb.checked = doneSet.has(h.id);
+          cb.addEventListener('change', ()=>{
+            const s=new Set(db.habitState.doneIds||[]);
+            cb.checked ? s.add(h.id) : s.delete(h.id);
+            db.habitState.doneIds=[...s];
+            saveDB(db);
+            render();
+          });
+          r.querySelector('button').addEventListener('click', ()=>{
+            if(!confirm('Sil?')) return;
+            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+            const s=new Set(db.habitState.doneIds||[]);
+            s.delete(h.id);
+            db.habitState.doneIds=[...s];
+            saveDB(db);
+            render();
+          });
+          habitsList.appendChild(r);
+        });
+      }
+
+      // ✅ Panel list (checkbox ile tick)
+      const pk=dayKey(selected);
+      const pI=(db.days[pk]||[]).filter(passesFilters).sort(itemSort);
+      panelTitle.textContent = fmtDay(selected);
+      taskList.innerHTML='';
+
+      if(!pI.length){
+        taskList.innerHTML='<div class="muted">Kart yok.</div>';
+      } else {
+        pI.forEach(it=>{
+          const row=document.createElement('div');
+          row.className='row';
+
+          const left=document.createElement('div');
+          left.style.display='flex';
+          left.style.alignItems='center';
+          left.style.gap='8px';
+          left.style.minWidth='0';
+
+          const cb=document.createElement('input');
+          cb.type='checkbox';
+          cb.checked=!!it.done;
+          cb.addEventListener('change', ()=>{
+            it.done = cb.checked;
+            saveDB(db);
+            render();
+          });
+
+          const txt=document.createElement('div');
+          txt.className='txt';
+          txt.style.color = it.done ? 'var(--muted)' : 'var(--text)';
+          txt.textContent = it.text + (it.time ? ` • ${it.time}` : '');
+
+          left.appendChild(cb);
+          left.appendChild(txt);
+          row.appendChild(left);
+
+          taskList.appendChild(row);
+        });
+      }
+    }
+
+    // ======================
+    // EVENTLER
+    // ======================
+    document.getElementById('prev').addEventListener('click', ()=>{
+      anchor = (mode==='week') ? addDays(anchor,-7) : new Date(anchor.getFullYear(), anchor.getMonth()-1, 1);
+      render();
+    });
+    document.getElementById('next').addEventListener('click', ()=>{
+      anchor = (mode==='week') ? addDays(anchor,7) : new Date(anchor.getFullYear(), anchor.getMonth()+1, 1);
+      render();
+    });
+    document.getElementById('today').addEventListener('click', ()=>{
+      anchor=new Date(); selected=new Date(); render();
+    });
+
+    btnWeek.addEventListener('click', ()=>{
+      mode='week';
+      btnWeek.classList.add('active'); btnMonth.classList.remove('active');
+      anchor=new Date(selected);
+      typeInput.value='gorev';
+      typeFilter.value='__preset__';
+      render();
+    });
+
+    btnMonth.addEventListener('click', ()=>{
+      mode='month';
+      btnMonth.classList.add('active'); btnWeek.classList.remove('active');
+      anchor=new Date(selected.getFullYear(), selected.getMonth(), 1);
+      typeInput.value='termin';
+      typeFilter.value='__preset__';
+      render();
+    });
+
+    tagFilter.addEventListener('change', render);
+    typeFilter.addEventListener('change', render);
+    search.addEventListener('input', render);
+
+    // Enter = ekle
+    taskInput.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); addSubmit.click(); }
+    });
+
+    addForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const t=taskInput.value.trim();
+      if(!t) return;
+
+      const item = {
+        text:t,
+        time:timeInput.value||'',
+        type:typeInput.value,
+        tag:(tagInput.value==='__none__'?'':tagInput.value),
+        done:false,
+        created:Date.now()
+      };
+
+      if(whereInput.value==='inbox'){
+        addItemTo('inbox', null, item);
+      } else {
+        addItemTo('day', dayKey(selected), item);
+      }
+
+      taskInput.value='';
+      timeInput.value='';
+      tagInput.value='__none__';
+      render();
+      taskInput.focus();
+    });
+
+    inboxAdd.addEventListener('click', ()=>openModalAdd({dest:'inbox', dayKey:null}));
+
+    // drag drop day -> inbox
+    inbox.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      inbox.classList.add('dragOver');
+      e.dataTransfer.dropEffect='move';
+    });
+    inbox.addEventListener('dragleave', ()=>inbox.classList.remove('dragOver'));
+    inbox.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      inbox.classList.remove('dragOver');
+      if(dragPayload?.from==='day'){
+        const frK=dragPayload.dayKey;
+        const arr=db.days[frK]||[];
+        const idx=arr.findIndex(x=>x.id===dragPayload.itemId);
+        if(idx<0) return;
+        const [moved]=arr.splice(idx,1);
+        if(!arr.length) delete db.days[frK];
+        db.inbox = db.inbox || [];
+        db.inbox.push(moved);
+        saveDB(db);
+        dragPayload=null;
+        render();
+      }
+    });
+
+    clearDone.addEventListener('click', ()=>{
+      const k=dayKey(selected);
+      const arr=db.days[k]||[];
+      const kept=arr.filter(x=>!x.done);
+      if(kept.length) db.days[k]=kept; else delete db.days[k];
+      saveDB(db);
+      render();
+    });
+
+    clearInboxDone.addEventListener('click', ()=>{
+      db.inbox = (db.inbox||[]).filter(x=>!x.done);
+      saveDB(db);
+      render();
+    });
+
+    habitAddBtn.addEventListener('click', ()=>{
+      const n=prompt('Alışkanlık:');
+      if(!n) return;
+      db.habits = db.habits || [];
+      db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name: n.trim() });
+      saveDB(db);
+      render();
+    });
+
+    habitResetBtn.addEventListener('click', ()=>{
+      db.habitState={ date: todayKey(), doneIds: [] };
+      saveDB(db);
+      render();
+    });
+
+    // Service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
+
+    // Start
+    typeFilter.value='__preset__';
+    typeInput.value='gorev';
+
+    checkUser(); // auth durumuna göre render çağırıyor
+    window.addEventListener('resize', ()=>{ if(mode==='month') render(); });
+  </script>
+</body>
+</html>
