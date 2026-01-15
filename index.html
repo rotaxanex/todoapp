@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Not Defterim (Pro)</title>
+    <title>Not Defterim Pro</title>
+    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <style>
@@ -35,7 +37,7 @@
             overflow: hidden;
         }
 
-        /* --- GİRİŞ EKRANI (SUPABASE AUTH) --- */
+        /* --- GİRİŞ EKRANI (LOGIN MODAL) --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg);
@@ -56,8 +58,9 @@
         .btn-auth {
             background: var(--text-main); color: var(--bg); border: none;
             padding: 12px; border-radius: 10px; font-weight: bold;
-            cursor: pointer; font-size: 14px; width: 100%; margin-bottom: 10px;
+            cursor: pointer; font-size: 14px; width: 100%; margin-bottom: 10px; transition: 0.2s;
         }
+        .btn-auth:hover { opacity: 0.9; }
         .btn-secondary {
             background: transparent; border: 1px solid var(--line); color: var(--text-muted);
         }
@@ -77,14 +80,14 @@
         .nav-btn.active { background: var(--input-bg); color: var(--text-main); }
         .nav-btn:hover { color: var(--text-main); }
         
-        .user-info { font-size: 12px; color: var(--text-muted); margin-right: 10px; }
+        .user-info { font-size: 12px; color: var(--text-muted); margin-right: 15px; }
         .btn-logout {
             background: rgba(248, 113, 113, 0.1); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.2);
             padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
         }
         .btn-logout:hover { background: var(--red); color: white; }
 
-        /* --- ANA GÖRÜNÜM ALANI --- */
+        /* --- TAKVİM ALANI --- */
         #calendarContainer {
             flex: 1; overflow-y: auto; margin-bottom: 20px;
             display: flex; flex-direction: column;
@@ -93,7 +96,7 @@
         /* Haftalık Grid */
         .week-grid {
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px;
-            height: 100%; min-height: 0;
+            min-height: 0;
         }
 
         /* Aylık Grid */
@@ -101,16 +104,21 @@
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
         }
 
-        /* Gün Kutusu (Haftalık) */
+        /* Gün Kutusu */
         .day-col {
             background: var(--card-bg); border-radius: 16px; padding: 15px;
             display: flex; flex-direction: column; border: 1px solid var(--line);
             height: 100%; max-height: calc(100vh - 280px); overflow-y: auto;
         }
         .day-col.selected { border-color: var(--blue); box-shadow: 0 0 15px rgba(96, 165, 250, 0.1); }
-        .day-col.today { background: #202023; }
+        .day-col.today { background: #202023; border-color: var(--text-muted); }
 
-        /* Gün Kutusu (Aylık) */
+        .day-header {
+            font-size: 14px; font-weight: 600; color: var(--text-muted);
+            margin-bottom: 15px; display: flex; justify-content: space-between;
+        }
+
+        /* Aylık Kutular */
         .month-day {
             background: var(--card-bg); border-radius: 10px; padding: 10px;
             border: 1px solid var(--line); min-height: 100px; cursor: pointer;
@@ -121,7 +129,7 @@
         .month-day.today { background: #202023; border-color: var(--text-muted); }
         .month-day.empty { background: transparent; border: none; cursor: default; }
 
-        /* Görev Kartları */
+        /* Görev Kartı */
         .task-card {
             background: var(--input-bg); padding: 12px; border-radius: 8px;
             margin-bottom: 8px; font-size: 13px; position: relative;
@@ -147,12 +155,14 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background-color: var(--line); border-radius: 10px; }
 
-        /* Ortak */
-        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; }
+        /* Ortak Elementler */
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
         .icon-btn:hover { color: var(--text-main); }
         .icon-btn.red:hover { color: var(--red); }
         .icon-btn.green:hover { color: var(--green); }
-        input { background: var(--bg); border: 1px solid var(--line); color: white; padding: 10px; border-radius: 8px; }
+        
+        input { background: var(--bg); border: 1px solid var(--line); color: white; padding: 10px; border-radius: 8px; font-family: inherit; }
+        input:focus { border-color: var(--blue); }
         .btn-add { background: var(--text-main); color: var(--bg); border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -163,8 +173,8 @@
             <span class="material-icons-round" style="font-size: 48px; color: var(--text-main); margin-bottom: 10px;">lock_person</span>
             <h2 style="margin: 0 0 20px 0;">Hoş Geldin</h2>
             
-            <input type="email" id="emailInput" class="login-input" placeholder="E-Posta Adresin">
-            <input type="password" id="passwordInput" class="login-input" placeholder="Şifren">
+            <input type="email" id="emailInput" class="login-input" placeholder="E-Posta Adresi">
+            <input type="password" id="passwordInput" class="login-input" placeholder="Şifre">
             
             <button onclick="handleLogin()" class="btn-auth">Giriş Yap</button>
             <button onclick="handleSignUp()" class="btn-auth btn-secondary">Kayıt Ol</button>
@@ -225,42 +235,40 @@
     </div>
 
     <script>
-        // --- AYARLAR ---
+        // --------------------------------------------------------
+        // 1. AYARLAR & AUTH
+        // --------------------------------------------------------
         const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
         
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- DEĞİŞKENLER ---
         let db = { tasks: [], inbox: [] };
-        let currentUser = null; // Giriş yapan kullanıcı
+        let currentUser = null; 
+        
         let state = {
-            view: 'week',
+            view: 'week', // week | month
             currentDate: new Date(),
             selectedDate: new Date().toISOString().split('T')[0]
         };
 
-        // --- AUTH İŞLEMLERİ (GİRİŞ/ÇIKIŞ) ---
-        
-        // Sayfa açılınca oturum kontrolü
+        // Sayfa Yüklenince Oturum Kontrolü
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
             if (session) {
                 userLoggedIn(session.user);
             } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
+                // Giriş ekranı zaten açık (display: flex)
             }
         };
 
-        // Giriş Yap
         async function handleLogin() {
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
             const errBox = document.getElementById('authError');
             
-            errBox.style.display = 'none';
-            errBox.innerText = 'Giriş yapılıyor...';
             errBox.style.display = 'block';
+            errBox.innerText = 'Giriş yapılıyor...';
 
             const { data, error } = await client.auth.signInWithPassword({ email, password });
 
@@ -271,36 +279,27 @@
             }
         }
 
-        // Kayıt Ol
         async function handleSignUp() {
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
-            const errBox = document.getElementById('authError');
-
-            if(!email || !password) {
-                alert("Email ve şifre yazmalısın.");
-                return;
-            }
-
-            errBox.innerText = 'Kayıt olunuyor...';
-            errBox.style.display = 'block';
-
+            
+            if(!email || !password) { alert("Email ve şifre gerekli."); return; }
+            
             const { data, error } = await client.auth.signUp({ email, password });
             
             if (error) {
-                errBox.innerText = 'Hata: ' + error.message;
+                document.getElementById('authError').style.display = 'block';
+                document.getElementById('authError').innerText = error.message;
             } else {
-                alert("Kayıt başarılı! Lütfen mail kutunu kontrol et ve onayla.");
+                alert("Kayıt olundu! Lütfen mail kutunuzu onaylayın.");
             }
         }
 
-        // Çıkış Yap
         async function handleLogout() {
             await client.auth.signOut();
             location.reload();
         }
 
-        // Giriş Başarılı Olduğunda
         function userLoggedIn(user) {
             currentUser = user;
             document.getElementById('loginOverlay').style.display = 'none';
@@ -308,81 +307,55 @@
             initApp();
         }
 
-        // --- UYGULAMA BAŞLANGICI ---
+        // --------------------------------------------------------
+        // 2. VERİTABANI İŞLEMLERİ (Kişiye Özel)
+        // --------------------------------------------------------
         async function initApp() {
             await loadData();
             render();
-            setupInboxListener();
+            setupEventListeners();
         }
 
-        // --- VERİTABANI (ARTIK KULLANICIYA ÖZEL) ---
         async function loadData() {
             if (!currentUser) return;
 
-            // DİKKAT: Veritabanında 'user_id' sütunu varsa buna göre çeker
-            // Eğer yoksa ve sadece 'id' varsa, burası hata verebilir.
-            // Bu kod 'id' sütununda kullanıcı ID'sinin (UUID) yazılı olduğunu varsayar.
-            // Veya 'user_id' sütununa filtre atar.
-            
-            // Yöntem 1: Eğer tablon sadece (id, data) ise ve id = UUID ise:
-            // const { data } = await client.from('minimal_todo').select('data').eq('id', currentUser.id).single();
-            
-            // Yöntem 2 (Önerilen): Tablonda 'user_id' sütunu vardır:
-             const { data } = await client.from('minimal_todo').select('data').eq('user_id', currentUser.id).single();
+            // Sadece bu kullanıcıya ait satırı getir
+            // DİKKAT: Tablonda 'user_id' sütunu olmalı!
+            const { data, error } = await client
+                .from('minimal_todo')
+                .select('data')
+                .eq('user_id', currentUser.id)
+                .single();
 
-            // Eğer veri yoksa (Yeni kullanıcı)
-            if (!data) {
-                db = { tasks: [], inbox: [] };
+            if (data && data.data) {
+                db = data.data;
             } else {
-                db = data.data || { tasks: [], inbox: [] };
+                // Kayıt yoksa boş başlat
+                db = { tasks: [], inbox: [] };
             }
+            
+            // Veri yapısı bozuksa onar
+            if (!db.tasks) db.tasks = [];
             if (!db.inbox) db.inbox = [];
         }
 
         async function saveDB() {
             if (!currentUser) return;
-            
-            // Veriyi kaydederken Kullanıcı ID'sini de gönderiyoruz
-            // Tablonda 'user_id' sütunu olduğundan emin ol!
+
+            // Kullanıcı ID'sine göre kaydet/güncelle (Upsert)
+            // 'user_id' primary key veya unique olmalı
             const saveData = {
-                user_id: currentUser.id, // Bu sütun şart
+                user_id: currentUser.id,
                 data: db
             };
-            
-            // Upsert (Varsa güncelle, yoksa ekle)
-            // onConflict, hangi sütuna göre çakışma kontrolü yapacağını belirler. 
-            // Genelde 'user_id' unique ise ona göre yaparız.
+
             await client.from('minimal_todo').upsert(saveData, { onConflict: 'user_id' });
         }
 
-        // --- GÖRÜNÜM KONTROLÜ ---
-        function setView(mode) {
-            state.view = mode;
-            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
-            document.getElementById('btnViewMonth').classList.toggle('active', mode === 'month');
-            render();
-        }
-
-        function changeDate(delta) {
-            if (state.view === 'week') {
-                state.currentDate.setDate(state.currentDate.getDate() + (delta * 7));
-            } else {
-                state.currentDate.setMonth(state.currentDate.getMonth() + delta);
-            }
-            render();
-        }
-
-        function goToToday() {
-            state.currentDate = new Date();
-            selectDay(new Date().toISOString().split('T')[0]);
-        }
-
-        function selectDay(dateStr) {
-            state.selectedDate = dateStr;
-            render(); 
-        }
-
-        // --- ANA RENDER ---
+        // --------------------------------------------------------
+        // 3. RENDER (GÖRÜNÜM)
+        // --------------------------------------------------------
+        
         function render() {
             const container = document.getElementById('calendarContainer');
             container.innerHTML = ''; 
@@ -397,16 +370,16 @@
             renderBrainDump();
         }
 
-        // 1. HAFTALIK
+        // --- HAFTALIK ---
         function renderWeek(container) {
             container.innerHTML = '<div class="week-grid" id="weekGrid"></div>';
             const grid = document.getElementById('weekGrid');
             
             const startOfWeek = getStartOfWeek(state.currentDate);
             const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate() + 6);
-
-            const options = { day: 'numeric', month: 'long' };
-            document.getElementById('dateTitle').innerText = `${startOfWeek.toLocaleDateString('tr-TR', options)} - ${endOfWeek.toLocaleDateString('tr-TR', options)}`;
+            
+            const opts = { day: 'numeric', month: 'long' };
+            document.getElementById('dateTitle').innerText = `${startOfWeek.toLocaleDateString('tr-TR', opts)} - ${endOfWeek.toLocaleDateString('tr-TR', opts)}`;
 
             for (let i = 0; i < 7; i++) {
                 const day = new Date(startOfWeek);
@@ -415,14 +388,15 @@
                 const isSelected = dateStr === state.selectedDate;
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
 
-                const dayTasks = db.tasks.filter(t => t.date === dateStr && !t.deleted);
-                dayTasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
+                // Görevler
+                const tasks = db.tasks.filter(t => t.date === dateStr && !t.deleted);
+                tasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
 
-                let tasksHTML = '';
-                dayTasks.forEach(t => {
-                    tasksHTML += `
+                let html = '';
+                tasks.forEach(t => {
+                    html += `
                         <div class="task-card" style="opacity: ${t.done ? 0.5 : 1}">
-                            ${t.time ? `<span class="task-time">${t.time}</span>` : ''}
+                            ${t.time ? `<span style="font-size:11px; color:var(--blue); display:block;">${t.time}</span>` : ''}
                             <span style="text-decoration: ${t.done ? 'line-through' : 'none'}">${t.text}</span>
                             <div class="task-actions">
                                 <button onclick="toggleTask('${t.id}')" class="icon-btn green"><span class="material-icons-round">check</span></button>
@@ -437,79 +411,85 @@
                             <span>${day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
                             <span>${day.getDate()}</span>
                         </div>
-                        <div style="flex: 1;">${tasksHTML}</div>
+                        <div style="flex:1;">${html}</div>
+                        <button onclick="selectDay('${dateStr}'); document.getElementById('taskInput').focus();" 
+                                style="margin-top:10px; background:none; border:1px dashed var(--line); color:var(--text-muted); width:100%; border-radius:6px; cursor:pointer;">
+                            +
+                        </button>
                     </div>`;
             }
         }
 
-        // 2. AYLIK
+        // --- AYLIK ---
         function renderMonth(container) {
             container.innerHTML = '<div class="month-grid" id="monthGrid"></div>';
             const grid = document.getElementById('monthGrid');
-
+            
             const year = state.currentDate.getFullYear();
             const month = state.currentDate.getMonth();
-            
             document.getElementById('dateTitle').innerText = new Date(year, month).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
 
             const firstDay = new Date(year, month, 1);
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             
-            let startDay = firstDay.getDay();
+            let startDay = firstDay.getDay(); 
             if (startDay === 0) startDay = 7; 
 
+            // Boşluklar
             for (let i = 1; i < startDay; i++) {
                 grid.innerHTML += `<div class="month-day empty"></div>`;
             }
 
+            // Günler
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const isSelected = dateStr === state.selectedDate;
                 const isToday = dateStr === new Date().toISOString().split('T')[0];
                 
-                const taskCount = db.tasks.filter(t => t.date === dateStr && !t.deleted && !t.done).length;
+                const activeCount = db.tasks.filter(t => t.date === dateStr && !t.deleted && !t.done).length;
                 const totalCount = db.tasks.filter(t => t.date === dateStr && !t.deleted).length;
 
                 let indicator = '';
-                if (totalCount > 0) {
-                    indicator = `<div style="font-size:11px; color:var(--text-muted); margin-top:5px;">
-                        ${taskCount > 0 ? `<span style="color:var(--text-main)">● ${taskCount} Açık</span>` : '✓ Tümü Bitti'}
+                if(totalCount > 0) {
+                    indicator = `<div style="font-size:10px; color:var(--text-muted); margin-top:5px;">
+                        ${activeCount > 0 ? `<span style="color:var(--text-main)">● ${activeCount}</span>` : '✓'}
                     </div>`;
                 }
 
                 grid.innerHTML += `
                     <div class="month-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" onclick="selectDay('${dateStr}')">
-                        <span style="font-weight:600; font-size:14px;">${d}</span>
+                        <span style="font-weight:600;">${d}</span>
                         ${indicator}
                     </div>`;
             }
         }
 
-        // 3. PANELLER
+        // --- ALT PANELLER ---
         function renderDashboard() {
+            // Seçili Gün Başlığı
             const d = new Date(state.selectedDate);
             document.getElementById('selectedDateText').innerText = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
+            // Liste
             const list = document.getElementById('selectedDayList');
             const tasks = db.tasks.filter(t => t.date === state.selectedDate && !t.deleted);
             tasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
 
             if (tasks.length === 0) {
-                list.innerHTML = '<div style="opacity:0.5; font-size:12px;">Görev yok.</div>';
+                list.innerHTML = '<div style="opacity:0.5; font-size:12px; margin-top:10px;">Görev yok.</div>';
                 return;
             }
 
             let html = '';
             tasks.forEach(t => {
                 html += `
-                    <div class="mini-task" style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
+                    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
                          <button onclick="toggleTask('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
                             <span class="material-icons-round">${t.done?'check_box':'check_box_outline_blank'}</span>
                          </button>
                          <div style="flex:1;">
                             <span style="text-decoration:${t.done?'line-through':'none'}; font-size:13px;">${t.text}</span>
-                            ${t.time ? `<div style="font-size:10px; color:var(--blue)">${t.time}</div>` : ''}
+                            ${t.time ? `<span style="font-size:10px; color:var(--blue); margin-left:5px;">${t.time}</span>` : ''}
                          </div>
                          <button onclick="deleteTask('${t.id}')" class="icon-btn red"><span class="material-icons-round" style="font-size:16px">close</span></button>
                     </div>`;
@@ -536,10 +516,42 @@
             list.innerHTML = html;
         }
 
-        // --- CRUD ---
+        // --------------------------------------------------------
+        // 4. İŞLEMLER (ACTIONS)
+        // --------------------------------------------------------
+        
+        function selectDay(dateStr) {
+            state.selectedDate = dateStr;
+            render();
+        }
+
+        function setView(mode) {
+            state.view = mode;
+            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
+            document.getElementById('btnViewMonth').classList.toggle('active', mode === 'month');
+            render();
+        }
+
+        function changeDate(delta) {
+            if (state.view === 'week') {
+                state.currentDate.setDate(state.currentDate.getDate() + (delta * 7));
+            } else {
+                state.currentDate.setMonth(state.currentDate.getMonth() + delta);
+            }
+            render();
+        }
+
+        function goToToday() {
+            state.currentDate = new Date();
+            state.selectedDate = new Date().toISOString().split('T')[0];
+            render();
+        }
+
+        // --- GÖREV EKLEME/SİLME ---
         function addTask() {
             const txt = document.getElementById('taskInput').value.trim();
             if(!txt) return;
+            
             db.tasks.push({
                 id: Date.now().toString(),
                 text: txt,
@@ -563,18 +575,20 @@
             const t = db.tasks.find(x => x.id == id);
             if(t) { t.done = !t.done; saveDB(); render(); }
         }
+
         function deleteTask(id) {
             if(confirm("Silinsin mi?")) {
                 const t = db.tasks.find(x => x.id == id);
                 if(t) { t.deleted = true; saveDB(); render(); }
             }
         }
+
         function toggleInbox(id) {
             const t = db.inbox.find(x => x.id == id);
             if(t) { t.done = !t.done; saveDB(); render(); }
         }
 
-        function setupInboxListener() {
+        function setupEventListeners() {
             document.getElementById('btnClearInbox').onclick = () => {
                 const doneCount = db.inbox.filter(t => t.done).length;
                 if(doneCount > 0 && confirm("Tamamlanan notlar silinsin mi?")) {
@@ -590,6 +604,7 @@
             const diff = date.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(date.setDate(diff));
         }
+
     </script>
 </body>
 </html>
