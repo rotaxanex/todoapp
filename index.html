@@ -15,13 +15,14 @@
             --bg: #0f0f10;
             --card-bg: #18181b;
             --input-bg: #27272a;
-            --line: #27272a;
+            --line: #3f3f46;
             --text-main: #e4e4e7;
             --text-muted: #a1a1aa;
-            --green: #4ade80;
-            --red: #f87171;
-            --blue: #60a5fa;
-            --hover: rgba(255,255,255,0.05);
+            --green: #10b981;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --orange: #f59e0b;
+            --purple: #8b5cf6;
         }
 
         * { box-sizing: border-box; outline: none; }
@@ -34,529 +35,350 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* PC'de sayfa kaymasın */
         }
 
-        /* --- GİRİŞ EKRANI (LOGIN MODAL) --- */
+        /* MOBİL UYUMLULUK (Responsive) */
+        @media (max-width: 768px) {
+            body { padding: 10px; height: auto; overflow: auto; } /* Mobilde kaydırmaya izin ver */
+            header { flex-direction: column; height: auto !important; gap: 10px; align-items: flex-start !important; }
+            .week-grid { grid-template-columns: 1fr !important; } /* Mobilde günler alt alta */
+            .dashboard { flex-direction: column; height: auto !important; position: static !important; }
+            #calendarContainer { height: auto !important; overflow: visible !important; }
+            .day-col { min-height: 150px; max-height: none !important; }
+        }
+
+        /* --- GİRİŞ EKRANI --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg);
-            z-index: 10000;
+            background-color: var(--bg); z-index: 10000;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
         }
         .login-box {
-            background: var(--card-bg); padding: 40px; border-radius: 20px;
-            border: 1px solid var(--line); text-align: center; width: 350px;
+            background: var(--card-bg); padding: 30px; border-radius: 20px;
+            border: 1px solid var(--line); text-align: center; width: 90%; max-width: 350px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .login-input {
-            width: 100%; padding: 15px; margin-bottom: 15px;
-            background: var(--input-bg); border: 1px solid var(--line);
-            color: white; border-radius: 10px; font-size: 14px;
-        }
-        .btn-auth {
-            background: var(--text-main); color: var(--bg); border: none;
-            padding: 12px; border-radius: 10px; font-weight: bold;
-            cursor: pointer; font-size: 14px; width: 100%; margin-bottom: 10px; transition: 0.2s;
-        }
-        .btn-auth:hover { opacity: 0.9; }
-        .btn-secondary {
-            background: transparent; border: 1px solid var(--line); color: var(--text-muted);
-        }
-        .btn-secondary:hover { color: var(--text-main); border-color: var(--text-main); }
-        #authError { color: var(--red); font-size: 12px; margin-top: 10px; display: none; }
+        .login-input { width: 100%; padding: 12px; margin-bottom: 12px; background: var(--input-bg); border: 1px solid var(--line); color: white; border-radius: 8px; }
+        .btn-auth { width: 100%; padding: 12px; background: var(--text-main); color: var(--bg); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        #authError { color: var(--red); font-size: 13px; display: none; margin-top: 10px; }
 
         /* --- HEADER --- */
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; height: 50px; flex-shrink: 0;
-        }
-        .nav-group { display: flex; gap: 10px; background: var(--card-bg); padding: 5px; border-radius: 10px; border: 1px solid var(--line); }
-        .nav-btn {
-            background: transparent; border: none; color: var(--text-muted);
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: 500;
-        }
-        .nav-btn.active { background: var(--input-bg); color: var(--text-main); }
-        .nav-btn:hover { color: var(--text-main); }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 50px; flex-shrink: 0; }
+        .nav-btn { background: var(--card-bg); border: 1px solid var(--line); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .nav-btn.active { background: var(--input-bg); color: var(--text-main); border-color: var(--text-main); }
+        .icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; }
+
+        /* --- TAKVİM --- */
+        #calendarContainer { flex: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 5px; }
         
-        .user-info { font-size: 12px; color: var(--text-muted); margin-right: 15px; }
-        .btn-logout {
-            background: rgba(248, 113, 113, 0.1); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.2);
-            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
-        }
-        .btn-logout:hover { background: var(--red); color: white; }
+        .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
+        .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
 
-        /* --- TAKVİM ALANI --- */
-        #calendarContainer {
-            flex: 1; overflow-y: auto; margin-bottom: 20px;
-            display: flex; flex-direction: column;
-        }
-
-        /* Haftalık Grid */
-        .week-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px;
-            min-height: 0;
-        }
-
-        /* Aylık Grid */
-        .month-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
-        }
-
-        /* Gün Kutusu */
         .day-col {
-            background: var(--card-bg); border-radius: 16px; padding: 15px;
-            display: flex; flex-direction: column; border: 1px solid var(--line);
-            height: 100%; max-height: calc(100vh - 280px); overflow-y: auto;
+            background: var(--card-bg); border-radius: 12px; padding: 12px;
+            border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px;
+            min-height: 200px; /* Kutular artık daha büyük */
         }
-        .day-col.selected { border-color: var(--blue); box-shadow: 0 0 15px rgba(96, 165, 250, 0.1); }
-        .day-col.today { background: #202023; border-color: var(--text-muted); }
+        .day-col.selected { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+        .day-col.today { background: #202023; }
 
-        .day-header {
-            font-size: 14px; font-weight: 600; color: var(--text-muted);
-            margin-bottom: 15px; display: flex; justify-content: space-between;
-        }
-
-        /* Aylık Kutular */
-        .month-day {
-            background: var(--card-bg); border-radius: 10px; padding: 10px;
-            border: 1px solid var(--line); min-height: 100px; cursor: pointer;
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .month-day:hover { border-color: var(--text-muted); }
-        .month-day.selected { border-color: var(--blue); background: #1c1c1f; }
-        .month-day.today { background: #202023; border-color: var(--text-muted); }
-        .month-day.empty { background: transparent; border: none; cursor: default; }
-
-        /* Görev Kartı */
+        /* --- GÖREV KARTI & TAGLER --- */
         .task-card {
-            background: var(--input-bg); padding: 12px; border-radius: 8px;
-            margin-bottom: 8px; font-size: 13px; position: relative;
-            border: 1px solid transparent; transition: 0.2s;
+            background: var(--input-bg); padding: 10px; border-radius: 8px;
+            position: relative; border-left: 3px solid transparent; transition: 0.2s;
         }
-        .task-card:hover { border-color: var(--line); transform: translateY(-2px); }
-        .task-actions { position: absolute; top: 5px; right: 5px; display: none; gap: 5px; }
-        .task-card:hover .task-actions { display: flex; }
+        .task-card:hover { transform: translateY(-2px); }
+        
+        /* Tag Renkleri (Sol Çizgi) */
+        .tag-is { border-left-color: var(--blue); }
+        .tag-ozel { border-left-color: var(--green); }
+        .tag-okul { border-left-color: var(--orange); }
+        .tag-acil { border-left-color: var(--red); }
+        .tag-yok { border-left-color: var(--line); }
+
+        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .tag-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); }
+        
+        .task-time { font-size: 11px; color: var(--blue); font-weight: bold; }
+        .task-text { font-size: 13px; line-height: 1.4; word-break: break-word; }
 
         /* --- ALT PANEL --- */
         .dashboard {
-            height: 220px; flex-shrink: 0; display: flex; gap: 20px;
-            position: relative; z-index: 999; background-color: var(--bg);
-            padding-top: 10px; box-shadow: 0 -20px 30px var(--bg);
+            height: 240px; flex-shrink: 0; display: flex; gap: 20px;
+            background: var(--bg); position: relative; z-index: 50;
+            border-top: 1px solid var(--line); padding-top: 15px;
         }
-        .panel-box {
-            background: var(--card-bg); border-radius: 16px; padding: 20px;
-            border: 1px solid var(--line); display: flex; flex-direction: column;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: var(--line); border-radius: 10px; }
-
-        /* Ortak Elementler */
-        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
-        .icon-btn:hover { color: var(--text-main); }
-        .icon-btn.red:hover { color: var(--red); }
-        .icon-btn.green:hover { color: var(--green); }
+        .panel-box { background: var(--card-bg); border: 1px solid var(--line); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; }
         
-        input { background: var(--bg); border: 1px solid var(--line); color: white; padding: 10px; border-radius: 8px; font-family: inherit; }
-        input:focus { border-color: var(--blue); }
+        /* Input Alanı */
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        select { background: var(--bg); border: 1px solid var(--line); color: white; padding: 10px; border-radius: 8px; }
         .btn-add { background: var(--text-main); color: var(--bg); border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* Kaydırma Çubuğu */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="login-box">
-            <span class="material-icons-round" style="font-size: 48px; color: var(--text-main); margin-bottom: 10px;">lock_person</span>
-            <h2 style="margin: 0 0 20px 0;">Hoş Geldin</h2>
-            
-            <input type="email" id="emailInput" class="login-input" placeholder="E-Posta Adresi">
+            <h2 style="margin-bottom:20px;">Giriş Yap</h2>
+            <input type="email" id="emailInput" class="login-input" placeholder="E-Posta">
             <input type="password" id="passwordInput" class="login-input" placeholder="Şifre">
-            
-            <button onclick="handleLogin()" class="btn-auth">Giriş Yap</button>
-            <button onclick="handleSignUp()" class="btn-auth btn-secondary">Kayıt Ol</button>
-            
+            <button onclick="handleLogin()" class="btn-auth">Giriş</button>
+            <button onclick="handleSignUp()" class="btn-auth" style="background:transparent; border:1px solid var(--line); color:var(--text-muted);">Kayıt Ol</button>
             <p id="authError"></p>
         </div>
     </div>
 
     <header>
-        <div style="display: flex; gap: 15px; align-items: center;">
-            <div class="nav-group">
-                <button onclick="setView('week')" id="btnViewWeek" class="nav-btn active">Haftalık</button>
-                <button onclick="setView('month')" id="btnViewMonth" class="nav-btn">Aylık</button>
-            </div>
-            
-            <button onclick="changeDate(-1)" class="icon-btn"><span class="material-icons-round">chevron_left</span></button>
-            <h2 id="dateTitle" style="margin:0; font-size: 16px;">Yükleniyor...</h2>
-            <button onclick="changeDate(1)" class="icon-btn"><span class="material-icons-round">chevron_right</span></button>
-            <button onclick="goToToday()" class="nav-btn" style="border: 1px solid var(--line);">Bugün</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button onclick="setView('week')" id="btnWeek" class="nav-btn active">Haftalık</button>
+            <button onclick="setView('month')" id="btnMonth" class="nav-btn">Aylık</button>
+            <span id="userEmail" style="font-size:12px; color:var(--text-muted); margin-left:10px;"></span>
         </div>
-
-        <div style="display: flex; align-items: center;">
-            <span id="userEmailDisplay" class="user-info"></span>
-            <button onclick="handleLogout()" class="btn-logout">Çıkış</button>
+        
+        <div style="display:flex; align-items:center; gap:5px;">
+            <button onclick="changeDate(-1)" class="icon-btn"><span class="material-icons-round">chevron_left</span></button>
+            <span id="dateTitle" style="font-size:14px; font-weight:500; min-width:150px; text-align:center;">...</span>
+            <button onclick="changeDate(1)" class="icon-btn"><span class="material-icons-round">chevron_right</span></button>
+            <button onclick="handleLogout()" class="icon-btn" style="color:var(--red); margin-left:10px;"><span class="material-icons-round">logout</span></button>
         </div>
     </header>
 
-    <div id="calendarContainer">
-        </div>
+    <div id="calendarContainer"></div>
 
     <div class="dashboard">
-        <div class="panel-box" style="flex: 2;">
-            <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
-                <h3 id="selectedDateText" style="margin:0; font-size:14px; color:var(--text-muted);">Seçili Gün</h3>
+        <div class="panel-box" style="flex:2;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span id="selectedDateTitle" style="color:var(--text-muted); font-size:13px;">Seçili Gün</span>
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="taskInput" placeholder="Yeni görev..." style="flex: 1;">
+
+            <div class="input-row">
+                <input type="text" id="taskInput" placeholder="Görev..." style="flex:1;">
+                <select id="tagInput">
+                    <option value="yok">Tag Yok</option>
+                    <option value="is">İş</option>
+                    <option value="ozel">Özel</option>
+                    <option value="okul">Okul</option>
+                    <option value="acil">Acil!</option>
+                </select>
                 <input type="time" id="timeInput">
                 <button onclick="addTask()" class="btn-add">Ekle</button>
             </div>
 
-            <div id="selectedDayList" style="flex: 1; overflow-y: auto;">
-                </div>
+            <div id="selectedList" style="flex:1; overflow-y:auto;"></div>
         </div>
 
-        <div class="panel-box" style="flex: 1;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                <h3 style="margin:0; font-size:14px;">Brain Dump</h3>
-                <div style="display:flex; gap: 5px;">
+        <div class="panel-box" style="flex:1;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:14px;">Brain Dump</span>
+                <div style="display:flex; gap:5px;">
                     <button onclick="addInboxTask()" class="icon-btn"><span class="material-icons-round">add</span></button>
-                    <button id="btnClearInbox" class="icon-btn red"><span class="material-icons-round">delete_sweep</span></button>
+                    <button onclick="clearInbox()" class="icon-btn" style="color:var(--red)"><span class="material-icons-round">delete_sweep</span></button>
                 </div>
             </div>
-            <div id="inboxList" style="flex: 1; overflow-y: auto;">
-                </div>
+            <div id="inboxList" style="flex:1; overflow-y:auto;"></div>
         </div>
     </div>
 
     <script>
-        // --------------------------------------------------------
-        // 1. AYARLAR & AUTH
-        // --------------------------------------------------------
-        const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
-        
+        const SUPABASE_URL = 'BURAYA_SUPABASE_URL_YAZ';
+        const SUPABASE_KEY = 'BURAYA_SUPABASE_KEY_YAZ';
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let db = { tasks: [], inbox: [] };
-        let currentUser = null; 
-        
-        let state = {
-            view: 'week', // week | month
-            currentDate: new Date(),
-            selectedDate: new Date().toISOString().split('T')[0]
-        };
+        let currentUser = null;
+        let state = { view: 'week', current: new Date(), selected: new Date().toISOString().split('T')[0] };
 
-        // Sayfa Yüklenince Oturum Kontrolü
+        // --- AUTH ---
         window.onload = async () => {
             const { data: { session } } = await client.auth.getSession();
-            if (session) {
-                userLoggedIn(session.user);
-            } else {
-                // Giriş ekranı zaten açık (display: flex)
-            }
+            if(session) userLoggedIn(session.user);
         };
 
         async function handleLogin() {
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
-            const errBox = document.getElementById('authError');
-            
-            errBox.style.display = 'block';
-            errBox.innerText = 'Giriş yapılıyor...';
-
             const { data, error } = await client.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                errBox.innerText = 'Hata: ' + error.message;
-            } else {
-                userLoggedIn(data.user);
-            }
+            if(error) alert(error.message); else userLoggedIn(data.user);
         }
 
         async function handleSignUp() {
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
-            
-            if(!email || !password) { alert("Email ve şifre gerekli."); return; }
-            
-            const { data, error } = await client.auth.signUp({ email, password });
-            
-            if (error) {
-                document.getElementById('authError').style.display = 'block';
-                document.getElementById('authError').innerText = error.message;
-            } else {
-                alert("Kayıt olundu! Lütfen mail kutunuzu onaylayın.");
-            }
+            const { error } = await client.auth.signUp({ email, password });
+            if(error) alert(error.message); else alert("Mailini onayla!");
         }
 
-        async function handleLogout() {
-            await client.auth.signOut();
-            location.reload();
-        }
+        async function handleLogout() { await client.auth.signOut(); location.reload(); }
 
         function userLoggedIn(user) {
             currentUser = user;
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('userEmailDisplay').innerText = user.email;
-            initApp();
+            document.getElementById('userEmail').innerText = user.email;
+            loadData().then(render);
         }
 
-        // --------------------------------------------------------
-        // 2. VERİTABANI İŞLEMLERİ (Kişiye Özel)
-        // --------------------------------------------------------
-        async function initApp() {
-            await loadData();
-            render();
-            setupEventListeners();
-        }
-
+        // --- DATA ---
         async function loadData() {
-            if (!currentUser) return;
-
-            // Sadece bu kullanıcıya ait satırı getir
-            // DİKKAT: Tablonda 'user_id' sütunu olmalı!
-            const { data, error } = await client
-                .from('minimal_todo')
-                .select('data')
-                .eq('user_id', currentUser.id)
-                .single();
-
-            if (data && data.data) {
-                db = data.data;
-            } else {
-                // Kayıt yoksa boş başlat
-                db = { tasks: [], inbox: [] };
-            }
-            
-            // Veri yapısı bozuksa onar
-            if (!db.tasks) db.tasks = [];
-            if (!db.inbox) db.inbox = [];
+            const { data } = await client.from('minimal_todo').select('data').eq('user_id', currentUser.id).single();
+            if(data) db = data.data || { tasks: [], inbox: [] };
         }
 
         async function saveDB() {
-            if (!currentUser) return;
-
-            // Kullanıcı ID'sine göre kaydet/güncelle (Upsert)
-            // 'user_id' primary key veya unique olmalı
-            const saveData = {
-                user_id: currentUser.id,
-                data: db
-            };
-
-            await client.from('minimal_todo').upsert(saveData, { onConflict: 'user_id' });
+            await client.from('minimal_todo').upsert({ user_id: currentUser.id, data: db }, { onConflict: 'user_id' });
         }
 
-        // --------------------------------------------------------
-        // 3. RENDER (GÖRÜNÜM)
-        // --------------------------------------------------------
-        
+        // --- RENDER ---
         function render() {
             const container = document.getElementById('calendarContainer');
-            container.innerHTML = ''; 
+            container.innerHTML = '';
+            
+            if(state.view === 'week') renderWeek(container);
+            else renderMonth(container);
 
-            if (state.view === 'week') {
-                renderWeek(container);
-            } else {
-                renderMonth(container);
-            }
-
-            renderDashboard(); 
-            renderBrainDump();
+            renderList();
+            renderInbox();
+            
+            const trDate = new Date(state.selected).toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long' });
+            document.getElementById('selectedDateTitle').innerText = trDate;
         }
 
-        // --- HAFTALIK ---
         function renderWeek(container) {
-            container.innerHTML = '<div class="week-grid" id="weekGrid"></div>';
-            const grid = document.getElementById('weekGrid');
+            container.innerHTML = '<div class="week-grid" id="grid"></div>';
+            const grid = document.getElementById('grid');
             
-            const startOfWeek = getStartOfWeek(state.currentDate);
-            const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate() + 6);
-            
-            const opts = { day: 'numeric', month: 'long' };
-            document.getElementById('dateTitle').innerText = `${startOfWeek.toLocaleDateString('tr-TR', opts)} - ${endOfWeek.toLocaleDateString('tr-TR', opts)}`;
+            const start = getStartOfWeek(state.current);
+            const end = new Date(start); end.setDate(end.getDate()+6);
+            document.getElementById('dateTitle').innerText = `${start.getDate()} - ${end.toLocaleDateString('tr-TR', {day:'numeric', month:'long'})}`;
 
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(startOfWeek);
-                day.setDate(day.getDate() + i);
-                const dateStr = day.toISOString().split('T')[0];
-                const isSelected = dateStr === state.selectedDate;
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
-
-                // Görevler
+            for(let i=0; i<7; i++) {
+                const d = new Date(start); d.setDate(d.getDate()+i);
+                const dateStr = d.toISOString().split('T')[0];
                 const tasks = db.tasks.filter(t => t.date === dateStr && !t.deleted);
-                tasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
-
+                
                 let html = '';
-                tasks.forEach(t => {
-                    html += `
-                        <div class="task-card" style="opacity: ${t.done ? 0.5 : 1}">
-                            ${t.time ? `<span style="font-size:11px; color:var(--blue); display:block;">${t.time}</span>` : ''}
-                            <span style="text-decoration: ${t.done ? 'line-through' : 'none'}">${t.text}</span>
-                            <div class="task-actions">
-                                <button onclick="toggleTask('${t.id}')" class="icon-btn green"><span class="material-icons-round">check</span></button>
-                                <button onclick="deleteTask('${t.id}')" class="icon-btn red"><span class="material-icons-round">close</span></button>
-                            </div>
-                        </div>`;
-                });
+                tasks.forEach(t => html += getTaskHTML(t));
+
+                const isSel = dateStr === state.selected ? 'selected' : '';
+                const isToday = dateStr === new Date().toISOString().split('T')[0] ? 'today' : '';
 
                 grid.innerHTML += `
-                    <div class="day-col ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" onclick="selectDay('${dateStr}')">
-                        <div class="day-header">
-                            <span>${day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
-                            <span>${day.getDate()}</span>
+                    <div class="day-col ${isSel} ${isToday}" onclick="selectDay('${dateStr}')">
+                        <div style="font-weight:600; color:var(--text-muted); display:flex; justify-content:space-between;">
+                            <span>${d.toLocaleDateString('tr-TR', {weekday:'short'})}</span>
+                            <span>${d.getDate()}</span>
                         </div>
                         <div style="flex:1;">${html}</div>
-                        <button onclick="selectDay('${dateStr}'); document.getElementById('taskInput').focus();" 
-                                style="margin-top:10px; background:none; border:1px dashed var(--line); color:var(--text-muted); width:100%; border-radius:6px; cursor:pointer;">
-                            +
-                        </button>
+                        <button onclick="selectDay('${dateStr}'); document.getElementById('taskInput').focus()" style="background:none; border:1px dashed var(--line); color:var(--text-muted); width:100%; border-radius:6px; cursor:pointer;">+</button>
                     </div>`;
             }
         }
 
-        // --- AYLIK ---
         function renderMonth(container) {
-            container.innerHTML = '<div class="month-grid" id="monthGrid"></div>';
-            const grid = document.getElementById('monthGrid');
+            container.innerHTML = '<div class="month-grid" id="mGrid"></div>';
+            const grid = document.getElementById('mGrid');
+            const y = state.current.getFullYear(), m = state.current.getMonth();
+            document.getElementById('dateTitle').innerText = new Date(y, m).toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
+
+            const days = new Date(y, m+1, 0).getDate();
+            const startDay = (new Date(y, m, 1).getDay() || 7) - 1; // Pzt=0
+
+            for(let i=0; i<startDay; i++) grid.innerHTML += '<div></div>';
             
-            const year = state.currentDate.getFullYear();
-            const month = state.currentDate.getMonth();
-            document.getElementById('dateTitle').innerText = new Date(year, month).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-
-            const firstDay = new Date(year, month, 1);
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
-            let startDay = firstDay.getDay(); 
-            if (startDay === 0) startDay = 7; 
-
-            // Boşluklar
-            for (let i = 1; i < startDay; i++) {
-                grid.innerHTML += `<div class="month-day empty"></div>`;
-            }
-
-            // Günler
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const isSelected = dateStr === state.selectedDate;
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
+            for(let d=1; d<=days; d++) {
+                const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const count = db.tasks.filter(t => t.date === dateStr && !t.deleted && !t.done).length;
+                const isSel = dateStr === state.selected ? 'border:1px solid var(--blue);' : 'border:1px solid var(--line);';
                 
-                const activeCount = db.tasks.filter(t => t.date === dateStr && !t.deleted && !t.done).length;
-                const totalCount = db.tasks.filter(t => t.date === dateStr && !t.deleted).length;
-
-                let indicator = '';
-                if(totalCount > 0) {
-                    indicator = `<div style="font-size:10px; color:var(--text-muted); margin-top:5px;">
-                        ${activeCount > 0 ? `<span style="color:var(--text-main)">● ${activeCount}</span>` : '✓'}
-                    </div>`;
-                }
-
                 grid.innerHTML += `
-                    <div class="month-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" onclick="selectDay('${dateStr}')">
-                        <span style="font-weight:600;">${d}</span>
-                        ${indicator}
+                    <div style="background:var(--card-bg); padding:10px; border-radius:8px; min-height:80px; cursor:pointer; ${isSel}" onclick="selectDay('${dateStr}')">
+                        <div style="font-weight:bold;">${d}</div>
+                        ${count > 0 ? `<div style="font-size:11px; color:var(--blue); margin-top:5px;">● ${count} İş</div>` : ''}
                     </div>`;
             }
         }
 
-        // --- ALT PANELLER ---
-        function renderDashboard() {
-            // Seçili Gün Başlığı
-            const d = new Date(state.selectedDate);
-            document.getElementById('selectedDateText').innerText = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
-
-            // Liste
-            const list = document.getElementById('selectedDayList');
-            const tasks = db.tasks.filter(t => t.date === state.selectedDate && !t.deleted);
-            tasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
-
-            if (tasks.length === 0) {
-                list.innerHTML = '<div style="opacity:0.5; font-size:12px; margin-top:10px;">Görev yok.</div>';
-                return;
-            }
-
-            let html = '';
-            tasks.forEach(t => {
-                html += `
-                    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
-                         <button onclick="toggleTask('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
-                            <span class="material-icons-round">${t.done?'check_box':'check_box_outline_blank'}</span>
-                         </button>
-                         <div style="flex:1;">
-                            <span style="text-decoration:${t.done?'line-through':'none'}; font-size:13px;">${t.text}</span>
-                            ${t.time ? `<span style="font-size:10px; color:var(--blue); margin-left:5px;">${t.time}</span>` : ''}
-                         </div>
-                         <button onclick="deleteTask('${t.id}')" class="icon-btn red"><span class="material-icons-round" style="font-size:16px">close</span></button>
-                    </div>`;
-            });
-            list.innerHTML = html;
+        function renderList() {
+            const list = document.getElementById('selectedList');
+            const tasks = db.tasks.filter(t => t.date === state.selected && !t.deleted);
+            list.innerHTML = '';
+            tasks.forEach(t => list.innerHTML += getRowHTML(t));
         }
 
-        function renderBrainDump() {
+        function renderInbox() {
             const list = document.getElementById('inboxList');
-            if (!db.inbox || db.inbox.length === 0) {
-                list.innerHTML = '<div style="opacity:0.5; font-size:12px; text-align:center; padding-top:20px;">Boş</div>';
-                return;
-            }
-            let html = '';
+            list.innerHTML = '';
             db.inbox.forEach(t => {
-                html += `
-                    <div style="display:flex; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
-                        <button onclick="toggleInbox('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
-                            <span class="material-icons-round">${t.done?'check_box':'check_box_outline_blank'}</span>
-                        </button>
-                        <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':'none'}">${t.text}</span>
-                    </div>`;
+                list.innerHTML += `
+                <div style="display:flex; gap:10px; padding:5px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
+                    <button onclick="toggleInbox('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">✓</button>
+                    <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':'none'}">${t.text}</span>
+                </div>`;
             });
-            list.innerHTML = html;
         }
 
-        // --------------------------------------------------------
-        // 4. İŞLEMLER (ACTIONS)
-        // --------------------------------------------------------
-        
-        function selectDay(dateStr) {
-            state.selectedDate = dateStr;
-            render();
-        }
-
-        function setView(mode) {
-            state.view = mode;
-            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
-            document.getElementById('btnViewMonth').classList.toggle('active', mode === 'month');
-            render();
-        }
-
-        function changeDate(delta) {
-            if (state.view === 'week') {
-                state.currentDate.setDate(state.currentDate.getDate() + (delta * 7));
-            } else {
-                state.currentDate.setMonth(state.currentDate.getMonth() + delta);
-            }
-            render();
-        }
-
-        function goToToday() {
-            state.currentDate = new Date();
-            state.selectedDate = new Date().toISOString().split('T')[0];
-            render();
-        }
-
-        // --- GÖREV EKLEME/SİLME ---
-        function addTask() {
-            const txt = document.getElementById('taskInput').value.trim();
-            if(!txt) return;
+        // --- HTML TEMPLATES ---
+        function getTaskHTML(t) {
+            const tagName = t.tag ? t.tag.toUpperCase() : '';
+            const tagClass = t.tag ? `tag-${t.tag}` : 'tag-yok';
             
+            return `
+            <div class="task-card ${tagClass}" style="opacity:${t.done?0.5:1}; margin-bottom:8px;">
+                <div class="task-header">
+                    ${t.time ? `<span class="task-time">${t.time}</span>` : '<span></span>'}
+                    ${tagName && tagName !== 'YOK' ? `<span class="tag-badge">${tagName}</span>` : ''}
+                </div>
+                <div class="task-text" style="text-decoration:${t.done?'line-through':'none'}">${t.text}</div>
+                <div style="position:absolute; bottom:5px; right:5px; display:flex; gap:5px;">
+                     <button onclick="toggleTask('${t.id}')" class="icon-btn" style="font-size:12px;">✓</button>
+                     <button onclick="delTask('${t.id}')" class="icon-btn" style="font-size:12px; color:var(--red);">✕</button>
+                </div>
+            </div>`;
+        }
+
+        function getRowHTML(t) {
+            return `
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
+                <button onclick="toggleTask('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
+                    <span class="material-icons-round">${t.done ? 'check_box' : 'check_box_outline_blank'}</span>
+                </button>
+                <div style="flex:1;">
+                    <div style="font-size:13px; text-decoration:${t.done?'line-through':'none'}">${t.text}</div>
+                    ${t.tag && t.tag !== 'yok' ? `<span style="font-size:10px; background:var(--line); padding:2px 4px; border-radius:4px;">${t.tag.toUpperCase()}</span>` : ''}
+                </div>
+                <button onclick="delTask('${t.id}')" class="icon-btn" style="color:var(--red);">✕</button>
+            </div>`;
+        }
+
+        // --- ACTIONS ---
+        function selectDay(d) { state.selected = d; render(); }
+        function setView(v) { 
+            state.view = v; 
+            document.getElementById('btnWeek').classList.toggle('active', v==='week');
+            document.getElementById('btnMonth').classList.toggle('active', v==='month');
+            render(); 
+        }
+        function changeDate(d) {
+            if(state.view === 'week') state.current.setDate(state.current.getDate() + (d*7));
+            else state.current.setMonth(state.current.getMonth() + d);
+            render();
+        }
+
+        function addTask() {
+            const txt = document.getElementById('taskInput').value;
+            if(!txt) return;
             db.tasks.push({
                 id: Date.now().toString(),
                 text: txt,
-                date: state.selectedDate,
                 time: document.getElementById('timeInput').value,
+                tag: document.getElementById('tagInput').value,
+                date: state.selected,
                 done: false, deleted: false
             });
             saveDB(); render();
@@ -564,39 +386,14 @@
         }
 
         function addInboxTask() {
-            const txt = prompt("Notun nedir?");
-            if(txt) {
-                db.inbox.push({ id: Date.now().toString(), text: txt, done: false });
-                saveDB(); render();
-            }
+            const t = prompt("Not:");
+            if(t) { db.inbox.push({id:Date.now().toString(), text:t, done:false}); saveDB(); render(); }
         }
 
-        function toggleTask(id) {
-            const t = db.tasks.find(x => x.id == id);
-            if(t) { t.done = !t.done; saveDB(); render(); }
-        }
-
-        function deleteTask(id) {
-            if(confirm("Silinsin mi?")) {
-                const t = db.tasks.find(x => x.id == id);
-                if(t) { t.deleted = true; saveDB(); render(); }
-            }
-        }
-
-        function toggleInbox(id) {
-            const t = db.inbox.find(x => x.id == id);
-            if(t) { t.done = !t.done; saveDB(); render(); }
-        }
-
-        function setupEventListeners() {
-            document.getElementById('btnClearInbox').onclick = () => {
-                const doneCount = db.inbox.filter(t => t.done).length;
-                if(doneCount > 0 && confirm("Tamamlanan notlar silinsin mi?")) {
-                    db.inbox = db.inbox.filter(t => !t.done);
-                    saveDB(); render();
-                }
-            };
-        }
+        function toggleTask(id) { const t = db.tasks.find(x=>x.id==id); if(t){t.done=!t.done; saveDB(); render();} }
+        function delTask(id) { if(confirm('Sil?')){ const t=db.tasks.find(x=>x.id==id); if(t){t.deleted=true; saveDB(); render();} } }
+        function toggleInbox(id) { const t = db.inbox.find(x=>x.id==id); if(t){t.done=!t.done; saveDB(); render();} }
+        function clearInbox() { db.inbox = db.inbox.filter(t=>!t.done); saveDB(); render(); }
 
         function getStartOfWeek(d) {
             const date = new Date(d);
@@ -604,7 +401,6 @@
             const diff = date.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(date.setDate(diff));
         }
-
     </script>
 </body>
 </html>
