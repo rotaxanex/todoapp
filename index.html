@@ -336,17 +336,20 @@ body.monthMode .calendarArea{
 body.monthMode #grid{
   overflow: hidden;
 }
-    /* AYLIK GÖRÜNÜM – sağ paneli gizle */
-body.monthMode .side{
+
+body.monthMode .bottom{
+  display: none;
+}
+    /* AYLIK GÖRÜNÜM – Brain Dump ve Habits GİZLE */
+body.monthMode #inbox,
+body.monthMode #habitsBox{
   display: none;
 }
 
-/* Ana alan tek kolon olsun */
-body.monthMode .main{
-  grid-template-columns: 1fr;
-}
-body.monthMode .bottom{
-  display: none;
+/* AYLIK GÖRÜNÜM – takvim scroll olmasın */
+body.monthMode .calendarArea{
+  height: auto;
+  overflow: hidden;
 }
   </style>
 </head>
@@ -1569,4 +1572,5 @@ body.monthMode .bottom{
   </script>
 </body>
 </html>
+
 
