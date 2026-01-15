@@ -326,6 +326,28 @@
       body.weekMode .bottomGrid{ grid-template-columns: 1fr; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
+    /* AYLIK GÖRÜNÜM – scroll KAPAT */
+body.monthMode .calendarArea{
+  height: auto;
+  overflow: hidden;
+}
+
+/* Grid de taşmasın */
+body.monthMode #grid{
+  overflow: hidden;
+}
+    /* AYLIK GÖRÜNÜM – sağ paneli gizle */
+body.monthMode .side{
+  display: none;
+}
+
+/* Ana alan tek kolon olsun */
+body.monthMode .main{
+  grid-template-columns: 1fr;
+}
+body.monthMode .bottom{
+  display: none;
+}
   </style>
 </head>
 
@@ -1547,3 +1569,4 @@
   </script>
 </body>
 </html>
+
