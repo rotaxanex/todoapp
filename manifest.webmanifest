@@ -1,6 +1,6 @@
 {
-  "name": "Minimal To-Do Cloud",
-  "short_name": "ToDo Cloud",
+  "name": "todoapp",
+  "short_name": "todoapp",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f0f10",
@@ -18,4 +18,5 @@
       "type": "image/png"
     }
   ]
+
 }
