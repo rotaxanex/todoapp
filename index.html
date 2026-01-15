@@ -154,6 +154,23 @@
       body.monthMode .side{ display:none; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
+    /* --- BURADAN BAŞLA --- */
+    
+    /* İhtimal verdiğimiz bütün isimleri yazdım, biri kesin tutar */
+    .col, .day-col, .day, .column {
+      height: 100%;
+      max-height: calc(100vh - 280px); /* Ekranın altından taşmayı engeller */
+      overflow-y: auto; /* Sığmazsa kaydırma çubuğu çıkarır */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Kaydırma çubuğunu güzelleştirme (Gri ve ince) */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background-color: #333; border-radius: 10px; }
+
+    /* --- BURADA BİTİR --- */
   </style>
 </head>
 
@@ -573,4 +590,5 @@
 </body>
 
 </html>
+
 
