@@ -376,6 +376,68 @@ body.monthMode .main{
     body.monthMode #bottom{ display: block !important; }
     body.monthMode #inbox,
     body.monthMode #habitsBox{ display: none !important;}
+
+    /* AYLIK: hücre header’ını köşelere yapıştır, kartlara alan aç */
+body.monthMode .cell.monthCell{
+  position: relative;
+  padding: 6px;
+  gap: 4px;
+}
+
+/* dateRow artık yer kaplamasın */
+body.monthMode .cell.monthCell .dateRow{
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  height: 0;          /* satır yüksekliği yok */
+  padding: 0;
+  margin: 0;
+}
+
+/* gün numarası sol üst köşede küçük */
+body.monthMode .cell.monthCell .dateLeft{
+  position: absolute;
+  top: 0;
+  left: 0;
+  gap: 0;
+}
+
+body.monthMode .cell.monthCell .date{
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+/* + butonu sağ üst köşede küçük */
+body.monthMode .cell.monthCell .plusBtn{
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+/* sağ üstteki sayı (count) çok küçük kalsın (istersen gizle de) */
+body.monthMode .cell.monthCell .count{
+  position: absolute;
+  top: 2px;
+  right: 24px; /* + butonunun soluna */
+  font-size: 10px;
+  line-height: 1;
+  opacity: .85;
+}
+
+/* kartlar, köşedeki badge’lere çarpmaması için hafif aşağıdan başlasın */
+body.monthMode .cell.monthCell .cards{
+  margin-top: 22px;
+}
+
   </style>
 </head>
 
@@ -1597,6 +1659,7 @@ body.monthMode .main{
   </script>
 </body>
 </html>
+
 
 
 
