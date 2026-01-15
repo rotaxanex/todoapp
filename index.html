@@ -278,7 +278,7 @@
     /* ✅ Month mode: 5/7 + 2/7 layout, side visible */
     body.monthMode .main{ grid-template-columns: 5fr 2fr; }
     body.monthMode .side{ display:flex; }
-    body.monthMode #bottomInboxSlot{ display:block; } /* week dock slot, month'ta artık sağda panelde iş görebilir */
+    body.monthMode #bottomInboxSlot{ display: none !important; } 
 
     /* Modal */
     .overlay{
@@ -337,9 +337,7 @@ body.monthMode #grid{
   overflow: hidden;
 }
 
-body.monthMode .bottom{
-  display: none;
-}
+
     /* AYLIK GÖRÜNÜM – Brain Dump ve Habits GİZLE */
 body.monthMode #inbox,
 body.monthMode #habitsBox{
@@ -375,6 +373,9 @@ body.monthMode #habitsBox{
 body.monthMode .main{
   grid-template-columns: 5fr 2fr;
 }
+    body.monthMode #bottom{ display: block !important; }
+    body.monthMode #inbox,
+    body.monthMode #habitsBox{ display: none !important;}
   </style>
 </head>
 
@@ -1596,6 +1597,7 @@ body.monthMode .main{
   </script>
 </body>
 </html>
+
 
 
 
