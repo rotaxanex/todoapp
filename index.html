@@ -12,15 +12,14 @@
         :root {
             --bg: #0f0f10;
             --card-bg: #18181b;
-            --sidebar-bg: #131315;
+            --input-bg: #27272a;
             --line: #27272a;
             --text-main: #e4e4e7;
             --text-muted: #a1a1aa;
-            --accent: #ffffff;
             --green: #4ade80;
             --red: #f87171;
             --blue: #60a5fa;
-            --hover: rgba(255,255,255,0.03);
+            --hover: rgba(255,255,255,0.05);
         }
 
         * { box-sizing: border-box; outline: none; }
@@ -33,496 +32,494 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Sayfanın kendisi asla kaymasın */
+            overflow: hidden;
         }
 
-        /* --- ÜST KISIM (HEADER) --- */
+        /* --- GİRİŞ EKRANI (LOGIN) --- */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg);
+            z-index: 10000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .login-box {
+            background: var(--card-bg); padding: 40px; border-radius: 20px;
+            border: 1px solid var(--line); text-align: center; width: 350px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .login-input {
+            width: 100%; padding: 15px; margin-top: 20px; margin-bottom: 20px;
+            background: var(--input-bg); border: 1px solid var(--line);
+            color: white; border-radius: 10px; font-size: 16px; text-align: center;
+        }
+        .btn-login {
+            background: var(--text-main); color: var(--bg); border: none;
+            padding: 12px 30px; border-radius: 10px; font-weight: bold;
+            cursor: pointer; font-size: 16px; width: 100%;
+        }
+
+        /* --- HEADER --- */
         header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 20px; height: 50px; flex-shrink: 0;
         }
+        .nav-group { display: flex; gap: 10px; background: var(--card-bg); padding: 5px; border-radius: 10px; border: 1px solid var(--line); }
         .nav-btn {
-            background: var(--card-bg); border: 1px solid var(--line);
-            color: var(--text-main); padding: 8px 16px; border-radius: 8px;
-            cursor: pointer; transition: 0.2s; font-family: inherit;
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: 500;
         }
-        .nav-btn:hover { background: var(--hover); border-color: var(--text-muted); }
+        .nav-btn.active { background: var(--input-bg); color: var(--text-main); }
+        .nav-btn:hover { color: var(--text-main); }
+        
+        .btn-logout {
+            background: rgba(248, 113, 113, 0.1); color: var(--red); border: 1px solid rgba(248, 113, 113, 0.2);
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+        }
+        .btn-logout:hover { background: var(--red); color: white; }
 
-        /* --- HAFTALIK GÖRÜNÜM (GRID) --- */
+        /* --- ANA GÖRÜNÜM ALANI --- */
+        #calendarContainer {
+            flex: 1; overflow-y: auto; margin-bottom: 20px;
+            display: flex; flex-direction: column;
+        }
+
+        /* Haftalık Grid */
         .week-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 15px;
-            flex: 1; /* Kalan boşluğu doldur */
-            margin-bottom: 20px;
-            min-height: 0; /* Flex içinde scroll çalışması için şart */
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px;
+            height: 100%; min-height: 0;
         }
 
+        /* Aylık Grid */
+        .month-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+            /* Aylık görünümde satırlar otomatik yükseklik alır */
+        }
+
+        /* Gün Kutusu (Haftalık) */
         .day-col {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--line);
-            transition: 0.2s;
-            
-            /* --- KRİTİK AYARLAR (KAYDIRMA) --- */
-            height: 100%; 
-            max-height: calc(100vh - 280px); /* Alt panel için yer bırak */
-            overflow-y: auto; /* Sığmazsa kaydır */
+            background: var(--card-bg); border-radius: 16px; padding: 15px;
+            display: flex; flex-direction: column; border: 1px solid var(--line);
+            height: 100%; max-height: calc(100vh - 280px); overflow-y: auto;
         }
+        .day-col.selected { border-color: var(--blue); box-shadow: 0 0 15px rgba(96, 165, 250, 0.1); }
+        .day-col.today { background: #202023; }
 
-        .day-col.today { border-color: var(--text-muted); background: #1c1c1f; }
-        
-        .day-header {
-            font-size: 14px; font-weight: 600; color: var(--text-muted);
-            margin-bottom: 15px; display: flex; justify-content: space-between;
+        /* Gün Kutusu (Aylık) */
+        .month-day {
+            background: var(--card-bg); border-radius: 10px; padding: 10px;
+            border: 1px solid var(--line); min-height: 100px; cursor: pointer;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
-        
-        /* Kart Tasarımı */
+        .month-day:hover { border-color: var(--text-muted); }
+        .month-day.selected { border-color: var(--blue); background: #1c1c1f; }
+        .month-day.today { background: #202023; border-color: var(--text-muted); }
+        .month-day.empty { background: transparent; border: none; cursor: default; }
+
+        /* Görev Kartları */
         .task-card {
-            background: #232326; padding: 12px; border-radius: 10px;
+            background: var(--input-bg); padding: 12px; border-radius: 8px;
             margin-bottom: 8px; font-size: 13px; position: relative;
             border: 1px solid transparent; transition: 0.2s;
         }
         .task-card:hover { border-color: var(--line); transform: translateY(-2px); }
-        .task-time { font-size: 11px; color: var(--blue); margin-bottom: 4px; display: block; }
-        
-        .task-actions {
-            position: absolute; top: 8px; right: 8px; display: none; gap: 5px;
-        }
+        .task-actions { position: absolute; top: 5px; right: 5px; display: none; gap: 5px; }
         .task-card:hover .task-actions { display: flex; }
 
-        /* --- ALT PANEL (DASHBOARD) --- */
+        /* --- ALT PANEL --- */
         .dashboard {
-            height: 220px; /* Sabit yükseklik */
-            display: flex; gap: 20px;
-            flex-shrink: 0; /* Asla küçülme */
-            
-            /* --- KRİTİK AYARLAR (KATMAN) --- */
-            position: relative;
-            z-index: 9999; /* En üstte dur */
-            background-color: var(--bg); /* Arkası görünmesin */
-            padding-top: 10px;
-            box-shadow: 0 -20px 30px var(--bg); /* Yumuşak geçiş gölgesi */
+            height: 220px; flex-shrink: 0; display: flex; gap: 20px;
+            position: relative; z-index: 999; background-color: var(--bg);
+            padding-top: 10px; box-shadow: 0 -20px 30px var(--bg);
+        }
+        .panel-box {
+            background: var(--card-bg); border-radius: 16px; padding: 20px;
+            border: 1px solid var(--line); display: flex; flex-direction: column;
         }
 
-        /* Sol Taraf: Giriş ve Liste */
-        .input-area {
-            flex: 2; background: var(--card-bg); border-radius: 16px;
-            padding: 20px; border: 1px solid var(--line);
-            display: flex; flex-direction: column;
-        }
-
-        /* Sağ Taraf: Brain Dump */
-        .brain-dump {
-            flex: 1; background: var(--card-bg); border-radius: 16px;
-            padding: 20px; border: 1px solid var(--line);
-            display: flex; flex-direction: column;
-            overflow-y: hidden;
-        }
-
-        /* Giriş Elemanları */
-        .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        input, select {
-            background: var(--bg); border: 1px solid var(--line);
-            color: var(--text-main); padding: 10px; border-radius: 8px;
-            font-family: inherit;
-        }
-        input:focus { border-color: var(--blue); }
-        
-        .btn-add {
-            background: var(--text-main); color: var(--bg); border: none;
-            padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
-        }
-
-        /* --- SCROLLBAR GÜZELLEŞTİRME --- */
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background-color: var(--line); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
 
-        /* Mini Butonlar */
-        .icon-btn {
-            background: none; border: none; cursor: pointer; color: var(--text-muted);
-            padding: 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-        }
-        .icon-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
+        /* Ortak */
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; }
+        .icon-btn:hover { color: var(--text-main); }
         .icon-btn.red:hover { color: var(--red); }
         .icon-btn.green:hover { color: var(--green); }
-
-        /* Seçili Gün Listesi (Sol Alt) */
-        #selected-day-list {
-            flex: 1; overflow-y: auto; margin-top: 10px; padding-right: 5px;
-        }
-        .mini-task {
-            padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px;
-        }
+        input { background: var(--bg); border: 1px solid var(--line); color: white; padding: 10px; border-radius: 8px; }
+        .btn-add { background: var(--text-main); color: var(--bg); border: none; padding: 0 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
+    <div id="loginOverlay">
+        <div class="login-box">
+            <span class="material-icons-round" style="font-size: 48px; color: var(--text-main); margin-bottom: 10px;">lock</span>
+            <h2 style="margin: 0;">Giriş Yap</h2>
+            <p style="color: var(--text-muted); font-size: 14px;">Notlarına erişmek için şifreni gir.</p>
+            <input type="password" id="passwordInput" class="login-input" placeholder="Şifre">
+            <button onclick="checkLogin()" class="btn-login">Giriş</button>
+            <p id="loginError" style="color: var(--red); font-size: 12px; margin-top: 10px; display: none;">Hatalı şifre!</p>
+        </div>
+    </div>
+
     <header>
-        <div style="display:flex; align-items:center; gap:15px;">
-            <button class="nav-btn" id="prevWeek"><span class="material-icons-round">chevron_left</span></button>
-            <button class="nav-btn" id="todayBtn">Bugün</button>
-            <button class="nav-btn" id="nextWeek"><span class="material-icons-round">chevron_right</span></button>
-            <h2 id="currentDateRange" style="margin:0; font-size:16px; font-weight:500;"></h2>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="nav-group">
+                <button onclick="setView('week')" id="btnViewWeek" class="nav-btn active">Haftalık</button>
+                <button onclick="setView('month')" id="btnViewMonth" class="nav-btn">Aylık</button>
+            </div>
+            
+            <button onclick="changeDate(-1)" class="icon-btn"><span class="material-icons-round">chevron_left</span></button>
+            <h2 id="dateTitle" style="margin:0; font-size: 16px;">Yükleniyor...</h2>
+            <button onclick="changeDate(1)" class="icon-btn"><span class="material-icons-round">chevron_right</span></button>
+            <button onclick="goToToday()" class="nav-btn" style="border: 1px solid var(--line);">Bugün</button>
         </div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <span style="font-size:12px; color:var(--text-muted);">Durum: <span id="statusText">Hazır</span></span>
-        </div>
+
+        <button onclick="logout()" class="btn-logout">Çıkış Yap</button>
     </header>
 
-    <div class="week-grid" id="weekGrid">
+    <div id="calendarContainer">
         </div>
 
     <div class="dashboard">
-        
-        <div class="input-area">
-            <h3 id="selectedDateTitle" style="margin:0 0 10px 0; font-size:14px; color:var(--text-muted);">
-                Seçili Gün İçin İşlemler
-            </h3>
+        <div class="panel-box" style="flex: 2;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                <h3 id="selectedDateText" style="margin:0; font-size:14px; color:var(--text-muted);">Seçili Gün</h3>
+            </div>
             
-            <div class="input-row">
-                <input type="text" id="taskInput" placeholder="Yeni görev yaz..." style="flex:2;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="taskInput" placeholder="Yeni görev..." style="flex: 1;">
                 <input type="time" id="timeInput">
-                <button class="btn-add" onclick="addTask()">Ekle</button>
+                <button onclick="addTask()" class="btn-add">Ekle</button>
             </div>
 
-            <div id="selected-day-list">
+            <div id="selectedDayList" style="flex: 1; overflow-y: auto;">
                 </div>
         </div>
 
-        <div class="brain-dump">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="panel-box" style="flex: 1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                 <h3 style="margin:0; font-size:14px;">Brain Dump</h3>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="addInboxTask()" class="icon-btn" title="Not Ekle"><span class="material-icons-round">add</span></button>
-                    <button id="btnInboxClear" class="icon-btn red" title="Tamamlananları Temizle">
-                        <span class="material-icons-round">delete_sweep</span>
-                    </button>
+                <div style="display:flex; gap: 5px;">
+                    <button onclick="addInboxTask()" class="icon-btn"><span class="material-icons-round">add</span></button>
+                    <button id="btnClearInbox" class="icon-btn red"><span class="material-icons-round">delete_sweep</span></button>
                 </div>
             </div>
-            <div id="inboxList" style="flex:1; overflow-y:auto; padding-right:5px;">
+            <div id="inboxList" style="flex: 1; overflow-y: auto;">
                 </div>
         </div>
     </div>
 
     <script>
-        // --- GÜVENLİK (ŞİFRE EKRANI) ---
-        // Burayı değiştirebilirsin:
-        const GUVENLIK_SIFRESI = "1234"; 
+        // --- AYARLAR ---
+        const GUVENLIK_SIFRESI = "1234"; // Şifreni buradan değiştir
+        const SUPABASE_URL = 'BURAYA_SUPABASE_URL_YAZ';
+        const SUPABASE_KEY = 'BURAYA_SUPABASE_KEY_YAZ';
+        
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        if (!sessionStorage.getItem('girisYapildi')) {
-            const girilen = prompt("Lütfen Giriş Şifresini Yazın:");
-            if (girilen === GUVENLIK_SIFRESI) {
-                sessionStorage.setItem('girisYapildi', 'true');
+        // --- DEĞİŞKENLER ---
+        let db = { tasks: [], inbox: [] };
+        let state = {
+            view: 'week', // 'week' veya 'month'
+            currentDate: new Date(), // Takvimde gezilen tarih
+            selectedDate: new Date().toISOString().split('T')[0] // Tıklanan, aktif gün
+        };
+
+        // --- GİRİŞ İŞLEMLERİ ---
+        function checkLogin() {
+            const pass = document.getElementById('passwordInput').value;
+            if (pass === GUVENLIK_SIFRESI) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                sessionStorage.setItem('isLoggedIn', 'true');
+                initApp();
             } else {
-                document.body.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; color:white;"><h1>⛔ Hatalı Şifre! Erişim Reddedildi.</h1></div>';
-                throw new Error("Erişim Reddedildi.");
+                document.getElementById('loginError').style.display = 'block';
             }
         }
 
-        // --- AYARLAR ---
-        const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
-        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
 
-        // --- VERİ YAPISI ---
-        let db = { tasks: [], inbox: [] };
-        let state = {
-            currentDate: new Date(),
-            selectedDate: new Date().toISOString().split('T')[0] // Varsayılan bugün
+        // Enter tuşuyla giriş
+        document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkLogin();
+        });
+
+        // Sayfa Yüklenince
+        window.onload = () => {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('loginOverlay').style.display = 'none';
+                initApp();
+            }
         };
 
-        // --- BAŞLANGIÇ ---
-        window.onload = async () => {
-            updateDateRange();
+        // --- UYGULAMA BAŞLANGICI ---
+        async function initApp() {
             await loadData();
             render();
-            setupEventListeners();
-        };
+            setupInboxListener();
+        }
 
-        // --- VERİTABANI İŞLEMLERİ ---
         async function loadData() {
-            setStatus('Yükleniyor...');
-            const { data: remoteData, error } = await client.from('minimal_todo').select('data').single();
-            if (remoteData) {
-                db = remoteData.data || { tasks: [], inbox: [] };
-            }
-            if (!db.inbox) db.inbox = []; 
-            setStatus('Senkronize');
+            const { data } = await client.from('minimal_todo').select('data').single();
+            if (data) db = data.data || { tasks: [], inbox: [] };
+            if (!db.inbox) db.inbox = [];
         }
 
         async function saveDB() {
-            setStatus('Kaydediliyor...');
             await client.from('minimal_todo').upsert({ id: 1, data: db });
-            setStatus('Kaydedildi');
         }
 
-        function setStatus(msg) {
-            document.getElementById('statusText').innerText = msg;
+        // --- GÖRÜNÜM KONTROLÜ ---
+        function setView(mode) {
+            state.view = mode;
+            document.getElementById('btnViewWeek').classList.toggle('active', mode === 'week');
+            document.getElementById('btnViewMonth').classList.toggle('active', mode === 'month');
+            render();
         }
 
-        // --- RENDER (ÇİZİM) ---
+        function changeDate(delta) {
+            if (state.view === 'week') {
+                state.currentDate.setDate(state.currentDate.getDate() + (delta * 7));
+            } else {
+                state.currentDate.setMonth(state.currentDate.getMonth() + delta);
+            }
+            render();
+        }
+
+        function goToToday() {
+            state.currentDate = new Date();
+            selectDay(new Date().toISOString().split('T')[0]);
+        }
+
+        function selectDay(dateStr) {
+            state.selectedDate = dateStr;
+            render(); // Hem takvimi (çerçeveyi) hem alt paneli günceller
+        }
+
+        // --- ANA RENDER FONKSİYONU ---
         function render() {
-            renderWeek();
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = ''; // Temizle
+
+            if (state.view === 'week') {
+                renderWeek(container);
+            } else {
+                renderMonth(container);
+            }
+
+            renderDashboard(); // Alt paneli güncelle
             renderBrainDump();
-            renderSelectedDayList(); // Sol alt listeyi de çiz
-            updateDateRange();
-            
-            // Seçili gün başlığını güncelle
-            const dateObj = new Date(state.selectedDate);
-            const trDate = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
-            document.getElementById('selectedDateTitle').innerText = trDate;
         }
 
-        // 1. HAFTALIK GÖRÜNÜM
-        function renderWeek() {
+        // 1. HAFTALIK ÇİZİM
+        function renderWeek(container) {
+            container.innerHTML = '<div class="week-grid" id="weekGrid"></div>';
             const grid = document.getElementById('weekGrid');
-            grid.innerHTML = '';
-
+            
             const startOfWeek = getStartOfWeek(state.currentDate);
+            const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            // Başlık Güncelleme
+            const options = { day: 'numeric', month: 'long' };
+            document.getElementById('dateTitle').innerText = `${startOfWeek.toLocaleDateString('tr-TR', options)} - ${endOfWeek.toLocaleDateString('tr-TR', options)}`;
 
             for (let i = 0; i < 7; i++) {
                 const day = new Date(startOfWeek);
                 day.setDate(day.getDate() + i);
                 const dateStr = day.toISOString().split('T')[0];
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
                 const isSelected = dateStr === state.selectedDate;
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
 
-                // O günün görevlerini bul
                 const dayTasks = db.tasks.filter(t => t.date === dateStr && !t.deleted);
-                dayTasks.sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+                dayTasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
 
-                let taskHTML = '';
+                let tasksHTML = '';
                 dayTasks.forEach(t => {
-                    const opacity = t.done ? '0.5' : '1';
-                    const decoration = t.done ? 'line-through' : 'none';
-                    const icon = t.done ? 'check_circle' : 'radio_button_unchecked';
-                    const color = t.done ? 'var(--green)' : 'var(--text-muted)';
-
-                    taskHTML += `
-                        <div class="task-card" style="opacity:${opacity}">
+                    tasksHTML += `
+                        <div class="task-card" style="opacity: ${t.done ? 0.5 : 1}">
                             ${t.time ? `<span class="task-time">${t.time}</span>` : ''}
-                            <span style="text-decoration:${decoration}">${t.text}</span>
+                            <span style="text-decoration: ${t.done ? 'line-through' : 'none'}">${t.text}</span>
                             <div class="task-actions">
-                                <button onclick="toggleTask('${t.id}')" class="icon-btn green"><span class="material-icons-round">${icon}</span></button>
+                                <button onclick="toggleTask('${t.id}')" class="icon-btn green"><span class="material-icons-round">check</span></button>
                                 <button onclick="deleteTask('${t.id}')" class="icon-btn red"><span class="material-icons-round">close</span></button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
 
-                // Kutuyu oluştur
-                const borderStyle = isSelected ? 'border-color: var(--blue); box-shadow: 0 0 15px rgba(96, 165, 250, 0.1);' : '';
-                
                 grid.innerHTML += `
-                    <div class="day-col ${isToday ? 'today' : ''}" 
-                         style="${borderStyle} cursor:pointer;" 
-                         onclick="selectDay('${dateStr}')">
-                        
+                    <div class="day-col ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" onclick="selectDay('${dateStr}')">
                         <div class="day-header">
                             <span>${day.toLocaleDateString('tr-TR', { weekday: 'short' })}</span>
                             <span>${day.getDate()}</span>
                         </div>
-                        <div style="flex:1;">
-                            ${taskHTML}
-                        </div>
-                        <button onclick="selectDay('${dateStr}'); document.getElementById('taskInput').focus();" 
-                                style="background:none; border:1px dashed var(--line); color:var(--text-muted); width:100%; padding:5px; border-radius:6px; cursor:pointer; margin-top:10px;">
-                            + Ekle
-                        </button>
-                    </div>
-                `;
+                        <div style="flex: 1;">${tasksHTML}</div>
+                    </div>`;
             }
         }
 
-        // 2. BRAIN DUMP (INBOX)
-        function renderBrainDump() {
-            const list = document.getElementById('inboxList');
+        // 2. AYLIK ÇİZİM
+        function renderMonth(container) {
+            container.innerHTML = '<div class="month-grid" id="monthGrid"></div>';
+            const grid = document.getElementById('monthGrid');
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
             
-            if (!db.inbox || db.inbox.length === 0) {
-                list.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px;">Henüz not yok.</div>';
-                return;
+            // Başlık
+            document.getElementById('dateTitle').innerText = new Date(year, month).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+
+            // Ayın ilk günü ve toplam gün sayısı
+            const firstDay = new Date(year, month, 1);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Pazartesi'den başlaması için ayar (Pazar 0'dır, biz Pazar'ı 7 yapalım)
+            let startDay = firstDay.getDay();
+            if (startDay === 0) startDay = 7; 
+
+            // Boşlukları Doldur (Ayın 1'inden öncekiler)
+            for (let i = 1; i < startDay; i++) {
+                grid.innerHTML += `<div class="month-day empty"></div>`;
             }
 
-            list.innerHTML = '';
-            db.inbox.forEach(t => {
-                const opacity = t.done ? '0.5' : '1';
-                const decoration = t.done ? 'line-through' : 'none';
-                const icon = t.done ? 'check_box' : 'check_box_outline_blank';
-                const color = t.done ? 'var(--green)' : 'var(--text-muted)';
+            // Günleri Doldur
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month, d);
+                // Saat dilimi farkını önlemek için string'i elle oluştur
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                
+                const isSelected = dateStr === state.selectedDate;
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                
+                const taskCount = db.tasks.filter(t => t.date === dateStr && !t.deleted && !t.done).length;
+                const totalCount = db.tasks.filter(t => t.date === dateStr && !t.deleted).length;
 
-                list.innerHTML += `
-                    <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${opacity}">
-                        <button onclick="toggleInbox('${t.id}')" class="icon-btn" style="color:${color}">
-                            <span class="material-icons-round" style="font-size:18px;">${icon}</span>
-                        </button>
-                        <span style="flex:1; font-size:13px; text-decoration:${decoration}">${t.text}</span>
-                    </div>
-                `;
-            });
+                let indicator = '';
+                if (totalCount > 0) {
+                    indicator = `<div style="font-size:11px; color:var(--text-muted); margin-top:5px;">
+                        ${taskCount > 0 ? `<span style="color:var(--text-main)">● ${taskCount} Açık</span>` : '✓ Tümü Bitti'}
+                    </div>`;
+                }
+
+                grid.innerHTML += `
+                    <div class="month-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}" onclick="selectDay('${dateStr}')">
+                        <span style="font-weight:600; font-size:14px;">${d}</span>
+                        ${indicator}
+                    </div>`;
+            }
         }
 
-        // 3. SOL ALT PANEL LİSTESİ (SEÇİLİ GÜN)
-        function renderSelectedDayList() {
-            const container = document.getElementById('selected-day-list');
-            if (!container) return;
+        // 3. ALT PANEL ve BRAIN DUMP
+        function renderDashboard() {
+            // Başlık
+            const d = new Date(state.selectedDate);
+            document.getElementById('selectedDateText').innerText = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
+            // Liste
+            const list = document.getElementById('selectedDayList');
             const tasks = db.tasks.filter(t => t.date === state.selectedDate && !t.deleted);
-            tasks.sort((a, b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+            tasks.sort((a,b) => (a.time||'23:59').localeCompare(b.time||'23:59'));
 
             if (tasks.length === 0) {
-                container.innerHTML = '<div style="opacity:0.5; font-size:12px; margin-top:10px;">Bu gün için planlanan görev yok.</div>';
+                list.innerHTML = '<div style="opacity:0.5; font-size:12px;">Görev yok.</div>';
                 return;
             }
 
             let html = '';
             tasks.forEach(t => {
-                const opacity = t.done ? '0.5' : '1';
-                const decoration = t.done ? 'line-through' : 'none';
-                const icon = t.done ? 'check_box' : 'check_box_outline_blank';
-                const color = t.done ? 'var(--green)' : 'var(--text-muted)';
-
                 html += `
-                  <div class="mini-task" style="opacity: ${opacity};">
-                      <button onclick="toggleTask('${t.id}')" class="icon-btn" style="color: ${color}">
-                          <span class="material-icons-round" style="font-size:18px;">${icon}</span>
-                      </button>
-                      <div style="flex:1; display:flex; flex-direction:column;">
-                          <span style="font-size: 13px; text-decoration: ${decoration}; color: var(--text-main);">${t.text}</span>
-                          ${t.time ? `<span style="font-size: 10px; color: var(--text-muted);">${t.time}</span>` : ''}
-                      </div>
-                      <button onclick="deleteTask('${t.id}')" class="icon-btn red" style="opacity: 0.5;">
-                          <span class="material-icons-round" style="font-size:16px;">close</span>
-                      </button>
-                  </div>
-                `;
+                    <div class="mini-task" style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
+                         <button onclick="toggleTask('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
+                            <span class="material-icons-round">${t.done?'check_box':'check_box_outline_blank'}</span>
+                         </button>
+                         <div style="flex:1;">
+                            <span style="text-decoration:${t.done?'line-through':'none'}; font-size:13px;">${t.text}</span>
+                            ${t.time ? `<div style="font-size:10px; color:var(--blue)">${t.time}</div>` : ''}
+                         </div>
+                         <button onclick="deleteTask('${t.id}')" class="icon-btn red"><span class="material-icons-round" style="font-size:16px">close</span></button>
+                    </div>`;
             });
-            container.innerHTML = html;
+            list.innerHTML = html;
         }
 
-        // --- İŞLEVLER ---
-
-        function selectDay(dateStr) {
-            state.selectedDate = dateStr;
-            render(); 
+        function renderBrainDump() {
+            const list = document.getElementById('inboxList');
+            if (!db.inbox || db.inbox.length === 0) {
+                list.innerHTML = '<div style="opacity:0.5; font-size:12px; text-align:center; padding-top:20px;">Boş</div>';
+                return;
+            }
+            let html = '';
+            db.inbox.forEach(t => {
+                html += `
+                    <div style="display:flex; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); opacity:${t.done?0.5:1}">
+                        <button onclick="toggleInbox('${t.id}')" class="icon-btn" style="color:${t.done?'var(--green)':'var(--text-muted)'}">
+                            <span class="material-icons-round">${t.done?'check_box':'check_box_outline_blank'}</span>
+                        </button>
+                        <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':'none'}">${t.text}</span>
+                    </div>`;
+            });
+            list.innerHTML = html;
         }
 
+        // --- CRUD İŞLEMLERİ ---
         function addTask() {
-            const input = document.getElementById('taskInput');
-            const timeInput = document.getElementById('timeInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const newTask = {
+            const txt = document.getElementById('taskInput').value.trim();
+            if(!txt) return;
+            db.tasks.push({
                 id: Date.now().toString(),
-                text: text,
+                text: txt,
                 date: state.selectedDate,
-                time: timeInput.value || '',
-                done: false,
-                deleted: false
-            };
-
-            db.tasks.push(newTask);
-            saveDB();
-            render();
-            input.value = '';
+                time: document.getElementById('timeInput').value,
+                done: false, deleted: false
+            });
+            saveDB(); render();
+            document.getElementById('taskInput').value = '';
         }
 
         function addInboxTask() {
-            const text = prompt("Aklındaki ne?");
-            if (text) {
-                db.inbox.push({ id: Date.now().toString(), text: text, done: false });
-                saveDB();
-                render();
-            }
-        }
-
-        function deleteTask(id) {
-            if(confirm('Silinsin mi?')) {
-                const task = db.tasks.find(t => t.id == id);
-                if (task) {
-                    task.deleted = true;
-                    saveDB();
-                    render();
-                }
+            const txt = prompt("Notun nedir?");
+            if(txt) {
+                db.inbox.push({ id: Date.now().toString(), text: txt, done: false });
+                saveDB(); render();
             }
         }
 
         function toggleTask(id) {
-            const task = db.tasks.find(t => t.id == id);
-            if (task) {
-                task.done = !task.done;
-                saveDB();
-                render();
+            const t = db.tasks.find(x => x.id == id);
+            if(t) { t.done = !t.done; saveDB(); render(); }
+        }
+        function deleteTask(id) {
+            if(confirm("Silinsin mi?")) {
+                const t = db.tasks.find(x => x.id == id);
+                if(t) { t.deleted = true; saveDB(); render(); }
             }
         }
-
         function toggleInbox(id) {
-            const item = db.inbox.find(t => t.id == id);
-            if (item) {
-                item.done = !item.done;
-                saveDB();
-                render();
-            }
+            const t = db.inbox.find(x => x.id == id);
+            if(t) { t.done = !t.done; saveDB(); render(); }
         }
 
-        function setupEventListeners() {
-            // Inbox Temizleme Butonu
-            const clearBtn = document.getElementById('btnInboxClear');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function() {
-                    if (!db.inbox || db.inbox.length === 0) return;
-                    
-                    const doneCount = db.inbox.filter(t => t.done).length;
-                    if (doneCount === 0) {
-                        alert("Silinecek tamamlanmış not yok.");
-                        return;
-                    }
-
-                    if (confirm(`${doneCount} adet tamamlanan not silinsin mi?`)) {
-                        db.inbox = db.inbox.filter(t => !t.done);
-                        saveDB();
-                        render();
-                    }
-                });
-            }
-
-            // Takvim Navigasyon
-            document.getElementById('prevWeek').onclick = () => {
-                state.currentDate.setDate(state.currentDate.getDate() - 7);
-                render();
-            };
-            document.getElementById('nextWeek').onclick = () => {
-                state.currentDate.setDate(state.currentDate.getDate() + 7);
-                render();
-            };
-            document.getElementById('todayBtn').onclick = () => {
-                state.currentDate = new Date();
-                state.selectedDate = new Date().toISOString().split('T')[0];
-                render();
+        function setupInboxListener() {
+            document.getElementById('btnClearInbox').onclick = () => {
+                const doneCount = db.inbox.filter(t => t.done).length;
+                if(doneCount > 0 && confirm("Tamamlanan notlar silinsin mi?")) {
+                    db.inbox = db.inbox.filter(t => !t.done);
+                    saveDB(); render();
+                }
             };
         }
 
-        function getStartOfWeek(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Pazartesi başlat
-            return new Date(d.setDate(diff));
-        }
-
-        function updateDateRange() {
-            const start = getStartOfWeek(state.currentDate);
-            const end = new Date(start);
-            end.setDate(end.getDate() + 6);
-            
-            const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            document.getElementById('currentDateRange').innerText = 
-                `${start.toLocaleDateString('tr-TR', options)} - ${end.toLocaleDateString('tr-TR', options)}`;
+        // --- YARDIMCILAR ---
+        function getStartOfWeek(d) {
+            const date = new Date(d);
+            const day = date.getDay();
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(date.setDate(diff));
         }
     </script>
 </body>
