@@ -351,6 +351,30 @@ body.monthMode .calendarArea{
   height: auto;
   overflow: hidden;
 }
+    // === AYLIK GÖRÜNÜMDE GÖREVLER LİSTESİNİ SAĞA TAŞI ===
+const side = document.querySelector('.side');
+const bottom = document.getElementById('bottom');
+
+if (mode === 'month') {
+  // bottom sağa taşınmamışsa
+  if (side && bottom && !side.contains(bottom)) {
+    side.prepend(bottom);
+  }
+} else {
+  // haftalık görünümde tekrar eski yerine al
+  const mainCol = document.querySelector('.main > div');
+  if (mainCol && bottom && !mainCol.contains(bottom)) {
+    mainCol.appendChild(bottom);
+  }
+}
+/* AYLIK GÖRÜNÜM – Brain Dump & Habits gizle */
+body.monthMode #inbox,
+body.monthMode #habitsBox{
+  display: none !important;
+}
+body.monthMode .main{
+  grid-template-columns: 5fr 2fr;
+}
   </style>
 </head>
 
@@ -1572,5 +1596,6 @@ body.monthMode .calendarArea{
   </script>
 </body>
 </html>
+
 
 
