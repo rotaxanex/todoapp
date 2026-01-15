@@ -550,7 +550,21 @@
         });
     }
     */
+    // --- INBOX TEMİZLEME FONKSİYONU ---
+  function inboxTemizle() {
+    // 1. Emin misin diye sor
+    if (!confirm("Inbox'taki TAMAMLANAN görevler silinsin mi?")) return;
 
+    // 2. Sadece yapılmamış (done: false) olanları tut, yapılanları at
+    db.inbox = db.inbox.filter(item => !item.done);
+
+    // 3. Veriyi Kaydet (PC kodunda fonksiyonun adı 'save' veya 'saveDB' olabilir, ikisini de dener)
+    if (typeof save === 'function') save(); 
+    else if (typeof saveDB === 'function') saveDB(db);
+
+    // 4. Ekranı yenile
+    render(); 
+  }
   </script>
 </body>
 </html>
@@ -559,3 +573,4 @@
 </body>
 
 </html>
+
