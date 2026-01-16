@@ -325,6 +325,62 @@
       body.weekMode .bottomGrid{ grid-template-columns: 1fr; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
+    /* =========================
+   MONTH MODE CLEANUP
+   - Aylık görünümde Brain Dump + Habits gizle
+   - Alt paneli sağa al (sağ panel alanına)
+   - Aylık takvimi sayfaya sığdır (calendarArea scroll olmasın)
+========================= */
+
+/* 1) Aylık görünümde sağ panelde Brain Dump + Habits'i kaldır */
+body.monthMode #inbox,
+body.monthMode #habitsBox{
+  display: none !important;
+}
+
+/* 2) Aylık görünümde ana grid 2 kolon kalsın:
+      sol: aylık takvim
+      sağ: "görevler listesi / alt panel" (senin bottom panel) */
+body.monthMode .main{
+  grid-template-columns: 1fr 360px !important;
+  align-items: start;
+}
+
+/* 3) Aylık görünümde takvim alanı scroll olmasın (ekrana sığsın) */
+body.monthMode .calendarArea{
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* 4) Aylık görünümde bottom paneli sağ kolona taşı ve görünür yap */
+body.monthMode #bottom{
+  display: block !important;
+}
+
+body.monthMode #bottom .bottomGrid{
+  display: block !important; /* tek panel gibi */
+}
+
+/* bottom'ı sağ kolona "sticky" yap */
+body.monthMode #bottom{
+  position: sticky;
+  top: 12px;
+}
+
+/* 5) Aylık görünümde bottomInboxSlot (dock edilen inbox) zaten yok olsun */
+body.monthMode #bottomInboxSlot{
+  display: none !important;
+}
+
+/* 6) Mobilde (max 900px) aylık görünümde yine tek kolon (sağ panel yok) */
+@media (max-width: 900px){
+  body.monthMode .main{
+    grid-template-columns: 1fr !important;
+  }
+  body.monthMode #bottom{
+    position: static !important;
+  }
+}
   </style>
 </head>
 
@@ -1605,3 +1661,4 @@
   </script>
 </body>
 </html>
+
