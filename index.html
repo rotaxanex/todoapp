@@ -2026,53 +2026,270 @@ if (mNext) mNext.addEventListener('click', ()=>{
     };
   }
 }
-    /* =========================
-   3C (MINIMAL): Mobilde "Bugün" görünümü
-   Yapıştırma yeri: render(); satırının hemen altı
-========================= */
-function renderMobileDaily(){
-  // sadece mobilde çalışsın
-  if (!window.matchMedia('(max-width: 900px)').matches) return;
+    /* =========================================================
+   3C SUPER PATCH (TEK PARÇA)
+   - Mobil "Bugün" ekranı + habits
+   - Menüden Ay/Gün geçişi
+   - Supabase sync gelince otomatik mobil refresh
+   - + butonu her zaman görünür
+   Yapıştırma yeri: en alttaki <script> içinde, </script> öncesi
+========================================================= */
 
-  // mobileHome/mobil alan yoksa hiç dokunma
-  const mh = document.getElementById('mobileHome');
-  const mt = document.getElementById('mobileTitle');
-  const mcard = document.getElementById('mobileDayCard');
-  if (!mh || !mt || !mcard) return;
+(function(){
+  // --- helpers: show/hide UI ---
+  function isMobile(){ return window.matchMedia('(max-width: 900px)').matches; }
 
-  // desktop alanlarını gizle, mobileHome'u göster
-  const main = document.querySelector('.main');
-  const bar = document.querySelector('.bar');
-  if (main) main.style.display = 'none';
-  if (bar) bar.style.display = 'none';
-  mh.classList.remove('hidden');
-
-  // başlık
-  mt.textContent = fmtDay(selected);
-
-  // seçili günün kartları
-  const k = dayKey(selected);
-  const items = (db.days[k] || []).map(fixItem).filter(passesFilters).sort(itemSort);
-
-  mcard.innerHTML = '';
-  if (!items.length){
-    const empty = document.createElement('div');
-    empty.className = 'muted';
-    empty.textContent = 'Bugün kart yok.';
-    mcard.appendChild(empty);
-    return;
+  function showDesktopUI(){
+    const mh = document.getElementById('mobileHome');
+    const main = document.querySelector('.main');
+    const bar = document.querySelector('.bar');
+    if (mh) mh.classList.add('hidden');
+    if (main) main.style.display = 'grid';
+    if (bar) bar.style.display = 'flex';
   }
 
-  for (const it of items){
-    mcard.appendChild(makeCard(it, { from:'day', dayKey:k }));
+  function showMobileDailyUI(){
+    const mh = document.getElementById('mobileHome');
+    const main = document.querySelector('.main');
+    const bar = document.querySelector('.bar');
+    if (main) main.style.display = 'none';
+    if (bar) bar.style.display = 'none';
+    if (mh) mh.classList.remove('hidden');
   }
-}
 
-// ilk açılış
-renderMobileDaily();
+  // --- refs (varsa) ---
+  const btnMenu = document.getElementById('btnMenu');
+  const drawer = document.getElementById('drawer');
+  const drawerBack = document.getElementById('drawerBack');
+  const drawerClose = document.getElementById('drawerClose');
 
-// pencere boyutu değişince
-window.addEventListener('resize', renderMobileDaily);
+  const goDaily = document.getElementById('goDaily');
+  const goMonth = document.getElementById('goMonth');
+  const goInbox = document.getElementById('goInbox');
+  const goTags  = document.getElementById('goTags');
+
+  function openDrawer(){
+    if (!drawer || !drawerBack) return;
+    drawer.classList.remove('hidden');
+    drawerBack.classList.remove('hidden');
+  }
+  function closeDrawer(){
+    if (!drawer || !drawerBack) return;
+    drawer.classList.add('hidden');
+    drawerBack.classList.add('hidden');
+  }
+
+  if (btnMenu) btnMenu.addEventListener('click', openDrawer);
+  if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+  if (drawerBack) drawerBack.addEventListener('click', closeDrawer);
+
+  // --- MOBILE RENDER (daily) ---
+  function renderMobileDaily(){
+    if (!isMobile()) { showDesktopUI(); return; }
+
+    const mh = document.getElementById('mobileHome');
+    const mt = document.getElementById('mobileTitle');
+    const msub = document.getElementById('mobileSub');
+    const mcard = document.getElementById('mobileDayCard');
+    const mHabitsSub = document.getElementById('mHabitsSub');
+    const mHabitsList = document.getElementById('mHabitsList');
+
+    if (!mh || !mt || !mcard) return;
+
+    // günlük ekranda mobil UI'yi göster
+    showMobileDailyUI();
+
+    // başlık
+    try { mt.textContent = fmtDay(selected); } catch { mt.textContent = 'Bugün'; }
+    if (msub) msub.textContent = 'Sağa/sola kaydır: gün değiştir';
+
+    // gün verileri
+    const k = dayKey(selected);
+    const items = (db.days[k] || []).map(fixItem).filter(passesFilters).sort(itemSort);
+    const openCount = items.filter(x=>!x.done).length;
+
+    // header + plus her zaman
+    mcard.innerHTML = `
+      <div class="dateRow" style="margin-bottom:8px;">
+        <div class="dateLeft">
+          <div class="date">${k}</div>
+          <button id="mPlus" class="plusBtn" type="button">+</button>
+        </div>
+        <div class="count">${openCount ? openCount : ''}</div>
+      </div>
+      <div class="cards" id="mCards"></div>
+    `;
+
+    const mPlus = document.getElementById('mPlus');
+    const mCards = document.getElementById('mCards');
+
+    if (mPlus){
+      mPlus.onclick = ()=>{
+        if (typeof openModalAdd === 'function') openModalAdd({ dest:'day', dayKey:k });
+      };
+    }
+
+    if (!items.length){
+      mCards.innerHTML = `<div class="muted">Bugün için kart yok.</div>`;
+    } else {
+      for (const it of items){
+        mCards.appendChild(makeCard(it, { from:'day', dayKey:k }));
+      }
+    }
+
+    // habits render
+    try { if (typeof ensureHabitReset === 'function') ensureHabitReset(); } catch {}
+    const done = new Set(db.habitState?.doneIds || []);
+    const total = (db.habits||[]).length;
+    if (mHabitsSub) mHabitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
+
+    if (mHabitsList){
+      mHabitsList.innerHTML = '';
+      if (!total){
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'Alışkanlık eklemek için +';
+        mHabitsList.appendChild(empty);
+      } else {
+        for (const h of db.habits){
+          const row = document.createElement('div');
+          row.className='habitRow';
+          row.innerHTML = `
+            <label>
+              <input type="checkbox" ${done.has(h.id)?'checked':''}>
+              <span>${h.name}</span>
+            </label>
+            <button class="iconBtn" type="button">🗑</button>
+          `;
+          row.querySelector('input').addEventListener('change', (e)=>{
+            const s = new Set(db.habitState?.doneIds || []);
+            e.target.checked ? s.add(h.id) : s.delete(h.id);
+            db.habitState = { date: todayKey(), doneIds: [...s] };
+            if (typeof saveDB === 'function') saveDB(db);
+            else localStorage.setItem(KEY, JSON.stringify(db));
+            renderMobileDaily();
+          });
+          row.querySelector('button').addEventListener('click', ()=>{
+            if (!confirm(`"${h.name}" silinsin mi?`)) return;
+            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
+            if (typeof saveDB === 'function') saveDB(db);
+            else localStorage.setItem(KEY, JSON.stringify(db));
+            renderMobileDaily();
+          });
+          mHabitsList.appendChild(row);
+        }
+      }
+    }
+  }
+
+  // --- habits buttons (mobil) ---
+  const mHabitAdd = document.getElementById('mHabitAdd');
+  const mHabitReset = document.getElementById('mHabitReset');
+
+  if (mHabitAdd){
+    mHabitAdd.addEventListener('click', ()=>{
+      const name = prompt('Yeni alışkanlık:');
+      if (!name) return;
+      db.habits = db.habits || [];
+      db.habits.push({ id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()), name: name.trim() });
+      if (typeof saveDB === 'function') saveDB(db);
+      else localStorage.setItem(KEY, JSON.stringify(db));
+      renderMobileDaily();
+    });
+  }
+
+  if (mHabitReset){
+    mHabitReset.addEventListener('click', ()=>{
+      db.habitState = { date: todayKey(), doneIds: [] };
+      if (typeof saveDB === 'function') saveDB(db);
+      else localStorage.setItem(KEY, JSON.stringify(db));
+      renderMobileDaily();
+    });
+  }
+
+  // --- menu routing ---
+  if (goDaily){
+    goDaily.addEventListener('click', ()=>{
+      closeDrawer();
+      renderMobileDaily();
+    });
+  }
+
+  if (goMonth){
+    goMonth.addEventListener('click', ()=>{
+      closeDrawer();
+      showDesktopUI();
+      mode = 'month';
+      anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+      if (typeof render === 'function') render();
+    });
+  }
+
+  // Şimdilik inbox/tags: desktop tarafına geçiriyoruz (senin mevcut UI’n)
+  if (goInbox){
+    goInbox.addEventListener('click', ()=>{
+      closeDrawer();
+      showDesktopUI();
+      if (typeof render === 'function') render();
+      alert('Brain Dump: şimdilik desktop görünümünde.');
+    });
+  }
+  if (goTags){
+    goTags.addEventListener('click', ()=>{
+      closeDrawer();
+      showDesktopUI();
+      if (typeof tagSettingsBtn !== 'undefined' && tagSettingsBtn) tagSettingsBtn.click();
+      else alert('Tag Ayarları butonu bulunamadı.');
+    });
+  }
+
+  // --- swipe (gün değiştir) ---
+  const mobileDayCard = document.getElementById('mobileDayCard');
+  let x0 = null;
+  if (mobileDayCard){
+    mobileDayCard.addEventListener('touchstart', (e)=>{
+      if (!isMobile()) return;
+      x0 = e.touches?.[0]?.clientX ?? null;
+    }, {passive:true});
+
+    mobileDayCard.addEventListener('touchend', (e)=>{
+      if (!isMobile()) return;
+      const x1 = e.changedTouches?.[0]?.clientX ?? null;
+      if (x0==null || x1==null) return;
+      const dx = x1 - x0;
+      if (Math.abs(dx) < 50) return;
+      selected = (dx > 0) ? addDays(selected, -1) : addDays(selected, +1);
+      anchor = new Date(selected);
+      if (typeof render === 'function') render();
+      renderMobileDaily();
+    }, {passive:true});
+  }
+
+  // --- sync hooks: loadRemoteData / saveDB çağrılarından sonra mobil refresh ---
+  if (typeof loadRemoteData === 'function'){
+    const _loadRemoteData = loadRemoteData;
+    loadRemoteData = async function(){
+      const r = await _loadRemoteData.apply(this, arguments);
+      try { renderMobileDaily(); } catch {}
+      return r;
+    };
+  }
+
+  if (typeof saveDB === 'function'){
+    const _saveDB = saveDB;
+    saveDB = function(){
+      const r = _saveDB.apply(this, arguments);
+      try { renderMobileDaily(); } catch {}
+      return r;
+    };
+  }
+
+  // --- start ---
+  renderMobileDaily();
+  window.addEventListener('resize', renderMobileDaily);
+
+})();
   </script>
   <!-- MOBILE DRAWER -->
 <div id="drawerBack" class="drawerBack hidden"></div>
@@ -2091,6 +2308,7 @@ window.addEventListener('resize', renderMobileDaily);
 </aside>
 </body>
 </html>
+
 
 
 
