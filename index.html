@@ -381,6 +381,37 @@ body.monthMode #bottomInboxSlot{
     position: static !important;
   }
 }
+    /* === PC Month: Bottom paneli sağa al (task panel + input) === */
+@media (min-width: 901px){
+  body.monthMode .main{
+    grid-template-columns: 1fr 360px;   /* sol: ay takvimi, sağ: panel */
+    align-items:start;
+  }
+
+  /* sağ kolon gibi davran */
+  body.monthMode #bottom{
+    margin-top: 0 !important;
+    position: sticky;
+    top: 12px;
+  }
+
+  /* bottom içindeki grid'i tek kolon yap (sadece sol panel kalsın) */
+  body.monthMode #bottomGrid{
+    display:block !important;
+  }
+
+  /* ay modunda Brain dump/habit istemiyorsun diye bunlar zaten gizliydi:
+     ama bottomInboxSlot gibi boş yer varsa kapat */
+  body.monthMode #bottomInboxSlot{
+    display:none !important;
+  }
+
+  /* ay modunda calendar alanını kaydırmasız yapmıştık; bu kalsın */
+  body.monthMode .calendarArea{
+    height:auto !important;
+    overflow:visible !important;
+  }
+}
   </style>
 </head>
 
@@ -1661,4 +1692,5 @@ body.monthMode #bottomInboxSlot{
   </script>
 </body>
 </html>
+
 
