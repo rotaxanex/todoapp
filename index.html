@@ -437,7 +437,91 @@ body.monthMode .cell.monthCell .count{
 body.monthMode .cell.monthCell .cards{
   margin-top: 22px;
 }
+/* ===== MOBILE MODE ===== */
+.mobileOnly{ display:none; }
 
+.mobileHome{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.mobileTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.mobileTitle{
+  font-size:14px;
+  font-weight:650;
+}
+
+.mobileDayCard{
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:12px;
+  box-shadow: var(--shadow);
+  min-height: 44vh;
+  overflow:hidden;
+  position: relative;
+  touch-action: pan-y; /* swipe için */
+}
+
+.mobileDayCard .dateRow{ margin-bottom:10px; }
+.mobileDayCard .cards{
+  max-height: 44vh;
+  overflow:auto;
+  padding-right:2px;
+}
+
+.mobileHabits{
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:12px;
+  box-shadow: var(--shadow);
+}
+
+/* Drawer */
+.drawerBack{
+  position:fixed; inset:0;
+  background: rgba(0,0,0,.55);
+  z-index: 200;
+}
+.drawer{
+  position:fixed;
+  top:0; left:0;
+  width:min(320px, 86vw);
+  height:100vh;
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  z-index: 201;
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+.drawerHead{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin-bottom:12px;
+}
+.drawerBtns{
+  display:flex; flex-direction:column; gap:10px;
+}
+
+/* Mobile breakpoint */
+@media (max-width: 900px){
+  .mobileOnly{ display:inline-block; }
+
+  /* Desktop main alanını mobile'da gizle, mobileHome göster */
+  #mobileHome{ display:flex; }
+  .main{ display:none; }
+  .bar{ display:none; } /* mobilde top bar yerine günlük başlık var */
+
+  /* header sıkılaştır */
+  .wrap{ padding:12px; }
+}
   </style>
 </head>
 
@@ -471,6 +555,7 @@ body.monthMode .cell.monthCell .cards{
           <span id="statusText">Offline</span>
         </div>
         <button id="tagSettingsBtn" class="btn" type="button">Taglar</button>
+        <button id="btnMenu" class="btn mobileOnly" type="button">☰</button>
         <button id="btnLogout" class="btn danger" type="button">Çıkış</button>
       </div>
     </header>
@@ -495,6 +580,34 @@ body.monthMode .cell.monthCell .cards{
         <input id="search" type="search" placeholder="Ara…" />
       </div>
     </div>
+
+    <!-- MOBILE HOME VIEW -->
+<div id="mobileHome" class="mobileHome hidden">
+  <div class="mobileTop">
+    <button id="mPrev" class="btn" type="button">◀</button>
+    <div>
+      <div class="mobileTitle" id="mobileTitle">Bugün</div>
+      <div class="muted" id="mobileSub">Sağa/sola kaydır: gün değiştir</div>
+    </div>
+    <button id="mNext" class="btn" type="button">▶</button>
+  </div>
+
+  <div id="mobileDayCard" class="mobileDayCard"></div>
+
+  <div class="mobileHabits">
+    <div class="panelHead" style="margin-bottom:8px;">
+      <div>
+        <h2 style="margin:0; font-size:14px;">Habits</h2>
+        <div class="muted" id="mHabitsSub">Her gün sıfırlanır</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="mHabitAdd" class="plusBtn" type="button">+</button>
+        <button id="mHabitReset" class="btn" type="button">Reset</button>
+      </div>
+    </div>
+    <div id="mHabitsList" class="habitsList"></div>
+  </div>
+</div>
 
     <div class="main">
       <div id="leftCol">
@@ -1656,9 +1769,329 @@ body.monthMode .cell.monthCell .cards{
 
     checkUser(); // auth durumuna göre render çağırıyor
     window.addEventListener('resize', ()=>{ if(mode==='month') render(); });
+    // ===== MOBILE VIEW ROUTER =====
+let view = 'daily'; // 'daily' | 'month' | 'inbox' | 'tags'
+
+const mobileHome = document.getElementById('mobileHome');
+const mobileTitle = document.getElementById('mobileTitle');
+const mobileSub = document.getElementById('mobileSub');
+const mobileDayCard = document.getElementById('mobileDayCard');
+
+const mPrev = document.getElementById('mPrev');
+const mNext = document.getElementById('mNext');
+
+const mHabitsSub = document.getElementById('mHabitsSub');
+const mHabitsList = document.getElementById('mHabitsList');
+const mHabitAdd = document.getElementById('mHabitAdd');
+const mHabitReset = document.getElementById('mHabitReset');
+
+// Drawer refs
+const btnMenu = document.getElementById('btnMenu');
+const drawer = document.getElementById('drawer');
+const drawerBack = document.getElementById('drawerBack');
+const drawerClose = document.getElementById('drawerClose');
+
+const goDaily = document.getElementById('goDaily');
+const goMonth  = document.getElementById('goMonth');
+const goInbox  = document.getElementById('goInbox');
+const goTags   = document.getElementById('goTags');
+const drawerUser = document.getElementById('drawerUser');
+
+function isMobile(){
+  return window.matchMedia('(max-width: 900px)').matches;
+}
+
+function openDrawer(){
+  if (!drawer) return;
+  drawer.classList.remove('hidden');
+  drawerBack.classList.remove('hidden');
+}
+function closeDrawer(){
+  if (!drawer) return;
+  drawer.classList.add('hidden');
+  drawerBack.classList.add('hidden');
+}
+
+if (btnMenu) btnMenu.addEventListener('click', openDrawer);
+if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+if (drawerBack) drawerBack.addEventListener('click', closeDrawer);
+
+function setView(next){
+  view = next;
+  closeDrawer();
+
+  // month/inbox/tags view açılınca, var olan UI'yi kullanacağız:
+  // month => mode='month' + desktop grid render (ama mobile'da main gizli, biz month'u modal gibi açmayacağız)
+  // Bu yüzden mobile'da: month/inbox/tags için hızlı çözüm = desktop main'i geçici göster.
+  // Daha sonra bunları tamamen mobil sayfalara ayırırız.
+  if (isMobile()){
+    if (view === 'daily'){
+      // mobileHome açık kalsın, main kapalı
+      document.querySelector('.main')?.classList.add('hiddenMobileMainFix');
+    } else {
+      // desktop UI'yi gösterelim ki month/inbox/tags çalışsın
+      document.querySelector('.main')?.classList.remove('hiddenMobileMainFix');
+    }
+  }
+
+  // Görünüm eşlemesi
+  if (view === 'month'){
+    mode = 'month';
+    btnMonth?.classList.add('active');
+    btnWeek?.classList.remove('active');
+    anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  } else {
+    // daily/inbox/tags hepsi günlük seçili gün üzerinden
+    mode = 'week'; // mobil daily'de gün tek, ama filtre preset week gibi (görev+hedef+termin)
+    btnWeek?.classList.add('active');
+    btnMonth?.classList.remove('active');
+    anchor = new Date(selected);
+  }
+
+  render(); // mevcut render’ın çalışsın
+  renderMobile(); // mobil ekranı da çiz
+}
+
+if (goDaily) goDaily.addEventListener('click', ()=>setView('daily'));
+if (goMonth)  goMonth.addEventListener('click', ()=>setView('month'));
+if (goInbox)  goInbox.addEventListener('click', ()=>setView('inbox'));
+if (goTags)   goTags.addEventListener('click', ()=>setView('tags'));
+
+// Mobile swipe: günlük ekranda gün değiştir
+let touchX0 = null;
+if (mobileDayCard){
+  mobileDayCard.addEventListener('touchstart', (e)=>{
+    if (!isMobile() || view !== 'daily') return;
+    touchX0 = e.touches?.[0]?.clientX ?? null;
+  }, {passive:true});
+
+  mobileDayCard.addEventListener('touchend', (e)=>{
+    if (!isMobile() || view !== 'daily') return;
+    const x1 = e.changedTouches?.[0]?.clientX ?? null;
+    if (touchX0 == null || x1 == null) return;
+    const dx = x1 - touchX0;
+    if (Math.abs(dx) < 50) return;
+    if (dx > 0) selected = addDays(selected, -1);
+    else selected = addDays(selected, +1);
+    anchor = new Date(selected);
+    render();
+    renderMobile();
+  }, {passive:true});
+}
+
+// Butonla gün değiştir
+if (mPrev) mPrev.addEventListener('click', ()=>{
+  selected = addDays(selected, -1);
+  anchor = new Date(selected);
+  render(); renderMobile();
+});
+if (mNext) mNext.addEventListener('click', ()=>{
+  selected = addDays(selected, +1);
+  anchor = new Date(selected);
+  render(); renderMobile();
+});
+    function renderMobile(){
+  if (!mobileHome) return;
+
+  // Kullanıcı bilgisi drawer’da
+  if (drawerUser){
+    drawerUser.textContent = (user?.email) ? `Giriş: ${user.email}` : 'Giriş gerekli';
+  }
+
+  // Mobil değilse mobileHome saklı kalsın
+  if (!isMobile()){
+    mobileHome.classList.add('hidden');
+    return;
+  }
+  mobileHome.classList.remove('hidden');
+
+  // Hangi view?
+  if (view !== 'daily'){
+    // mobileHome’u gizleyip desktop main’i kullanıyoruz (şimdilik hızlı çözüm)
+    mobileHome.classList.add('hidden');
+    document.querySelector('.main')?.classList.remove('hidden');
+    document.querySelector('.bar')?.classList.remove('hidden');
+    return;
+  } else {
+    mobileHome.classList.remove('hidden');
+    document.querySelector('.main')?.classList.add('hidden');
+    document.querySelector('.bar')?.classList.add('hidden');
+  }
+
+  // Başlık
+  mobileTitle.textContent = fmtDay(selected);
+  mobileSub.textContent = 'Sağa/sola kaydır: gün değiştir';
+
+  // Gün kartı (weekly hücre gibi)
+  const k = dayKey(selected);
+  const items = (db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
+  const openCount = items.filter(x=>!x.done).length;
+
+  // Kartın iç HTML’i
+  mobileDayCard.innerHTML = `
+    <div class="dateRow">
+      <div class="dateLeft">
+        <div class="date">${k}</div>
+        <button id="mPlus" class="plusBtn" type="button">+</button>
+      </div>
+      <div class="count">${openCount ? openCount : ''}</div>
+    </div>
+    <div class="cards" id="mCards"></div>
+  `;
+
+  const mPlus = document.getElementById('mPlus');
+  const mCards = document.getElementById('mCards');
+
+  if (mPlus){
+    mPlus.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openModalAdd({ dest:'day', dayKey:k });
+    });
+  }
+
+  if (mCards){
+    if (!items.length){
+      const empty = document.createElement('div');
+      empty.className = 'muted';
+      empty.textContent = 'Bu gün için kart yok. + ile ekle.';
+      mCards.appendChild(empty);
+    } else {
+      for (const it of items){
+        mCards.appendChild(makeCard(it, { from:'day', dayKey:k }));
+      }
+    }
+  }
+
+  // Habits (mobil)
+  ensureHabitReset();
+  const done = new Set(db.habitState?.doneIds || []);
+  const total = (db.habits||[]).length;
+  if (mHabitsSub) mHabitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
+
+  if (mHabitsList){
+    mHabitsList.innerHTML = '';
+    if (!total){
+      const empty = document.createElement('div');
+      empty.className='muted';
+      empty.textContent='Alışkanlık eklemek için +';
+      mHabitsList.appendChild(empty);
+    } else {
+      for (const h of db.habits){
+        const row = document.createElement('div');
+        row.className = 'habitRow';
+        const checked = done.has(h.id);
+        row.innerHTML = `
+          <label>
+            <input type="checkbox" ${checked ? 'checked' : ''}>
+            <span>${h.name}</span>
+          </label>
+          <button class="iconBtn" type="button">🗑</button>
+        `;
+        row.querySelector('input').addEventListener('change', (e)=>{
+          ensureHabitReset();
+          const s = new Set(db.habitState.doneIds || []);
+          e.target.checked ? s.add(h.id) : s.delete(h.id);
+          db.habitState.doneIds = [...s];
+          saveDB(db);
+          renderMobile();
+        });
+        row.querySelector('button').addEventListener('click', ()=>{
+          if (!confirm(`"${h.name}" silinsin mi?`)) return;
+          db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+          db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
+          saveDB(db);
+          renderMobile();
+        });
+        mHabitsList.appendChild(row);
+      }
+    }
+  }
+
+  // Mobil habit butonları
+  if (mHabitAdd){
+    mHabitAdd.onclick = ()=>{
+      const name = prompt('Yeni alışkanlık:');
+      if (!name) return;
+      db.habits = db.habits || [];
+      db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name: name.trim() });
+      saveDB(db);
+      renderMobile();
+    };
+  }
+  if (mHabitReset){
+    mHabitReset.onclick = ()=>{
+      db.habitState = { date: todayKey(), doneIds: [] };
+      saveDB(db);
+      renderMobile();
+    };
+  }
+}
+    /* =========================
+   3C (MINIMAL): Mobilde "Bugün" görünümü
+   Yapıştırma yeri: render(); satırının hemen altı
+========================= */
+function renderMobileDaily(){
+  // sadece mobilde çalışsın
+  if (!window.matchMedia('(max-width: 900px)').matches) return;
+
+  // mobileHome/mobil alan yoksa hiç dokunma
+  const mh = document.getElementById('mobileHome');
+  const mt = document.getElementById('mobileTitle');
+  const mcard = document.getElementById('mobileDayCard');
+  if (!mh || !mt || !mcard) return;
+
+  // desktop alanlarını gizle, mobileHome'u göster
+  const main = document.querySelector('.main');
+  const bar = document.querySelector('.bar');
+  if (main) main.style.display = 'none';
+  if (bar) bar.style.display = 'none';
+  mh.classList.remove('hidden');
+
+  // başlık
+  mt.textContent = fmtDay(selected);
+
+  // seçili günün kartları
+  const k = dayKey(selected);
+  const items = (db.days[k] || []).map(fixItem).filter(passesFilters).sort(itemSort);
+
+  mcard.innerHTML = '';
+  if (!items.length){
+    const empty = document.createElement('div');
+    empty.className = 'muted';
+    empty.textContent = 'Bugün kart yok.';
+    mcard.appendChild(empty);
+    return;
+  }
+
+  for (const it of items){
+    mcard.appendChild(makeCard(it, { from:'day', dayKey:k }));
+  }
+}
+
+// ilk açılış
+renderMobileDaily();
+
+// pencere boyutu değişince
+window.addEventListener('resize', renderMobileDaily);
   </script>
+  <!-- MOBILE DRAWER -->
+<div id="drawerBack" class="drawerBack hidden"></div>
+<aside id="drawer" class="drawer hidden" aria-label="Menü">
+  <div class="drawerHead">
+    <div style="font-weight:650;">Menü</div>
+    <button id="drawerClose" class="btn" type="button">Kapat</button>
+  </div>
+  <div class="drawerBtns">
+    <button id="goDaily" class="btn" type="button">Gün</button>
+    <button id="goMonth" class="btn" type="button">Ay</button>
+    <button id="goInbox" class="btn" type="button">Brain Dump</button>
+    <button id="goTags" class="btn" type="button">Tag Ayarları</button>
+  </div>
+  <div class="muted" style="margin-top:10px;" id="drawerUser">—</div>
+</aside>
 </body>
 </html>
+
 
 
 
