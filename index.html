@@ -16,7 +16,7 @@
       --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
       --frame-termin:#fb7185; --frame-hedef:#60a5fa; --frame-gorev:#34d399;
-      --monthCellH: 130px;
+      --monthCellH: 128px;
     }
     *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     html, body{ height:100%; }
@@ -457,6 +457,14 @@ body.monthMode #bottom{
 /* AY MODU: takvimi sağ panel kadar daralt, üstüne binmesin */
 body.monthMode .main > div{
   margin-right: 8px;        /* bottom genişliği + biraz boşluk */
+}
+    /* AY: sağdaki görev paneli sabit kalsın */
+body.monthMode #bottom{
+  position: sticky;
+  top: 12px;                 /* istersen 80px yap: header altına sabitle */
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  z-index: 20;
 }
   </style>
 </head>
@@ -1754,6 +1762,7 @@ body.monthMode .main > div{
   </script>
 </body>
 </html>
+
 
 
 
