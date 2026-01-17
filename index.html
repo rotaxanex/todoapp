@@ -458,11 +458,82 @@ body.monthMode #bottom{
 body.monthMode .main > div{
   margin-right: 4px;        /* bottom genişliği + biraz boşluk */
 }
-   
+   /* =====================
+   MOBILE: tek üst bar
+   ===================== */
+.mTop{ display:none; }
+
+@media (max-width: 900px){
+  /* Desktop header + filtre barı mobilde kapat (ekranda ikinci kez görünmesin) */
+  .wrap > header{ display:none !important; }
+  .wrap > .bar{ display:none !important; }
+
+  /* Mobil üst bar aç */
+  .mTop{
+    display:block;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    background: var(--bg);
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .mTopRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+  }
+  .mTitle{ font-size: 18px; font-weight: 750; }
+  .mSub{ font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .mRight{ display:flex; align-items:center; gap:10px; }
+
+  .mSeg{
+    display:flex;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow:hidden;
+  }
+  .mSegBtn{
+    border:0;
+    background: transparent;
+    color: var(--muted);
+    padding: 8px 12px;
+    cursor:pointer;
+  }
+  .mSegBtn.active{
+    background:#1f1f24;
+    color: var(--text);
+  }
+
+  /* Mobilde içerik üst barın altına düzgün otursun */
+  .wrap{ padding-top: 8px; }
+
+  /* Mobilde side zaten saklanıyordu; kalsın */
+  .side{ display:none !important; }
+}
   </style>
 </head>
 
 <body>
+  <!-- MOBILE TOP BAR -->
+<div id="mobileTop" class="mTop">
+  <div class="mTopRow">
+    <div>
+      <div id="mTitle" class="mTitle">Bugün</div>
+      <div class="mSub">Sağa/sola kaydır: gün değiştir</div>
+    </div>
+
+    <div class="mRight">
+      <div class="mSeg">
+        <button id="mDayBtn" type="button" class="mSegBtn active">Gün</button>
+        <button id="mMonthBtn" type="button" class="mSegBtn">Ay</button>
+      </div>
+      <button id="menuBtn" class="btn" type="button">☰</button>
+    </div>
+  </div>
+</div>
   <!-- AUTH -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-box">
@@ -1752,9 +1823,56 @@ body.monthMode .main > div{
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
+    function setMobileTitle(){
+  const el = document.getElementById('mTitle');
+  if (!el) return;
+  // fmtDay fonksiyonun varsa onu kullan
+  try {
+    el.textContent = (typeof fmtDay === 'function') ? fmtDay(selected) : selected.toDateString();
+  } catch {
+    el.textContent = selected.toDateString();
+  }
+}
+
+const mDayBtn = document.getElementById('mDayBtn');
+const mMonthBtn = document.getElementById('mMonthBtn');
+
+function setActiveMobileTab(which){
+  if (!mDayBtn || !mMonthBtn) return;
+  mDayBtn.classList.toggle('active', which === 'day');
+  mMonthBtn.classList.toggle('active', which === 'month');
+}
+
+mDayBtn?.addEventListener('click', ()=>{
+  mode = 'day';                 // sende day mode varsa
+  anchor = new Date(selected);
+  setActiveMobileTab('day');
+  render();
+  setMobileTitle();
+});
+
+mMonthBtn?.addEventListener('click', ()=>{
+  mode = 'month';
+  anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+  setActiveMobileTab('month');
+  render();
+  setMobileTitle();
+});
+
+/* Render sonrası başlık güncellensin */
+const _oldRender = render;
+render = function(){
+  _oldRender();
+  setMobileTitle();
+  // mobilde mode’a göre aktif tab
+  if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches){
+    setActiveMobileTab(mode === 'month' ? 'month' : 'day');
+  }
+};
   </script>
 </body>
 </html>
+
 
 
 
