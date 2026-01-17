@@ -414,6 +414,20 @@ body.monthMode #bottomInboxSlot{
     overflow:visible !important;
   }
 }
+    /* Aylık görünümde görev panelini sağa al */
+body.monthMode .main {
+  grid-template-columns: 1fr 360px;
+}
+
+/* Aylık görünümde alt panel artık altta değil */
+body.monthMode .bottom {
+  margin-top: 0;
+}
+
+/* Aylık görünümde bottom içeriği görünür olsun */
+body.monthMode #bottomInboxSlot {
+  display: block;
+}
   </style>
 </head>
 
@@ -1694,6 +1708,7 @@ body.monthMode #bottomInboxSlot{
   </script>
 </body>
 </html>
+
 
 
 
