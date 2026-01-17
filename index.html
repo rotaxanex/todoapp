@@ -443,6 +443,21 @@ body.monthMode .main > div > #bottom{
 body.monthMode #monthTasksSlot > #bottom{
   display:block;
 }
+    /* AY MODU: bottom paneli sağ kolona sabitle (HTML taşımadan) */
+body.monthMode #bottom{
+  position: fixed;
+  top: 128px;                 /* header+bar yüksekliği gibi düşün */
+  right: 16px;
+  width: 360px;
+  max-height: calc(100vh - 150px);
+  overflow: auto;
+  z-index: 20;
+}
+
+/* AY MODU: takvimi sağ panel kadar daralt, üstüne binmesin */
+body.monthMode .main > div{
+  margin-right: 380px;        /* bottom genişliği + biraz boşluk */
+}
   </style>
 </head>
 
@@ -1739,6 +1754,7 @@ body.monthMode #monthTasksSlot > #bottom{
   </script>
 </body>
 </html>
+
 
 
 
