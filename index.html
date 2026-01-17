@@ -428,6 +428,21 @@ body.monthMode .bottom {
 body.monthMode #bottomInboxSlot {
   display: block;
 }
+    /* Ay görünümünde sağda “Seçili gün” paneli */
+body.monthMode #monthTasksSlot .panelLike{
+  height: calc(100vh - 210px);
+  overflow: auto;
+}
+
+/* Ay görünümünde soldaki alanda bottom görünmesin (çünkü sağa taşıyacağız) */
+body.monthMode .main > div > #bottom{
+  display:none;
+}
+
+/* Ay görünümünde sağ slot görünür */
+body.monthMode #monthTasksSlot > #bottom{
+  display:block;
+}
   </style>
 </head>
 
@@ -558,6 +573,7 @@ body.monthMode #bottomInboxSlot {
       </div>
 
       <aside class="side">
+        <div id="monthTasksSlot"></div>
         <div id="inbox" class="panelBox">
           <div class="panelHead">
             <div>
@@ -820,6 +836,9 @@ body.monthMode #bottomInboxSlot {
   const habitResetBtn = document.getElementById('habitResetBtn');
   const habitsSub = document.getElementById('habitsSub');
 
+  const monthTasksSlot = document.getElementById('monthTasksSlot');
+  const bottom = document.getElementById('bottom');
+
   // Modal
   const overlay = document.getElementById('overlay');
   const modalClose = document.getElementById('modalClose');
@@ -999,6 +1018,18 @@ body.monthMode #bottomInboxSlot {
     if (mode==='week'){
       document.body.classList.add('weekMode');
       document.body.classList.remove('monthMode');
+    // AY görünümünde: seçili gün panelini sağa taşı
+    if (mode === 'month') {
+  if (monthTasksSlot && bottom && bottom.parentElement !== monthTasksSlot) {
+    monthTasksSlot.appendChild(bottom);
+  }
+} else {
+  // HAFTA görünümünde: tekrar takvimin altına geri koy
+  const leftCol = document.querySelector('.main > div'); // takvim+bottom’un olduğu sol kolon
+  if (leftCol && bottom && bottom.parentElement !== leftCol) {
+    leftCol.appendChild(bottom);
+  }
+}
       if (bottomInboxSlot && inbox.parentElement !== bottomInboxSlot) bottomInboxSlot.appendChild(inbox);
     } else {
       document.body.classList.remove('weekMode');
@@ -1708,6 +1739,7 @@ body.monthMode #bottomInboxSlot {
   </script>
 </body>
 </html>
+
 
 
 
