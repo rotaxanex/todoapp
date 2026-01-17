@@ -513,6 +513,22 @@ body.monthMode .main > div{
   /* Mobilde side zaten saklanıyordu; kalsın */
   .side{ display:none !important; }
 }
+    /* =========================
+   MOBILE: duplicate headers off
+   ========================= */
+@media (max-width: 900px){
+
+  /* Günlük paneldeki tarih başlığını kapat */
+  .bottomTop h2,
+  #panelTitle{
+    display: none !important;
+  }
+
+  /* Günlük paneldeki "Bugün için kart yok" üst boşluğunu azalt */
+  .panelLike{
+    margin-top: 8px;
+  }
+}
   </style>
 </head>
 
@@ -1872,6 +1888,7 @@ render = function(){
   </script>
 </body>
 </html>
+
 
 
 
