@@ -1,20 +1,494 @@
-<script>
-  // --- KONFIGURASYON ---
-  // LÜTFEN BURAYI KENDİ BİLGİLERİNLE DOLDUR:
-  const SUPABASE_URL = 'https://BURAYA_PROJE_URL_GELECEK.supabase.co'; 
-  const SUPABASE_KEY = 'BURAYA_ANON_KEY_GELECEK';
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0f0f10" />
+<title>Minimal Mobile Sync</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0f0f10; --card: #1c1c1e; --line: #2c2c2e; --text: #f2f2f7; --muted: #8e8e93;
+    --accent: #0a84ff; --danger: #ff453a;
+    --termin: #ff375f; --hedef: #0a84ff; --gorev: #30d158;
+    --safe-area-top: env(safe-area-inset-top, 20px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-  // Hata yakalama fonksiyonu (Ekrana yazdırmak için)
-  function logError(msg) {
-    const el = document.getElementById('auth-msg');
-    if(el) {
-      el.textContent = msg;
-      el.style.display = 'block';
-    }
-    console.error(msg);
+  /* --- Login Screen --- */
+  #auth-screen { position: absolute; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .auth-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+  input { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 12px; border-radius: 12px; font-size: 16px; outline: none; }
+  button.primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  
+  /* --- App Layout --- */
+  #app-screen { display: none; flex-direction: column; height: 100%; position: relative; }
+  
+  /* Header */
+  header {
+    padding: calc(var(--safe-area-top) + 12px) 16px 12px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; z-index: 10;
+  }
+  .menu-btn { font-size: 24px; background: none; border: none; color: var(--text); cursor: pointer; }
+  .header-title { font-size: 17px; font-weight: 600; }
+  .header-actions { display: flex; gap: 12px; }
+
+  /* Content Area */
+  main { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
+  
+  /* --- Views --- */
+  .view { display: none; padding: 16px; padding-bottom: 100px; animation: fadeIn 0.2s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Daily View */
+  .day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--card); padding: 8px 12px; border-radius: 14px; }
+  .day-big { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .nav-arrow { font-size: 18px; padding: 8px; color: var(--accent); background: none; border: none; }
+
+  /* Card Styles */
+  .card { 
+    background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 10px; 
+    border-left: 4px solid var(--line); position: relative; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .card.termin { border-left-color: var(--termin); }
+  .card.hedef { border-left-color: var(--hedef); }
+  .card.gorev { border-left-color: var(--gorev); }
+  .card.done { opacity: 0.5; }
+  
+  .checkbox { 
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); 
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .card.done .checkbox { background: var(--muted); border-color: var(--muted); }
+  .card-content { flex: 1; min-width: 0; }
+  .card-text { font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+
+  /* Monthly View */
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .cal-cell { 
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    border-radius: 10px; background: var(--card); font-size: 13px; position: relative;
+    border: 1px solid transparent;
+  }
+  .cal-cell.today { border-color: var(--accent); color: var(--accent); font-weight: bold; }
+  .cal-cell.has-task::after { content:''; width: 4px; height: 4px; background: var(--gorev); border-radius: 50%; position: absolute; bottom: 6px; }
+  .cal-head { color: var(--muted); font-size: 11px; padding-bottom: 8px; }
+
+  /* Habits */
+  .habit-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--card); border-radius: 14px; margin-bottom: 8px; }
+  
+  /* FAB (Floating Action Button) */
+  .fab { 
+    position: fixed; bottom: calc(var(--safe-area-bottom) + 20px); right: 20px; 
+    width: 56px; height: 56px; background: var(--accent); color: white; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; font-size: 28px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none; z-index: 50;
   }
 
-  let supabase;
+  /* --- Drawer (Sidebar) --- */
+  .drawer-overlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; 
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; 
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 260px; background: #151517;
+    z-index: 901; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex; flex-direction: column; border-right: 1px solid var(--line);
+    padding-top: calc(var(--safe-area-top) + 20px);
+  }
+  .drawer.open { transform: translateX(0); }
+  .nav-item { padding: 16px 20px; font-size: 16px; color: var(--muted); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .nav-item.active { color: var(--text); background: rgba(255,255,255,0.05); border-right: 3px solid var(--accent); }
+  .drawer-bottom { margin-top: auto; padding: 20px; border-top: 1px solid var(--line); }
+
+  /* --- Modal --- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { 
+    width: 100%; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; 
+    padding: 24px; padding-bottom: calc(var(--safe-area-bottom) + 24px); 
+    display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+  .sheet-input { background: #2c2c2e; border: none; color: white; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
+  .type-select { display: flex; gap: 8px; margin: 8px 0; }
+  .type-opt { flex: 1; padding: 8px; text-align: center; background: #2c2c2e; border-radius: 8px; font-size: 13px; color: var(--muted); border: 1px solid transparent; }
+  .type-opt.selected { color: white; border-color: var(--accent); background: rgba(10, 132, 255, 0.15); }
+
+</style>
+</head>
+<body>
+
+  <div id="auth-screen">
+    <div style="margin-bottom:20px; font-weight:bold; font-size:24px;">Minimal To-Do</div>
+    <div class="auth-box">
+      <input type="email" id="email" placeholder="E-posta" />
+      <input type="password" id="password" placeholder="Şifre" />
+      <button class="primary" onclick="handleLogin()">Giriş Yap</button>
+      <button style="background:transparent; color:var(--accent); border:none;" onclick="handleSignUp()">Kayıt Ol</button>
+      <div id="auth-msg" style="color:var(--danger); font-size:13px; text-align:center;"></div>
+    </div>
+  </div>
+
+  <div id="app-screen">
+    <header>
+      <button class="menu-btn" onclick="toggleDrawer()">☰</button>
+      <div class="header-title" id="page-title">Bugün</div>
+      <div class="header-actions">
+        </div>
+    </header>
+
+    <main id="main-container">
+      <div id="view-daily" class="view active">
+        <div class="day-nav">
+          <button class="nav-arrow" onclick="changeDay(-1)">◀</button>
+          <div style="text-align:center;">
+            <div id="daily-date-display" style="font-weight:bold; color:var(--text);"></div>
+            <div id="daily-dow-display" style="font-size:12px; color:var(--muted);"></div>
+          </div>
+          <button class="nav-arrow" onclick="changeDay(1)">▶</button>
+        </div>
+        <div id="daily-list"></div>
+        <div style="text-align:center; padding:20px; color:var(--muted); font-size:13px; display:none;" id="daily-empty">Boş gün</div>
+      </div>
+
+      <div id="view-month" class="view">
+        <div class="day-nav">
+          <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
+          <div id="month-display" style="font-weight:bold;"></div>
+          <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="calendar-header">
+          </div>
+        <div class="calendar-grid" id="calendar-body" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="view-habits" class="view">
+        <div id="habits-list"></div>
+      </div>
+
+      <div id="view-inbox" class="view">
+        <div style="color:var(--muted); font-size:13px; margin-bottom:10px;">Tarihsiz görevler</div>
+        <div id="inbox-list"></div>
+      </div>
+
+      <div id="view-tags" class="view">
+        <div id="tags-list"></div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <input id="new-tag-name" placeholder="Yeni Etiket" style="flex:1;" />
+          <input type="color" id="new-tag-color" value="#7dd3fc" style="width:50px; padding:0; height:46px;" />
+          <button class="primary" onclick="addTag()">Ekle</button>
+        </div>
+      </div>
+    </main>
+
+    <button id="fab" class="fab" onclick="openAddModal()">+</button>
+  </div>
+
+  <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div style="padding:0 20px 20px;">
+      <h2 style="margin:0; font-size:20px;">Menü</h2>
+      <div style="font-size:12px; color:var(--muted);" id="user-email"></div>
+    </div>
+    
+    <div class="nav-item active" onclick="navTo('daily')">📅 Günlük Görünüm</div>
+    <div class="nav-item" onclick="navTo('month')">🗓 Aylık Takvim</div>
+    <div class="nav-item" onclick="navTo('habits')">🔥 Alışkanlıklar</div>
+    <div class="nav-item" onclick="navTo('inbox')">🧠 Brain Dump</div>
+    <div class="nav-item" onclick="navTo('tags')">🏷 Etiketler</div>
+
+    <div class="drawer-bottom">
+      <button style="background:var(--line); color:var(--text); width:100%; padding:10px; border:none; border-radius:8px;" onclick="handleLogout()">Çıkış Yap</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-modal" onclick="if(event.target===this) closeAddModal()">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 style="margin:0;">Yeni Ekle</h3>
+        <button style="background:none; border:none; color:var(--accent);" onclick="closeAddModal()">Bitti</button>
+      </div>
+      <input type="text" id="m-text" class="sheet-input" placeholder="Ne yapılacak?" />
+      
+      <div class="type-select">
+        <div class="type-opt" data-val="termin" onclick="selectType('termin')">Termin</div>
+        <div class="type-opt" data-val="hedef" onclick="selectType('hedef')">Hedef</div>
+        <div class="type-opt selected" data-val="gorev" onclick="selectType('gorev')">Görev</div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <input type="time" id="m-time" class="sheet-input" style="flex:1;" />
+        <select id="m-tag" class="sheet-input" style="flex:1;"></select>
+      </div>
+
+      <button class="primary" onclick="saveTask()">Kaydet</button>
+      <div id="habit-adder" style="display:none;">
+        <hr style="border-color:var(--line); opacity:0.3; margin:10px 0;">
+        <button class="primary" style="background:#2c2c2e; width:100%;" onclick="saveHabit()">Alışkanlık Olarak Ekle</button>
+      </div>
+    </div>
+  </div>
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0f0f10" />
+<title>Minimal Mobile Sync</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0f0f10; --card: #1c1c1e; --line: #2c2c2e; --text: #f2f2f7; --muted: #8e8e93;
+    --accent: #0a84ff; --danger: #ff453a;
+    --termin: #ff375f; --hedef: #0a84ff; --gorev: #30d158;
+    --safe-area-top: env(safe-area-inset-top, 20px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* --- Login Screen --- */
+  #auth-screen { position: absolute; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .auth-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+  input { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 12px; border-radius: 12px; font-size: 16px; outline: none; }
+  button.primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  
+  /* --- App Layout --- */
+  #app-screen { display: none; flex-direction: column; height: 100%; position: relative; }
+  
+  /* Header */
+  header {
+    padding: calc(var(--safe-area-top) + 12px) 16px 12px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; z-index: 10;
+  }
+  .menu-btn { font-size: 24px; background: none; border: none; color: var(--text); cursor: pointer; }
+  .header-title { font-size: 17px; font-weight: 600; }
+  .header-actions { display: flex; gap: 12px; }
+
+  /* Content Area */
+  main { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
+  
+  /* --- Views --- */
+  .view { display: none; padding: 16px; padding-bottom: 100px; animation: fadeIn 0.2s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Daily View */
+  .day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--card); padding: 8px 12px; border-radius: 14px; }
+  .day-big { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .nav-arrow { font-size: 18px; padding: 8px; color: var(--accent); background: none; border: none; }
+
+  /* Card Styles */
+  .card { 
+    background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 10px; 
+    border-left: 4px solid var(--line); position: relative; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .card.termin { border-left-color: var(--termin); }
+  .card.hedef { border-left-color: var(--hedef); }
+  .card.gorev { border-left-color: var(--gorev); }
+  .card.done { opacity: 0.5; }
+  
+  .checkbox { 
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); 
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .card.done .checkbox { background: var(--muted); border-color: var(--muted); }
+  .card-content { flex: 1; min-width: 0; }
+  .card-text { font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+
+  /* Monthly View */
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .cal-cell { 
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    border-radius: 10px; background: var(--card); font-size: 13px; position: relative;
+    border: 1px solid transparent;
+  }
+  .cal-cell.today { border-color: var(--accent); color: var(--accent); font-weight: bold; }
+  .cal-cell.has-task::after { content:''; width: 4px; height: 4px; background: var(--gorev); border-radius: 50%; position: absolute; bottom: 6px; }
+  .cal-head { color: var(--muted); font-size: 11px; padding-bottom: 8px; }
+
+  /* Habits */
+  .habit-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--card); border-radius: 14px; margin-bottom: 8px; }
+  
+  /* FAB (Floating Action Button) */
+  .fab { 
+    position: fixed; bottom: calc(var(--safe-area-bottom) + 20px); right: 20px; 
+    width: 56px; height: 56px; background: var(--accent); color: white; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; font-size: 28px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none; z-index: 50;
+  }
+
+  /* --- Drawer (Sidebar) --- */
+  .drawer-overlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; 
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; 
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 260px; background: #151517;
+    z-index: 901; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex; flex-direction: column; border-right: 1px solid var(--line);
+    padding-top: calc(var(--safe-area-top) + 20px);
+  }
+  .drawer.open { transform: translateX(0); }
+  .nav-item { padding: 16px 20px; font-size: 16px; color: var(--muted); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .nav-item.active { color: var(--text); background: rgba(255,255,255,0.05); border-right: 3px solid var(--accent); }
+  .drawer-bottom { margin-top: auto; padding: 20px; border-top: 1px solid var(--line); }
+
+  /* --- Modal --- */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { 
+    width: 100%; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; 
+    padding: 24px; padding-bottom: calc(var(--safe-area-bottom) + 24px); 
+    display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+  .sheet-input { background: #2c2c2e; border: none; color: white; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
+  .type-select { display: flex; gap: 8px; margin: 8px 0; }
+  .type-opt { flex: 1; padding: 8px; text-align: center; background: #2c2c2e; border-radius: 8px; font-size: 13px; color: var(--muted); border: 1px solid transparent; }
+  .type-opt.selected { color: white; border-color: var(--accent); background: rgba(10, 132, 255, 0.15); }
+
+</style>
+</head>
+<body>
+
+  <div id="auth-screen">
+    <div style="margin-bottom:20px; font-weight:bold; font-size:24px;">Minimal To-Do</div>
+    <div class="auth-box">
+      <input type="email" id="email" placeholder="E-posta" />
+      <input type="password" id="password" placeholder="Şifre" />
+      <button class="primary" onclick="handleLogin()">Giriş Yap</button>
+      <button style="background:transparent; color:var(--accent); border:none;" onclick="handleSignUp()">Kayıt Ol</button>
+      <div id="auth-msg" style="color:var(--danger); font-size:13px; text-align:center;"></div>
+    </div>
+  </div>
+
+  <div id="app-screen">
+    <header>
+      <button class="menu-btn" onclick="toggleDrawer()">☰</button>
+      <div class="header-title" id="page-title">Bugün</div>
+      <div class="header-actions">
+        </div>
+    </header>
+
+    <main id="main-container">
+      <div id="view-daily" class="view active">
+        <div class="day-nav">
+          <button class="nav-arrow" onclick="changeDay(-1)">◀</button>
+          <div style="text-align:center;">
+            <div id="daily-date-display" style="font-weight:bold; color:var(--text);"></div>
+            <div id="daily-dow-display" style="font-size:12px; color:var(--muted);"></div>
+          </div>
+          <button class="nav-arrow" onclick="changeDay(1)">▶</button>
+        </div>
+        <div id="daily-list"></div>
+        <div style="text-align:center; padding:20px; color:var(--muted); font-size:13px; display:none;" id="daily-empty">Boş gün</div>
+      </div>
+
+      <div id="view-month" class="view">
+        <div class="day-nav">
+          <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
+          <div id="month-display" style="font-weight:bold;"></div>
+          <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="calendar-header">
+          </div>
+        <div class="calendar-grid" id="calendar-body" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="view-habits" class="view">
+        <div id="habits-list"></div>
+      </div>
+
+      <div id="view-inbox" class="view">
+        <div style="color:var(--muted); font-size:13px; margin-bottom:10px;">Tarihsiz görevler</div>
+        <div id="inbox-list"></div>
+      </div>
+
+      <div id="view-tags" class="view">
+        <div id="tags-list"></div>
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <input id="new-tag-name" placeholder="Yeni Etiket" style="flex:1;" />
+          <input type="color" id="new-tag-color" value="#7dd3fc" style="width:50px; padding:0; height:46px;" />
+          <button class="primary" onclick="addTag()">Ekle</button>
+        </div>
+      </div>
+    </main>
+
+    <button id="fab" class="fab" onclick="openAddModal()">+</button>
+  </div>
+
+  <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div style="padding:0 20px 20px;">
+      <h2 style="margin:0; font-size:20px;">Menü</h2>
+      <div style="font-size:12px; color:var(--muted);" id="user-email"></div>
+    </div>
+    
+    <div class="nav-item active" onclick="navTo('daily')">📅 Günlük Görünüm</div>
+    <div class="nav-item" onclick="navTo('month')">🗓 Aylık Takvim</div>
+    <div class="nav-item" onclick="navTo('habits')">🔥 Alışkanlıklar</div>
+    <div class="nav-item" onclick="navTo('inbox')">🧠 Brain Dump</div>
+    <div class="nav-item" onclick="navTo('tags')">🏷 Etiketler</div>
+
+    <div class="drawer-bottom">
+      <button style="background:var(--line); color:var(--text); width:100%; padding:10px; border:none; border-radius:8px;" onclick="handleLogout()">Çıkış Yap</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-modal" onclick="if(event.target===this) closeAddModal()">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 style="margin:0;">Yeni Ekle</h3>
+        <button style="background:none; border:none; color:var(--accent);" onclick="closeAddModal()">Bitti</button>
+      </div>
+      <input type="text" id="m-text" class="sheet-input" placeholder="Ne yapılacak?" />
+      
+      <div class="type-select">
+        <div class="type-opt" data-val="termin" onclick="selectType('termin')">Termin</div>
+        <div class="type-opt" data-val="hedef" onclick="selectType('hedef')">Hedef</div>
+        <div class="type-opt selected" data-val="gorev" onclick="selectType('gorev')">Görev</div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <input type="time" id="m-time" class="sheet-input" style="flex:1;" />
+        <select id="m-tag" class="sheet-input" style="flex:1;"></select>
+      </div>
+
+      <button class="primary" onclick="saveTask()">Kaydet</button>
+      <div id="habit-adder" style="display:none;">
+        <hr style="border-color:var(--line); opacity:0.3; margin:10px 0;">
+        <button class="primary" style="background:#2c2c2e; width:100%;" onclick="saveHabit()">Alışkanlık Olarak Ekle</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // --- KONFIGURASYON ---
+  // BURAYA SUPABASE BILGILERINI GIRIN
+  const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY';
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // --- GLOBAL STATE ---
   let session = null;
   let currentView = 'daily';
   let currentDate = new Date();
@@ -24,27 +498,12 @@
 
   // --- INIT ---
   async function init() {
-    try {
-      if (!window.supabase) {
-        throw new Error('Supabase kütüphanesi yüklenemedi. İnternet bağlantını kontrol et.');
-      }
-      
-      // Client oluştur
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-      // Session kontrolü
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      
-      session = data.session;
-      updateAuthUI();
-      
-      if(session) {
-        document.getElementById('user-email').textContent = session.user.email;
-        loadData();
-      }
-    } catch (err) {
-      logError('Başlatma Hatası: ' + err.message);
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+    updateAuthUI();
+    if(session) {
+      loadData();
+      document.getElementById('user-email').textContent = session.user.email;
     }
   }
   
@@ -64,59 +523,17 @@
   async function handleLogin() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const msgBox = document.getElementById('auth-msg');
-    
-    if(!email || !password) {
-      logError('Lütfen e-posta ve şifre girin.');
-      return;
-    }
-
-    msgBox.style.color = 'yellow';
-    msgBox.textContent = 'Giriş yapılıyor...';
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if(error) throw error;
-      
-      msgBox.textContent = '';
-      session = data.session;
-      updateAuthUI();
-      document.getElementById('user-email').textContent = session.user.email;
-      loadData();
-    } catch (err) {
-      msgBox.style.color = 'var(--danger)';
-      logError('Giriş Hatası: ' + err.message);
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error) alert(error.message);
+    else window.location.reload();
   }
 
   async function handleSignUp() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const msgBox = document.getElementById('auth-msg');
-
-    if(!email || !password) {
-      logError('Kayıt için e-posta ve şifre gerekli.');
-      return;
-    }
-
-    msgBox.style.color = 'yellow';
-    msgBox.textContent = 'Kayıt olunuyor...';
-
-    try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if(error) throw error;
-
-      alert('Kayıt başarılı! Eğer e-posta onayı açıksa lütfen mail kutunu kontrol et.');
-      // Otomatik giriş yapmaya çalışalım (Eğer onay kapalıysa)
-      if(data.session) {
-        session = data.session;
-        updateAuthUI();
-        loadData();
-      }
-    } catch (err) {
-      msgBox.style.color = 'var(--danger)';
-      logError('Kayıt Hatası: ' + err.message);
-    }
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if(error) alert(error.message);
+    else alert('Kayıt başarılı! Lütfen mailinizi onaylayın (eğer kapalıysa direkt giriş yapabilirsiniz).');
   }
 
   async function handleLogout() {
@@ -136,11 +553,13 @@
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     
     document.getElementById('view-' + viewId).classList.add('active');
+    // Highlight nav item logic simplified here
     toggleDrawer();
 
     const titles = { daily:'Günlük', month:'Takvim', habits:'Alışkanlıklar', inbox:'Brain Dump', tags:'Etiketler' };
     document.getElementById('page-title').textContent = titles[viewId];
     
+    // FAB Logic
     const fab = document.getElementById('fab');
     if(viewId === 'tags') fab.style.display = 'none';
     else fab.style.display = 'flex';
@@ -158,22 +577,16 @@
 
   // --- LOAD DATA & RENDER ---
   async function loadData() {
-    try {
-      // 1. Fetch Tags Global
-      const { data: tags, error } = await supabase.from('tags').select('*').order('name');
-      if(error) throw error;
-      
-      cachedTags = tags || [];
-      renderTagOptions();
+    // 1. Fetch Tags Global
+    const { data: tags } = await supabase.from('tags').select('*').order('name');
+    cachedTags = tags || [];
+    renderTagOptions();
 
-      if(currentView === 'daily') renderDaily();
-      else if(currentView === 'month') renderMonth();
-      else if(currentView === 'habits') renderHabits();
-      else if(currentView === 'inbox') renderInbox();
-      else if(currentView === 'tags') renderTagsView();
-    } catch (err) {
-      console.error('Veri yükleme hatası:', err);
-    }
+    if(currentView === 'daily') renderDaily();
+    else if(currentView === 'month') renderMonth();
+    else if(currentView === 'habits') renderHabits();
+    else if(currentView === 'inbox') renderInbox();
+    else if(currentView === 'tags') renderTagsView();
   }
 
   // --- DAILY VIEW ---
@@ -186,8 +599,8 @@
       .from('tasks')
       .select('*')
       .eq('date_key', dateKey)
-      .order('status', {ascending:true}) 
-      .order('type'); 
+      .order('status', {ascending:true}) // bitmemişler önce
+      .order('type'); // termin > hedef > gorev (alfabetik ama olsun)
 
     const list = document.getElementById('daily-list');
     list.innerHTML = '';
@@ -209,12 +622,13 @@
     renderDaily();
   }
   
+  // Swipe Logic for Daily
   const dailyView = document.getElementById('view-daily');
   dailyView.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
   dailyView.addEventListener('touchend', e => {
     const touchEndX = e.changedTouches[0].screenX;
-    if(touchEndX < touchStartX - 50) changeDay(1); 
-    if(touchEndX > touchStartX + 50) changeDay(-1); 
+    if(touchEndX < touchStartX - 50) changeDay(1); // Swipe Left -> Next Day
+    if(touchEndX > touchStartX + 50) changeDay(-1); // Swipe Right -> Prev Day
   });
 
   // --- MONTHLY VIEW ---
@@ -222,6 +636,7 @@
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     document.getElementById('month-display').textContent = currentDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
     
+    // Get Tasks for dots
     const startStr = new Date(y, m, 1).toISOString().split('T')[0];
     const endStr = new Date(y, m+1, 0).toISOString().split('T')[0];
     
@@ -241,9 +656,10 @@
     body.innerHTML = '';
 
     const firstDay = new Date(y, m, 1);
-    const startDay = (firstDay.getDay() + 6) % 7; 
+    const startDay = (firstDay.getDay() + 6) % 7; // Pzt 0 yapma
     const daysInMonth = new Date(y, m+1, 0).getDate();
 
+    // Empty cells
     for(let i=0; i<startDay; i++) body.innerHTML += `<div></div>`;
 
     const todayKey = getDayKey(new Date());
@@ -284,9 +700,11 @@
 
   // --- HABITS VIEW ---
   async function renderHabits() {
-    const today = getDayKey(new Date());
+    const today = getDayKey(new Date()); // Always check against real today
     
+    // Fetch Habits
     const { data: habits } = await supabase.from('habits').select('*').order('created_at');
+    // Fetch Logs for today
     const { data: logs } = await supabase.from('habit_logs').select('habit_id').eq('date_key', today);
     const doneIds = new Set(logs?.map(l => l.habit_id));
 
@@ -307,6 +725,8 @@
         </div>
         <button style="background:none; border:none; color:var(--muted);" onclick="deleteHabit('${h.id}')">🗑</button>
       `;
+      
+      // Click on text/checkbox toggles status
       row.children[0].onclick = () => toggleHabit(h.id, !isDone);
       list.appendChild(row);
     });
@@ -335,7 +755,7 @@
     list.innerHTML = '';
     cachedTags.forEach(t => {
       const div = document.createElement('div');
-      div.className = 'habit-row';
+      div.className = 'habit-row'; // Use same style
       div.innerHTML = `
         <div style="display:flex; align-items:center; gap:10px;">
           <div style="width:16px; height:16px; border-radius:50%; background:${t.color}"></div>
@@ -402,6 +822,7 @@
     document.getElementById('add-modal').classList.add('open');
     document.getElementById('m-text').focus();
     
+    // Toggle Habit button based on view
     const hDiv = document.getElementById('habit-adder');
     if(currentView === 'habits') {
       hDiv.style.display = 'block';
@@ -441,6 +862,7 @@
     if(currentView === 'daily' || currentView === 'month') {
       dateKey = getDayKey(currentDate);
     }
+    // Inbox ise dateKey null kalır
 
     await supabase.from('tasks').insert({
       user_id: session.user.id,
@@ -462,4 +884,7 @@
     closeAddModal();
     loadData();
   }
+
 </script>
+</body>
+</html>
