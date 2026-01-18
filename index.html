@@ -4,7 +4,23 @@
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="#111"/>
 <title>todoapp</title><script src="https://unpkg.com/@supabase/supabase-js@2">
-</script><style>body{margin:0;background:#0f0f10;color:#f5f5f5;font-family:system-ui,sans-serif;line-height:1.4;transition:all .2s ease-in-out}header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #2a2a2f;background:#0f0f10;position:sticky;top:0;z-index:1000}.main{display:grid;grid-template-columns:1fr 320px;gap:12px;padding:12px}@media(max-width:900px){.main{grid-template-columns:1fr}.side{position:fixed;top:0;right:0;bottom:56px;width:80%;max-width:320px;background:#17171a;transform:translateX(100%);transition:transform .3s ease;z-index:999}.side.open{transform:translateX(0)}}.tabbar{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;justify-content:space-around;align-items:center;background:#17171a;border-top:1px solid #2a2a2f;z-index:1000}.tabbar button{background:none;border:0;color:#a3a3a3;font-size:16px;flex:1;height:100%;cursor:pointer}.tabbar button.active{color:#7dd3fc}</style></head><body><header><h1>todoapp</h1><button id="menuBtn">☰</button></header><main class="main"><section id="calendarArea"><div id="content">Takvim veya Günlük Görünüm</div></section><aside class="side" id="side"><div id="inbox">Inbox</div><div id="habits">Alışkanlıklar</div></aside></main><nav class="tabbar"><button data-tab="home" class="active">🏠</button>
+</script>
+<style>
+body{margin:0;background:#0f0f10;color:#f5f5f5;font-family:system-ui,sans-serif;line-height:1.4;transition:all .2s ease-in-out}header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #2a2a2f;background:#0f0f10;position:sticky;top:0;z-index:1000}.main{display:grid;grid-template-columns:1fr 320px;gap:12px;padding:12px}@media(max-width:900px){.main{grid-template-columns:1fr}.side{position:fixed;top:0;right:0;bottom:56px;width:80%;max-width:320px;background:#17171a;transform:translateX(100%);transition:transform .3s ease;z-index:999}.side.open{transform:translateX(0)}}.tabbar{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;justify-content:space-around;align-items:center;background:#17171a;border-top:1px solid #2a2a2f;z-index:1000}.tabbar button{background:none;border:0;color:#a3a3a3;font-size:16px;flex:1;height:100%;cursor:pointer}.tabbar button.active{color:#7dd3fc}
+</style>
+</head>
+<body>
+<header>
+<h1>todoapp</h1>
+<button id="menuBtn">☰</button></header>
+<main class="main">
+<section id="calendarArea">
+<div id="content">Takvim veya Günlük Görünüm</div>
+</section>
+<aside class="side" id="side">
+<div id="inbox">Inbox</div>
+<div id="habits">Alışkanlıklar</div></aside>
+</main><nav class="tabbar"><button data-tab="home" class="active">🏠</button>
 <button data-tab="calendar">📆</button>
 <button data-tab="inbox">📥</button><button data-tab="habits">💡</button></nav>
 <script>const 
