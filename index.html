@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <meta name="theme-color" content="#111111" />
-  <title>TodoApp Pro v2</title>
+  <meta name="theme-color" content="#0f0f10" />
+  <title>TodoApp Pro v3</title>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
@@ -25,14 +25,14 @@
     .btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all .2s; font-size: 13px; }
     .btn:hover { border-color: #555; background: var(--card-hover); }
     .btn.danger { color: #fb7185; border-color: rgba(251,113,133,.3); }
-    .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+    .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
     
     input, select { background: #101014; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px; outline: none; font-size: 14px; }
     input:focus, select:focus { border-color: var(--accent); }
 
     /* --- LAYOUTS --- */
     
-    /* 1. DESKTOP LAYOUT (Default) */
+    /* DESKTOP LAYOUT */
     .app-wrap {
       max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; display: flex; flex-direction: column;
     }
@@ -57,7 +57,8 @@
     .cell.out { opacity: 0.5; background: #0a0a0a; }
     
     .cell-head { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
-    .day-num { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .day-num { font-size: 13px; font-weight: 600; color: var(--muted); display:flex; gap:4px; align-items:baseline; }
+    .day-name { font-size: 11px; font-weight:400; color:var(--muted); opacity:0.7; }
     .cell.today .day-num { color: var(--accent); }
     .cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
 
@@ -70,32 +71,37 @@
     .task-card:active { cursor: grabbing; transform: scale(0.98); }
     .task-card.done { opacity: 0.5; text-decoration: line-through; }
     
-    /* Bottom/Side Panels */
     .entry-panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
     .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
     .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 45vh; }
 
-    /* 2. MOBILE LAYOUT */
-    .mobile-view { display: none; padding: 16px; height: 100vh; overflow-y: auto; background: var(--bg); }
-    .m-card { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border: 1px solid var(--line); }
+    /* --- MOBILE SPECIFIC --- */
+    .mobile-view { display: none; padding: 16px; height: 100vh; overflow-y: hidden; background: var(--bg); flex-direction:column; }
+    .m-card { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border: 1px solid var(--line); flex-shrink: 0; }
+    
+    /* Mobile Calendar Grid */
+    .m-cal-container { background: var(--card); border-radius: 18px; border: 1px solid var(--line); padding: 10px; margin-bottom: 12px; display:none; }
+    .m-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 8px; }
+    .m-dow { text-align: center; font-size: 10px; color: var(--muted); font-weight: 700; }
+    .m-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .m-cell { 
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      border-radius: 8px; font-size: 13px; color: var(--text); position: relative; border: 1px solid transparent;
+    }
+    .m-cell.today { color: var(--accent); font-weight: 700; border-color: rgba(125,211,252,0.3); }
+    .m-cell.selected { background: var(--text); color: var(--bg); font-weight: 700; }
+    .m-cell.has-task::after {
+      content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+    }
+    .m-cell.selected.has-task::after { background: var(--bg); }
+    .m-cell.out { opacity: 0.3; }
 
-    /* --- RESPONSIVE LOGIC --- */
-    /* Masaüstü varsayılan, Mobil gizli. 
-       Ekran küçülürse tam tersi olur. */
+    /* Responsive Switch */
     @media (max-width: 900px) {
       .app-wrap { display: none; }
-      .mobile-view { display: block; }
+      .mobile-view { display: flex; }
     }
     
-    /* FORCE DESKTOP CLASS (Mobildeyken Takvimi zorla açmak için) */
-    body.force-desktop .mobile-view { display: none !important; }
-    body.force-desktop .app-wrap { display: flex !important; }
-    
-    /* Forced Desktop Adjustments */
-    .back-to-mobile-btn { display: none; }
-    body.force-desktop .back-to-mobile-btn { display: inline-block; background: var(--accent); color: #000; font-weight: bold; border:0; }
-
-    /* Month Mode Specifics */
     body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
     body.mode-month .cell { height: var(--month-cell-h); }
     
@@ -104,7 +110,6 @@
     .modal { width: min(400px, 90%); background: #1c1c1f; padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); }
     .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
     .modal-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: block; }
-
   </style>
 </head>
 
@@ -124,15 +129,13 @@
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <h3 style="margin:0;">Kart Düzenle</h3>
+        <h3 style="margin:0;">Düzenle</h3>
         <button onclick="closeModal()" class="btn" style="padding:4px 10px;">✕</button>
       </div>
-      
       <div>
         <span class="modal-label">Başlık</span>
         <input id="mText" class="w-full" placeholder="Ne yapılacak?" />
       </div>
-
       <div class="modal-grid">
         <div>
           <span class="modal-label">Tür</span>
@@ -147,18 +150,16 @@
           <select id="mTag" class="w-full"></select>
         </div>
       </div>
-
       <div class="modal-grid">
         <div>
           <span class="modal-label">Saat</span>
           <input id="mTime" type="time" class="w-full" />
         </div>
         <div>
-          <span class="modal-label">Tarih (Taşı)</span>
+          <span class="modal-label">Tarih</span>
           <input id="mDate" type="date" class="w-full" style="color-scheme:dark;" />
         </div>
       </div>
-
       <div style="display:flex; justify-content:space-between; margin-top:20px;">
         <button id="modalDel" class="btn danger">Sil</button>
         <button id="modalSave" class="btn active">Kaydet</button>
@@ -170,7 +171,6 @@
     <header>
       <div style="font-weight:700; font-size:20px;">todoapp</div>
       <div style="display:flex; gap:10px; align-items:center;">
-        <button id="backMobile" class="btn back-to-mobile-btn">📱 Mobile Dön</button>
         <span id="userEmail" style="font-size:12px; color:var(--muted);">...</span>
         <button onclick="signOut()" class="btn danger">Çıkış</button>
       </div>
@@ -198,7 +198,6 @@
           <div class="dow-row" id="dowRow"></div>
           <div class="cal-grid" id="calGrid"></div>
         </div>
-
         <div class="entry-panel" id="bottomEntryPanel">
           <div class="cell-head">
             <span style="font-weight:600;" id="selDayTitle">Seçili Gün</span>
@@ -217,7 +216,6 @@
 
       <aside class="sidebar">
         <div id="sideEntrySlot" class="entry-panel hidden" style="border-color:var(--accent);"></div>
-
         <div class="panel">
           <div class="cell-head"><span>Brain Dump</span> <button onclick="addInbox()" class="btn" style="padding:2px 8px;">+</button></div>
           <div id="inboxList" style="display:flex; flex-direction:column; gap:6px; overflow:auto;"></div>
@@ -231,20 +229,30 @@
   </div>
 
   <div class="mobile-view" id="mobileApp">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink:0;">
       <div>
-        <h1 style="font-size:22px; margin:0;" id="mHeaderTitle">Bugün</h1>
-        <div style="font-size:12px; color:var(--muted);">Günü değiştirmek için kaydır</div>
+        <h1 style="font-size:24px; margin:0; font-weight:800; letter-spacing:-0.5px;">todo<span style="color:var(--accent)">app</span></h1>
+        <div id="mHeaderDate" style="font-size:13px; color:var(--muted); margin-top:2px;">...</div>
       </div>
-      <button onclick="signOut()" class="btn danger">Çıkış</button>
+      <button onclick="signOut()" class="btn danger" style="padding:6px 12px;">Çıkış</button>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-      <button class="btn active w-full">Günlük</button>
-      <button id="forceDesktopBtn" class="btn w-full">📅 Takvim Görünümü</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; flex-shrink:0;">
+      <button id="mTabDay" class="btn active w-full" onclick="setMobileMode('day')">Günlük</button>
+      <button id="mTabCal" class="btn w-full" onclick="setMobileMode('cal')">Takvim</button>
     </div>
 
-    <div class="m-card">
+    <div id="mCalendarContainer" class="m-cal-container">
+      <div class="cell-head" style="margin-bottom:8px;">
+        <button class="btn" onclick="navMobileMonth(-1)">◀</button>
+        <span id="mCalTitle" style="font-weight:600; font-size:14px;">...</span>
+        <button class="btn" onclick="navMobileMonth(1)">▶</button>
+      </div>
+      <div class="m-dow-row" id="mDowRow"></div>
+      <div class="m-grid" id="mCalGrid"></div>
+    </div>
+
+    <div class="m-card" style="margin-bottom:12px; flex-shrink:0;">
       <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
         <span style="font-weight:600;">Alışkanlıklar</span>
         <button onclick="addHabit()" class="btn" style="padding:2px 8px; font-size:16px;">+</button>
@@ -252,45 +260,44 @@
       <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 
-    <div class="m-card" id="mTouchArea" style="min-height:300px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <div class="m-card" id="mTouchArea" style="flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-shrink:0;">
         <span id="mDateDisplay" style="color:var(--accent); font-weight:600;">...</span>
         <button onclick="addQuickMobile()" class="btn active">+ Ekle</button>
       </div>
-      <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-bottom:20px;"></div>
       <div id="mEmptyMsg" style="text-align:center; color:var(--muted); padding:20px; font-size:13px;">Görev yok.</div>
     </div>
   </div>
 
 <script>
-  // --- AYARLAR ---
+  // CONFIG
   const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // --- GLOBAL STATE ---
+  // STATE
   let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
-  const defaultTags = [
-    {name:'İş', color:'#60a5fa'}, {name:'Kişisel', color:'#fb7185'}, 
-    {name:'Okul', color:'#34d399'}, {name:'Finans', color:'#fbbf24'}
-  ];
+  const defaultTags = [{name:'İş', color:'#60a5fa'}, {name:'Kişisel', color:'#fb7185'}, {name:'Okul', color:'#34d399'}, {name:'Finans', color:'#fbbf24'}];
   
   let state = {
     mode: 'week', 
     anchor: new Date(),
     selected: new Date(),
     user: null,
-    drag: null // { id, source, dateKey }
+    drag: null,
+    mobileMode: 'day' // 'day' or 'cal'
   };
 
-  // --- YARDIMCILAR ---
+  // HELPERS
   const $ = (id) => document.getElementById(id);
   const toKey = (d) => d.toISOString().split('T')[0];
   const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
   const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
+  const getStartOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
   
   function save() {
-    localStorage.setItem('todo_v3', JSON.stringify(db));
+    localStorage.setItem('todo_v4', JSON.stringify(db));
     if(state.user) {
       clearTimeout(window._sync);
       window._sync = setTimeout(() => {
@@ -299,73 +306,22 @@
     }
   }
 
-  // --- DRAG DROP MANTIK (MASAÜSTÜ İÇİN) ---
-  function handleDragStart(e, id, source, dateKey) {
-    state.drag = { id, source, dateKey };
-    e.dataTransfer.effectAllowed = 'move';
-    e.target.style.opacity = '0.5';
-  }
-
-  function handleDragEnd(e) {
-    e.target.style.opacity = '1';
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault(); // Drop'a izin vermek için şart
-    e.dataTransfer.dropEffect = 'move';
-    const cell = e.currentTarget;
-    if(!cell.classList.contains('drag-over')) cell.classList.add('drag-over');
-  }
-
-  function handleDragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
-  }
-
-  function handleDrop(e, targetDateKey) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    if(!state.drag) return;
-
-    const { id, source, dateKey } = state.drag;
-    // Aynı yere bıraktıysa işlem yapma
-    if(source === 'day' && dateKey === targetDateKey) return;
-
-    // 1. Öğeyi bul ve çıkar
-    let task;
-    if(source === 'inbox') {
-      const idx = db.inbox.findIndex(x => x.id === id);
-      if(idx > -1) task = db.inbox.splice(idx, 1)[0];
-    } else {
-      const list = db.days[dateKey];
-      const idx = list.findIndex(x => x.id === id);
-      if(idx > -1) task = list.splice(idx, 1)[0];
-      // Liste boşaldıysa key'i sil (opsiyonel temizlik)
-      if(list.length === 0) delete db.days[dateKey];
-    }
-
-    // 2. Yeni yere ekle
-    if(task) {
-      if(targetDateKey === 'inbox') { // Inbox'a atıldıysa (ileride eklenebilir)
-         db.inbox.push(task);
-      } else {
-         if(!db.days[targetDateKey]) db.days[targetDateKey] = [];
-         db.days[targetDateKey].push(task);
-      }
-      save();
-      render();
-    }
-    state.drag = null;
-  }
-
   // --- RENDER ---
   function render() {
-    // Tag Ayarları
+    // 1. Desktop Render
+    renderDesktopGrid();
+    renderPanels();
+    
+    // 2. Mobile Render
+    renderMobile();
+  }
+
+  function renderDesktopGrid() {
+    // Tags
     if(!db.tags || !db.tags.length) db.tags = defaultTags;
     const tagOpts = `<option value="">Etiket Yok</option>` + db.tags.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
     $('inpTag').innerHTML = tagOpts; $('mTag').innerHTML = tagOpts; $('filterTag').innerHTML = `<option value="all">Tümü</option>` + db.tags.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
 
-    // Takvim Izgarası
     const grid = $('calGrid'); grid.innerHTML = '';
     const dow = $('dowRow'); dow.innerHTML = '';
     ['PZT','SAL','ÇAR','PER','CUM','CTS','PAZ'].forEach(d => dow.innerHTML += `<div class="dow">${d}</div>`);
@@ -376,9 +332,8 @@
       daysCount = 7;
       $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`;
     } else {
-      const y = state.anchor.getFullYear(), m = state.anchor.getMonth();
-      start = getStartOfWeek(new Date(y, m, 1));
-      daysCount = 35; // Basit 5 satır
+      start = getStartOfWeek(getStartOfMonth(state.anchor));
+      daysCount = 42; // Always 6 rows for consistency
       $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'});
     }
 
@@ -389,158 +344,98 @@
       const d = addDays(start, i);
       const k = toKey(d);
       const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
+      const dayNameShort = d.toLocaleDateString('tr-TR', {weekday:'short'});
       
       const cell = document.createElement('div');
       cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
       
-      // Drag Events (Hücreye)
+      // Events
       cell.ondragover = handleDragOver;
       cell.ondragleave = handleDragLeave;
       cell.ondrop = (e) => handleDrop(e, k);
       cell.onclick = () => { state.selected = d; render(); };
 
-      // Hücre Başlığı
-      let html = `<div class="cell-head"><span class="day-num">${d.getDate()}</span> <button class="btn" style="padding:0 5px; font-size:16px; line-height:1;" onclick="quickAddModal('${k}', event)">+</button></div>`;
-      html += `<div class="cell-cards">`;
+      // Değişiklik 2: Gün ismini desktop hücresine ekleme
+      let html = `
+        <div class="cell-head">
+          <span class="day-num">${d.getDate()} <span class="day-name">${dayNameShort}</span></span> 
+          <button class="btn" style="padding:0 5px; font-size:16px; line-height:1;" onclick="quickAddModal('${k}', event)">+</button>
+        </div>
+        <div class="cell-cards"></div>
+      `;
+      cell.innerHTML = html; 
       
-      // Kartlar
       const tasks = db.days[k] || [];
       const filter = $('filterTag').value;
-      
-      tasks.forEach(t => {
-        if(filter !== 'all' && t.tag !== filter) return;
-        const color = t.type==='termin' ? 'var(--frame-termin)' : t.type==='hedef' ? 'var(--frame-hedef)' : 'var(--frame-gorev)';
-        // Kart Oluşturma (DOM Element olarak) - string değil, eventler için
-      });
-      
-      cell.innerHTML = html + `</div>`; 
-      
-      // Kartları ekle (innerHTML sonrası DOM'a append etmeliyiz ki event listener'lar çalışsın)
       const cardCont = cell.querySelector('.cell-cards');
+      
       tasks.forEach(t => {
          if(filter !== 'all' && t.tag !== filter) return;
-         const el = createCardEl(t, 'day', k);
-         cardCont.appendChild(el);
+         cardCont.appendChild(createCardEl(t, 'day', k));
       });
-
       grid.appendChild(cell);
-    }
-
-    renderPanels();
-    renderMobile();
-  }
-
-  function createCardEl(t, source, dateKey) {
-    const el = document.createElement('div');
-    el.className = `task-card ${t.done?'done':''}`;
-    el.draggable = true;
-    el.style.borderLeftColor = t.type==='termin'?'var(--frame-termin)':t.type==='hedef'?'var(--frame-hedef)':'var(--frame-gorev)';
-    el.innerHTML = `
-      <div style="font-weight:600; margin-bottom:2px; pointer-events:none;">${t.text}</div>
-      <div style="display:flex; justify-content:space-between; color:var(--muted); pointer-events:none;">
-        <span>${t.time||''}</span> <span>${t.tag||''}</span>
-      </div>
-    `;
-    
-    // Drag Events (Karta)
-    el.ondragstart = (e) => handleDragStart(e, t.id, source, dateKey);
-    el.ondragend = handleDragEnd;
-    
-    // Tıklama (Düzenle)
-    el.onclick = (e) => { e.stopPropagation(); openModal(t, source, dateKey); };
-    
-    return el;
-  }
-
-  function renderPanels() {
-    const k = toKey(state.selected);
-    $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
-    
-    // Alt Panel Listesi
-    const list = $('bottomTaskList'); list.innerHTML = '';
-    (db.days[k]||[]).forEach(t => {
-       const row = document.createElement('div');
-       row.style.display = 'flex'; row.style.gap='8px'; row.style.padding='6px'; row.style.background='#121215'; row.style.borderRadius='8px'; row.style.alignItems='center';
-       row.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:16px; height:16px;"> <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':''}">${t.text}</span>`;
-       row.querySelector('input').onchange = () => { t.done=!t.done; save(); render(); };
-       row.ondblclick = () => openModal(t, 'day', k);
-       list.appendChild(row);
-    });
-
-    // Sidebar: Brain Dump
-    const ibx = $('inboxList'); ibx.innerHTML = '';
-    db.inbox.forEach(t => {
-      const el = createCardEl(t, 'inbox', null);
-      ibx.appendChild(el);
-    });
-
-    // Sidebar: Habits
-    const hList = $('habitList'); hList.innerHTML = '';
-    const today = toKey(new Date());
-    db.habits.forEach(h => {
-      const isDone = (db.habitLog[today]||[]).includes(h.id);
-      const row = document.createElement('div');
-      row.style.cssText = "display:flex; justify-content:space-between; background:#121215; padding:8px; border-radius:8px; align-items:center;";
-      row.innerHTML = `<span>${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
-      row.querySelector('input').onchange = (e) => {
-        if(!db.habitLog[today]) db.habitLog[today] = [];
-        if(e.target.checked) db.habitLog[today].push(h.id);
-        else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
-        save(); render();
-      };
-      hList.appendChild(row);
-    });
-
-    // Month Mode Side Slot Logic
-    const sideSlot = $('sideEntrySlot');
-    if(state.mode === 'month') {
-      sideSlot.classList.remove('hidden');
-      $('bottomEntryPanel').classList.add('hidden');
-      // Kopyala yapıştır yerine içeriği oluştur
-      sideSlot.innerHTML = `
-        <div style="font-weight:600; margin-bottom:10px;">${state.selected.toLocaleDateString('tr-TR')}</div>
-        <button onclick="addQuickMobile()" class="btn active w-full" style="margin-bottom:10px;">+ Görev Ekle</button>
-        <div id="sideTaskList" style="overflow:auto; flex:1; display:flex; flex-direction:column; gap:5px;"></div>
-      `;
-      // Side listeyi doldur (yukarıdaki list mantığının aynısı)
-      const sl = sideSlot.querySelector('#sideTaskList');
-      (db.days[k]||[]).forEach(t => {
-         const d = document.createElement('div');
-         d.className = 'task-card';
-         d.innerText = t.text;
-         d.style.opacity = t.done ? 0.5 : 1;
-         d.onclick = () => openModal(t, 'day', k);
-         sl.appendChild(d);
-      });
-    } else {
-      sideSlot.classList.add('hidden');
-      $('bottomEntryPanel').classList.remove('hidden');
     }
   }
 
   function renderMobile() {
-    $('mHeaderTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long'});
+    // Header Data
+    $('mHeaderDate').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    
+    // Toggle View
+    const mCal = $('mCalendarContainer');
+    if(state.mobileMode === 'cal') {
+      mCal.style.display = 'block';
+      $('mTabCal').classList.add('active'); $('mTabDay').classList.remove('active');
+      renderMobileCalendar();
+    } else {
+      mCal.style.display = 'none';
+      $('mTabDay').classList.add('active'); $('mTabCal').classList.remove('active');
+    }
+
+    // Task List & Habits (Her iki modda da görünür)
+    renderMobileHabits();
+    renderMobileTasks();
+  }
+
+  function renderMobileCalendar() {
+    const title = $('mCalTitle');
+    const dow = $('mDowRow');
+    const grid = $('mCalGrid');
+    
+    const y = state.anchor.getFullYear(), m = state.anchor.getMonth();
+    title.innerText = state.anchor.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
+    
+    dow.innerHTML = '';
+    ['Pt','Sa','Ça','Pe','Cu','Ct','Pa'].forEach(d => dow.innerHTML += `<div class="m-dow">${d}</div>`);
+    
+    grid.innerHTML = '';
+    const start = getStartOfWeek(new Date(y, m, 1));
+    const selK = toKey(state.selected);
+    const todayK = toKey(new Date());
+
+    for(let i=0; i<42; i++) {
+      const d = addDays(start, i);
+      const k = toKey(d);
+      const isOut = d.getMonth() !== m;
+      const hasTask = db.days[k] && db.days[k].length > 0;
+      
+      const cell = document.createElement('div');
+      cell.className = `m-cell ${k===selK?'selected':''} ${k===todayK?'today':''} ${isOut?'out':''} ${hasTask?'has-task':''}`;
+      cell.innerText = d.getDate();
+      cell.onclick = () => {
+        state.selected = d;
+        // Ay değişimi gerekirse anchor'ı da güncelle
+        if(isOut) state.anchor = new Date(d.getFullYear(), d.getMonth(), 1);
+        render(); 
+      };
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderMobileTasks() {
+    const mt = $('mTaskList'); mt.innerHTML = '';
     $('mDateDisplay').innerText = state.selected.toLocaleDateString('tr-TR', {day:'numeric', month:'long'});
     
-    // Habits Mobile
-    const mh = $('mHabitList'); mh.innerHTML = '';
-    const today = toKey(new Date());
-    db.habits.forEach(h => {
-      const isDone = (db.habitLog[today]||[]).includes(h.id);
-      const div = document.createElement('div');
-      div.style.cssText = "display:flex; gap:10px; padding:10px; background:#121215; border-radius:10px; align-items:center;";
-      div.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="font-size:14px;">${h.name}</span> <button style="margin-left:auto; background:none; border:0; color:#444;" onclick="delHabit('${h.id}')">🗑</button>`;
-      div.querySelector('input').onchange = (e) => {
-         if(!db.habitLog[today]) db.habitLog[today] = [];
-         if(e.target.checked) db.habitLog[today].push(h.id);
-         else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
-         save(); render();
-      };
-      mh.appendChild(div);
-    });
-
-    // Task Mobile
-    const mt = $('mTaskList'); mt.innerHTML = '';
     const k = toKey(state.selected);
     const tasks = db.days[k] || [];
     $('mEmptyMsg').style.display = tasks.length ? 'none' : 'block';
@@ -561,161 +456,162 @@
       mt.appendChild(div);
     });
   }
+  
+  function renderMobileHabits() {
+    const mh = $('mHabitList'); mh.innerHTML = '';
+    const today = toKey(new Date());
+    db.habits.forEach(h => {
+      const isDone = (db.habitLog[today]||[]).includes(h.id);
+      const div = document.createElement('div');
+      div.style.cssText = "display:flex; gap:10px; padding:10px; background:#121215; border-radius:10px; align-items:center;";
+      div.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="font-size:14px;">${h.name}</span> <button style="margin-left:auto; background:none; border:0; color:#444;" onclick="delHabit('${h.id}')">🗑</button>`;
+      div.querySelector('input').onchange = (e) => {
+         if(!db.habitLog[today]) db.habitLog[today] = [];
+         if(e.target.checked) db.habitLog[today].push(h.id);
+         else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
+         save(); render();
+      };
+      mh.appendChild(div);
+    });
+  }
 
-  // --- CRUD & ACTIONS ---
-  $('addForm').onsubmit = (e) => {
-    e.preventDefault();
-    const txt = $('inpText').value;
-    if(!txt) return;
-    const task = { id: Date.now().toString(), text: txt, time: $('inpTime').value, type: $('inpType').value, tag: $('inpTag').value, done:false };
+  function renderPanels() {
     const k = toKey(state.selected);
-    if(!db.days[k]) db.days[k] = [];
-    db.days[k].push(task);
-    $('inpText').value = '';
-    save(); render();
-  };
+    $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
+    
+    // Bottom Panel List
+    const list = $('bottomTaskList'); list.innerHTML = '';
+    (db.days[k]||[]).forEach(t => {
+       const row = document.createElement('div');
+       row.style.cssText = "display:flex; gap:8px; padding:6px; background:#121215; border-radius:8px; align-items:center;";
+       row.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:16px; height:16px;"> <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':''}">${t.text}</span>`;
+       row.querySelector('input').onchange = () => { t.done=!t.done; save(); render(); };
+       row.ondblclick = () => openModal(t, 'day', k);
+       list.appendChild(row);
+    });
 
-  function addInbox() { const t = prompt('Brain Dump:'); if(t) { db.inbox.push({id:Date.now().toString(), text:t, type:'gorev', done:false}); save(); render(); } }
+    // Sidebar Content
+    const ibx = $('inboxList'); ibx.innerHTML = '';
+    db.inbox.forEach(t => ibx.appendChild(createCardEl(t, 'inbox', null)));
+
+    const hList = $('habitList'); hList.innerHTML = '';
+    const today = toKey(new Date());
+    db.habits.forEach(h => {
+      const isDone = (db.habitLog[today]||[]).includes(h.id);
+      const row = document.createElement('div');
+      row.style.cssText = "display:flex; justify-content:space-between; background:#121215; padding:8px; border-radius:8px; align-items:center;";
+      row.innerHTML = `<span>${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
+      row.querySelector('input').onchange = (e) => {
+        if(!db.habitLog[today]) db.habitLog[today] = [];
+        if(e.target.checked) db.habitLog[today].push(h.id);
+        else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
+        save(); render();
+      };
+      hList.appendChild(row);
+    });
+
+    // Month Mode Sidebar
+    const sideSlot = $('sideEntrySlot');
+    if(state.mode === 'month') {
+      sideSlot.classList.remove('hidden');
+      $('bottomEntryPanel').classList.add('hidden');
+      sideSlot.innerHTML = `<div style="font-weight:600; margin-bottom:10px;">${state.selected.toLocaleDateString('tr-TR')}</div><button onclick="addQuickMobile()" class="btn active w-full" style="margin-bottom:10px;">+ Görev Ekle</button><div id="sideTaskList" style="overflow:auto; flex:1; display:flex; flex-direction:column; gap:5px;"></div>`;
+      const sl = sideSlot.querySelector('#sideTaskList');
+      (db.days[k]||[]).forEach(t => {
+         const d = document.createElement('div'); d.className = 'task-card'; d.innerText = t.text; d.style.opacity = t.done ? 0.5 : 1;
+         d.onclick = () => openModal(t, 'day', k); sl.appendChild(d);
+      });
+    } else {
+      sideSlot.classList.add('hidden');
+      $('bottomEntryPanel').classList.remove('hidden');
+    }
+  }
+
+  function createCardEl(t, source, dateKey) {
+    const el = document.createElement('div');
+    el.className = `task-card ${t.done?'done':''}`;
+    el.draggable = true;
+    el.style.borderLeftColor = t.type==='termin'?'var(--frame-termin)':t.type==='hedef'?'var(--frame-hedef)':'var(--frame-gorev)';
+    el.innerHTML = `<div style="font-weight:600; margin-bottom:2px; pointer-events:none;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); pointer-events:none;"><span>${t.time||''}</span> <span>${t.tag||''}</span></div>`;
+    el.ondragstart = (e) => { state.drag = { id: t.id, source, dateKey }; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; };
+    el.ondragend = (e) => { e.target.style.opacity = '1'; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); };
+    el.onclick = (e) => { e.stopPropagation(); openModal(t, source, dateKey); };
+    return el;
+  }
+
+  // LOGIC
+  function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over'); }
+  function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+  function handleDrop(e, targetK) {
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+    if(!state.drag) return;
+    const { id, source, dateKey } = state.drag;
+    if(source === 'day' && dateKey === targetK) return;
+    let task;
+    if(source === 'inbox') { const i = db.inbox.findIndex(x=>x.id===id); if(i>-1) task=db.inbox.splice(i,1)[0]; }
+    else { const l = db.days[dateKey]; const i = l.findIndex(x=>x.id===id); if(i>-1) task=l.splice(i,1)[0]; if(l.length===0) delete db.days[dateKey]; }
+    if(task) { if(!db.days[targetK]) db.days[targetK]=[]; db.days[targetK].push(task); save(); render(); }
+    state.drag = null;
+  }
+
+  // ACTIONS
+  $('addForm').onsubmit = (e) => { e.preventDefault(); const txt=$('inpText').value; if(!txt)return; addTask(txt, $('inpTime').value, $('inpType').value, $('inpTag').value, 'day'); $('inpText').value=''; };
+  function addTask(txt, time, type, tag, dest) {
+    const t = { id: Date.now().toString(), text: txt, time, type, tag, done:false };
+    if(dest==='inbox') db.inbox.push(t); else { const k=toKey(state.selected); if(!db.days[k]) db.days[k]=[]; db.days[k].push(t); }
+    save(); render();
+  }
+  function addInbox() { const t = prompt('Brain Dump:'); if(t) addTask(t, '', 'gorev', '', 'inbox'); }
   function addHabit() { const t = prompt('Yeni Alışkanlık:'); if(t) { db.habits.push({id:Date.now().toString(), name:t}); save(); render(); } }
   function delHabit(id) { if(confirm('Sil?')) { db.habits=db.habits.filter(x=>x.id!==id); save(); render(); } }
-  function addQuickMobile() {
-    const t = prompt('Yeni Görev:'); 
-    if(t) { 
-      const k = toKey(state.selected);
-      if(!db.days[k]) db.days[k]=[];
-      db.days[k].push({id:Date.now().toString(), text:t, type:'gorev', done:false}); 
-      save(); render(); 
-    }
-  }
-  function quickAddModal(k, e) {
-    e.stopPropagation();
-    state.selected = new Date(k);
-    render();
-    setTimeout(()=> $('inpText').focus(), 50); // Desktopta inputa odaklan
-  }
-  function clearDone() {
-    const k = toKey(state.selected);
-    if(db.days[k]) { db.days[k] = db.days[k].filter(t => !t.done); save(); render(); }
-  }
+  function addQuickMobile() { const t = prompt('Yeni Görev:'); if(t) addTask(t, '', 'gorev', '', 'day'); }
+  function quickAddModal(k, e) { e.stopPropagation(); state.selected = new Date(k); render(); setTimeout(()=> $('inpText').focus(), 50); }
+  function clearDone() { const k=toKey(state.selected); if(db.days[k]) { db.days[k]=db.days[k].filter(t=>!t.done); save(); render(); } }
 
-  // --- MODAL & EDIT ---
+  // MODAL
   let editCtx = null;
-  function openModal(task, source, dateKey) {
-    editCtx = { task, source, dateKey };
-    $('modalOverlay').style.display = 'flex';
-    $('mText').value = task.text;
-    $('mTime').value = task.time || '';
-    $('mType').value = task.type || 'gorev';
-    $('mTag').value = task.tag || '';
-    $('mDate').value = source === 'day' ? dateKey : ''; // Tarihi göster
-  }
-  function openModalById(id, source, dateKey) {
-    const list = source==='inbox' ? db.inbox : db.days[dateKey];
-    const t = list.find(x=>x.id === id);
-    if(t) openModal(t, source, dateKey);
-  }
+  function openModal(task, source, dateKey) { editCtx = { task, source, dateKey }; $('modalOverlay').style.display = 'flex'; $('mText').value = task.text; $('mTime').value = task.time||''; $('mType').value = task.type||'gorev'; $('mTag').value = task.tag||''; $('mDate').value = source==='day'?dateKey:''; }
+  function openModalById(id, source, dateKey) { const list = source==='inbox'?db.inbox:db.days[dateKey]; const t=list.find(x=>x.id===id); if(t) openModal(t, source, dateKey); }
   function closeModal() { $('modalOverlay').style.display = 'none'; editCtx = null; }
-  
   $('modalSave').onclick = () => {
-    if(!editCtx) return;
-    const { task, source, dateKey } = editCtx;
-    task.text = $('mText').value;
-    task.time = $('mTime').value;
-    task.type = $('mType').value;
-    task.tag = $('mTag').value;
-    
-    // Tarih Değiştirme Mantığı (Mobile Drag alternatifi)
-    const newDate = $('mDate').value;
-    const oldDate = source === 'day' ? dateKey : '';
-    
-    if(newDate && newDate !== oldDate) {
-      // Eskiden sil
-      if(source === 'inbox') db.inbox = db.inbox.filter(x=>x.id!==task.id);
-      else {
-        db.days[oldDate] = db.days[oldDate].filter(x=>x.id!==task.id);
-        if(db.days[oldDate].length===0) delete db.days[oldDate];
-      }
-      // Yeniye ekle
-      if(!db.days[newDate]) db.days[newDate] = [];
-      db.days[newDate].push(task);
-      state.selected = new Date(newDate); // O güne git
+    if(!editCtx) return; const { task, source, dateKey } = editCtx;
+    task.text = $('mText').value; task.time = $('mTime').value; task.type = $('mType').value; task.tag = $('mTag').value;
+    const nDate = $('mDate').value; const oDate = source==='day'?dateKey:'';
+    if(nDate && nDate!==oDate) {
+      if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else { db.days[oDate]=db.days[oDate].filter(x=>x.id!==task.id); if(db.days[oDate].length===0) delete db.days[oDate]; }
+      if(!db.days[nDate]) db.days[nDate]=[]; db.days[nDate].push(task); state.selected=new Date(nDate);
     }
-
     save(); render(); closeModal();
   };
-  
-  $('modalDel').onclick = () => {
-    if(!editCtx) return;
-    if(confirm('Silinsin mi?')) {
-      const { task, source, dateKey } = editCtx;
-      if(source==='inbox') db.inbox = db.inbox.filter(x=>x.id!==task.id);
-      else db.days[dateKey] = db.days[dateKey].filter(x=>x.id!==task.id);
-      save(); render(); closeModal();
-    }
-  };
+  $('modalDel').onclick = () => { if(!editCtx)return; if(confirm('Sil?')) { const { task, source, dateKey } = editCtx; if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else db.days[dateKey]=db.days[dateKey].filter(x=>x.id!==task.id); save(); render(); closeModal(); } };
 
-  // --- VIEW SWITCHING ---
-  // Telefondan Takvim'e geçiş
-  $('forceDesktopBtn').onclick = () => {
-    document.body.classList.add('force-desktop');
-    // Takvim modunu aç ki tam ekran görsün
-    state.mode = 'month'; 
-    $('viewMonth').click();
-  };
-  // Geri dön
-  $('backMobile').onclick = () => {
-    document.body.classList.remove('force-desktop');
-  };
-
-  $('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week '+ (document.body.classList.contains('force-desktop')?'force-desktop':''); render(); };
-  $('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month '+ (document.body.classList.contains('force-desktop')?'force-desktop':''); render(); };
+  // NAV
+  function setMobileMode(m) { state.mobileMode = m; 
+    if(m==='cal') state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1); 
+    render(); 
+  }
+  function navMobileMonth(dir) { state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+dir, 1); render(); }
   
+  $('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week'; render(); };
+  $('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month'; render(); };
   $('navPrev').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); render(); };
   $('navNext').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1); render(); };
   $('navToday').onclick = () => { state.anchor=new Date(); state.selected=new Date(); render(); };
-  
   $('filterTag').onchange = render;
 
-  // Swipe Mobile
-  let touchX = 0;
-  $('mTouchArea').ontouchstart = e => touchX = e.changedTouches[0].clientX;
-  $('mTouchArea').ontouchend = e => {
-    if(Math.abs(e.changedTouches[0].clientX - touchX) > 50) {
-      const dir = e.changedTouches[0].clientX < touchX ? 1 : -1;
-      state.selected = addDays(state.selected, dir);
-      render();
-    }
-  };
+  let touchX = 0; $('mTouchArea').ontouchstart = e => touchX = e.changedTouches[0].clientX;
+  $('mTouchArea').ontouchend = e => { if(Math.abs(e.changedTouches[0].clientX - touchX) > 50) { const dir = e.changedTouches[0].clientX < touchX ? 1 : -1; state.selected = addDays(state.selected, dir); render(); } };
 
-  // --- INIT ---
+  // INIT
   async function init() {
-    const local = localStorage.getItem('todo_v3');
-    if(local) db = JSON.parse(local);
-    
-    // Auth Check
+    const local = localStorage.getItem('todo_v4'); if(local) db = JSON.parse(local);
     const { data } = await sb.auth.getSession();
-    if(data.session) {
-      state.user = data.session.user;
-      $('authOverlay').classList.add('hidden');
-      $('userEmail').innerText = state.user.email;
-      // Pull Data
-      const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single();
-      if(remote && remote.content) { db = remote.content; save(); }
-    }
-    
+    if(data.session) { state.user = data.session.user; $('authOverlay').classList.add('hidden'); $('userEmail').innerText = state.user.email; const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single(); if(remote && remote.content) { db = remote.content; save(); } }
     render();
   }
-
-  $('btnLogin').onclick = async () => {
-    const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value });
-    if(error) $('authMsg').innerText = error.message; else location.reload();
-  };
-  $('btnReg').onclick = async () => {
-    const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value });
-    if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı! Giriş yapın.";
-  };
+  $('btnLogin').onclick = async () => { const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else location.reload(); };
+  $('btnReg').onclick = async () => { const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı!"; };
   window.signOut = async () => { await sb.auth.signOut(); location.reload(); };
-
   init();
 </script>
 </body>
