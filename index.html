@@ -1,32 +1,722 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="theme-color" content="#111"/>
-<title>todoapp</title><script src="https://unpkg.com/@supabase/supabase-js@2">
-</script>
-<style>
-body{margin:0;background:#0f0f10;color:#f5f5f5;font-family:system-ui,sans-serif;line-height:1.4;transition:all .2s ease-in-out}header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #2a2a2f;background:#0f0f10;position:sticky;top:0;z-index:1000}.main{display:grid;grid-template-columns:1fr 320px;gap:12px;padding:12px}@media(max-width:900px){.main{grid-template-columns:1fr}.side{position:fixed;top:0;right:0;bottom:56px;width:80%;max-width:320px;background:#17171a;transform:translateX(100%);transition:transform .3s ease;z-index:999}.side.open{transform:translateX(0)}}.tabbar{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;justify-content:space-around;align-items:center;background:#17171a;border-top:1px solid #2a2a2f;z-index:1000}.tabbar button{background:none;border:0;color:#a3a3a3;font-size:16px;flex:1;height:100%;cursor:pointer}.tabbar button.active{color:#7dd3fc}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#111111" />
+  <title>TodoApp Pro v2</title>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg: #0f0f10; --card: #17171a; --card-hover: #1f1f24;
+      --muted: #a3a3a3; --text: #f5f5f5; --line: #2a2a2f; --accent: #7dd3fc;
+      --shadow: 0 10px 30px rgba(0,0,0,.5);
+      --frame-termin: #fb7185; --frame-hedef: #60a5fa; --frame-gorev: #34d399;
+      --month-cell-h: 110px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; height: 100vh; overflow: hidden; }
+    
+    .hidden { display: none !important; }
+    .w-full { width: 100%; }
+    .btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all .2s; font-size: 13px; }
+    .btn:hover { border-color: #555; background: var(--card-hover); }
+    .btn.danger { color: #fb7185; border-color: rgba(251,113,133,.3); }
+    .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+    
+    input, select { background: #101014; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px; outline: none; font-size: 14px; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    /* --- LAYOUTS --- */
+    
+    /* 1. DESKTOP LAYOUT (Default) */
+    .app-wrap {
+      max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; display: flex; flex-direction: column;
+    }
+    
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+    .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
+    .main-grid { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
+    
+    /* Calendar Area */
+    .left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
+    .calendar-container { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; min-height: 0; border: 1px solid var(--line); border-radius: 16px; }
+    .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 0; border-bottom: 1px solid var(--line); background: var(--card); }
+    .dow { color: var(--muted); font-size: 11px; text-align: center; text-transform: uppercase; font-weight: 700; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); overflow-y: auto; flex: 1; background: var(--line); gap: 1px; }
+    
+    /* Cells */
+    .cell { background: var(--bg); display: flex; flex-direction: column; min-height: 80px; position: relative; transition: background .2s; }
+    .cell:hover { background: #151518; }
+    .cell.drag-over { background: rgba(125, 211, 252, 0.1) !important; outline: 2px dashed var(--accent); z-index: 10; }
+    .cell.today { background: rgba(125, 211, 252, 0.04); }
+    .cell.selected { background: #1c1c20; }
+    .cell.out { opacity: 0.5; background: #0a0a0a; }
+    
+    .cell-head { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
+    .day-num { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .cell.today .day-num { color: var(--accent); }
+    .cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+
+    /* Task Card */
+    .task-card {
+      background: var(--card); border-left: 3px solid var(--muted); border-radius: 4px; padding: 6px 8px;
+      font-size: 12px; cursor: grab; user-select: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: transform .1s;
+    }
+    .task-card:active { cursor: grabbing; transform: scale(0.98); }
+    .task-card.done { opacity: 0.5; text-decoration: line-through; }
+    
+    /* Bottom/Side Panels */
+    .entry-panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 45vh; }
+
+    /* 2. MOBILE LAYOUT */
+    .mobile-view { display: none; padding: 16px; height: 100vh; overflow-y: auto; background: var(--bg); }
+    .m-card { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border: 1px solid var(--line); }
+
+    /* --- RESPONSIVE LOGIC --- */
+    /* Masaüstü varsayılan, Mobil gizli. 
+       Ekran küçülürse tam tersi olur. */
+    @media (max-width: 900px) {
+      .app-wrap { display: none; }
+      .mobile-view { display: block; }
+    }
+    
+    /* FORCE DESKTOP CLASS (Mobildeyken Takvimi zorla açmak için) */
+    body.force-desktop .mobile-view { display: none !important; }
+    body.force-desktop .app-wrap { display: flex !important; }
+    
+    /* Forced Desktop Adjustments */
+    .back-to-mobile-btn { display: none; }
+    body.force-desktop .back-to-mobile-btn { display: inline-block; background: var(--accent); color: #000; font-weight: bold; border:0; }
+
+    /* Month Mode Specifics */
+    body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
+    body.mode-month .cell { height: var(--month-cell-h); }
+    
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .modal { width: min(400px, 90%); background: #1c1c1f; padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .modal-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: block; }
+
+  </style>
 </head>
-<body>
-<header>
-<h1>todoapp</h1>
-<button id="menuBtn">☰</button></header>
-<main class="main">
-<section id="calendarArea">
-<div id="content">Takvim veya Günlük Görünüm</div>
-</section>
-<aside class="side" id="side">
-<div id="inbox">Inbox</div>
-<div id="habits">Alışkanlıklar</div></aside>
-</main><nav class="tabbar"><button data-tab="home" class="active">🏠</button>
-<button data-tab="calendar">📆</button>
-<button data-tab="inbox">📥</button><button data-tab="habits">💡</button></nav>
-<script>const 
-SUPABASE_URL="https://czuprhvrnlqpipcytvwx.supabase.co";const 
-SUPABASE_KEY="sb_publishable_IR67FHQQNsnA9aNMizaq UA_HYGC8cKM";const 
-supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const tabs=document.querySelectorAll('.tabbar button');const content=document.getElementById('content');const side=document.getElementById('side');const menuBtn=document.getElementById('menuBtn');menuBtn.addEventListener('click',()=>{side.classList.toggle('open')});tabs.forEach(btn=>{btn.addEventListener('click',()=>{tabs.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const t=btn.dataset.tab;if(t==='home'){content.textContent='Bugün';}if(t==='calendar'){content.textContent='Aylık Takvim';}if(t==='inbox'){content.textContent='Inbox';}if(t==='habits'){content.textContent='Alışkanlıklar';}})});
+
+<body class="mode-week">
+
+  <div id="authOverlay" style="position:fixed; inset:0; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center;">
+    <div style="width:300px; text-align:center;">
+      <h2 style="margin-bottom:20px;">TodoApp</h2>
+      <div id="authMsg" style="color:var(--frame-termin); font-size:12px; margin-bottom:10px;"></div>
+      <input id="emailIn" placeholder="E-posta" style="width:100%; margin-bottom:10px;">
+      <input id="passIn" type="password" placeholder="Şifre" style="width:100%; margin-bottom:10px;">
+      <button id="btnLogin" class="btn active w-full" style="margin-bottom:10px;">Giriş</button>
+      <button id="btnReg" class="btn w-full">Kayıt</button>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <h3 style="margin:0;">Kart Düzenle</h3>
+        <button onclick="closeModal()" class="btn" style="padding:4px 10px;">✕</button>
+      </div>
+      
+      <div>
+        <span class="modal-label">Başlık</span>
+        <input id="mText" class="w-full" placeholder="Ne yapılacak?" />
+      </div>
+
+      <div class="modal-grid">
+        <div>
+          <span class="modal-label">Tür</span>
+          <select id="mType" class="w-full">
+            <option value="gorev">Görev</option>
+            <option value="termin">Termin</option>
+            <option value="hedef">Hedef</option>
+          </select>
+        </div>
+        <div>
+          <span class="modal-label">Etiket</span>
+          <select id="mTag" class="w-full"></select>
+        </div>
+      </div>
+
+      <div class="modal-grid">
+        <div>
+          <span class="modal-label">Saat</span>
+          <input id="mTime" type="time" class="w-full" />
+        </div>
+        <div>
+          <span class="modal-label">Tarih (Taşı)</span>
+          <input id="mDate" type="date" class="w-full" style="color-scheme:dark;" />
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-top:20px;">
+        <button id="modalDel" class="btn danger">Sil</button>
+        <button id="modalSave" class="btn active">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-wrap" id="desktopApp">
+    <header>
+      <div style="font-weight:700; font-size:20px;">todoapp</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="backMobile" class="btn back-to-mobile-btn">📱 Mobile Dön</button>
+        <span id="userEmail" style="font-size:12px; color:var(--muted);">...</span>
+        <button onclick="signOut()" class="btn danger">Çıkış</button>
+      </div>
+    </header>
+
+    <div class="bar">
+      <div style="display:flex; gap:5px;">
+        <button id="navPrev" class="btn">◀</button>
+        <button id="navToday" class="btn">Bugün</button>
+        <button id="navNext" class="btn">▶</button>
+      </div>
+      <div id="rangeTitle" style="font-weight:600; color:var(--text); min-width:150px; text-align:center;">...</div>
+      <div style="display:flex; gap:10px; flex:1; justify-content:flex-end;">
+        <div style="display:flex; background:var(--card); border-radius:10px; overflow:hidden; border:1px solid var(--line);">
+          <button id="viewWeek" class="btn" style="border:0; border-radius:0;">Hafta</button>
+          <button id="viewMonth" class="btn" style="border:0; border-radius:0;">Ay</button>
+        </div>
+        <select id="filterTag" style="width:120px;"><option value="all">Tümü</option></select>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="calendar-container">
+          <div class="dow-row" id="dowRow"></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <div class="entry-panel" id="bottomEntryPanel">
+          <div class="cell-head">
+            <span style="font-weight:600;" id="selDayTitle">Seçili Gün</span>
+            <button onclick="clearDone()" class="btn" style="font-size:11px; padding:4px 8px;">Tamamlananları Sil</button>
+          </div>
+          <form id="addForm" style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input id="inpText" placeholder="Yeni görev..." style="flex:2; min-width:140px;">
+            <input id="inpTime" type="time">
+            <select id="inpType"><option value="gorev">Görev</option><option value="termin">Termin</option><option value="hedef">Hedef</option></select>
+            <select id="inpTag"></select>
+            <button type="submit" class="btn active">+</button>
+          </form>
+          <div id="bottomTaskList" style="max-height:150px; overflow:auto; display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div id="sideEntrySlot" class="entry-panel hidden" style="border-color:var(--accent);"></div>
+
+        <div class="panel">
+          <div class="cell-head"><span>Brain Dump</span> <button onclick="addInbox()" class="btn" style="padding:2px 8px;">+</button></div>
+          <div id="inboxList" style="display:flex; flex-direction:column; gap:6px; overflow:auto;"></div>
+        </div>
+        <div class="panel">
+          <div class="cell-head"><span>Alışkanlıklar</span> <button onclick="addHabit()" class="btn" style="padding:2px 8px;">+</button></div>
+          <div id="habitList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="mobile-view" id="mobileApp">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <div>
+        <h1 style="font-size:22px; margin:0;" id="mHeaderTitle">Bugün</h1>
+        <div style="font-size:12px; color:var(--muted);">Günü değiştirmek için kaydır</div>
+      </div>
+      <button onclick="signOut()" class="btn danger">Çıkış</button>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+      <button class="btn active w-full">Günlük</button>
+      <button id="forceDesktopBtn" class="btn w-full">📅 Takvim Görünümü</button>
+    </div>
+
+    <div class="m-card">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span style="font-weight:600;">Alışkanlıklar</span>
+        <button onclick="addHabit()" class="btn" style="padding:2px 8px; font-size:16px;">+</button>
+      </div>
+      <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="m-card" id="mTouchArea" style="min-height:300px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <span id="mDateDisplay" style="color:var(--accent); font-weight:600;">...</span>
+        <button onclick="addQuickMobile()" class="btn active">+ Ekle</button>
+      </div>
+      <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <div id="mEmptyMsg" style="text-align:center; color:var(--muted); padding:20px; font-size:13px;">Görev yok.</div>
+    </div>
+  </div>
+
+<script>
+  // --- AYARLAR ---
+  const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // --- GLOBAL STATE ---
+  let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
+  const defaultTags = [
+    {name:'İş', color:'#60a5fa'}, {name:'Kişisel', color:'#fb7185'}, 
+    {name:'Okul', color:'#34d399'}, {name:'Finans', color:'#fbbf24'}
+  ];
+  
+  let state = {
+    mode: 'week', 
+    anchor: new Date(),
+    selected: new Date(),
+    user: null,
+    drag: null // { id, source, dateKey }
+  };
+
+  // --- YARDIMCILAR ---
+  const $ = (id) => document.getElementById(id);
+  const toKey = (d) => d.toISOString().split('T')[0];
+  const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+  const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
+  
+  function save() {
+    localStorage.setItem('todo_v3', JSON.stringify(db));
+    if(state.user) {
+      clearTimeout(window._sync);
+      window._sync = setTimeout(() => {
+        sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then();
+      }, 1500);
+    }
+  }
+
+  // --- DRAG DROP MANTIK (MASAÜSTÜ İÇİN) ---
+  function handleDragStart(e, id, source, dateKey) {
+    state.drag = { id, source, dateKey };
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.style.opacity = '0.5';
+  }
+
+  function handleDragEnd(e) {
+    e.target.style.opacity = '1';
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault(); // Drop'a izin vermek için şart
+    e.dataTransfer.dropEffect = 'move';
+    const cell = e.currentTarget;
+    if(!cell.classList.contains('drag-over')) cell.classList.add('drag-over');
+  }
+
+  function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+
+  function handleDrop(e, targetDateKey) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if(!state.drag) return;
+
+    const { id, source, dateKey } = state.drag;
+    // Aynı yere bıraktıysa işlem yapma
+    if(source === 'day' && dateKey === targetDateKey) return;
+
+    // 1. Öğeyi bul ve çıkar
+    let task;
+    if(source === 'inbox') {
+      const idx = db.inbox.findIndex(x => x.id === id);
+      if(idx > -1) task = db.inbox.splice(idx, 1)[0];
+    } else {
+      const list = db.days[dateKey];
+      const idx = list.findIndex(x => x.id === id);
+      if(idx > -1) task = list.splice(idx, 1)[0];
+      // Liste boşaldıysa key'i sil (opsiyonel temizlik)
+      if(list.length === 0) delete db.days[dateKey];
+    }
+
+    // 2. Yeni yere ekle
+    if(task) {
+      if(targetDateKey === 'inbox') { // Inbox'a atıldıysa (ileride eklenebilir)
+         db.inbox.push(task);
+      } else {
+         if(!db.days[targetDateKey]) db.days[targetDateKey] = [];
+         db.days[targetDateKey].push(task);
+      }
+      save();
+      render();
+    }
+    state.drag = null;
+  }
+
+  // --- RENDER ---
+  function render() {
+    // Tag Ayarları
+    if(!db.tags || !db.tags.length) db.tags = defaultTags;
+    const tagOpts = `<option value="">Etiket Yok</option>` + db.tags.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
+    $('inpTag').innerHTML = tagOpts; $('mTag').innerHTML = tagOpts; $('filterTag').innerHTML = `<option value="all">Tümü</option>` + db.tags.map(t=>`<option value="${t.name}">${t.name}</option>`).join('');
+
+    // Takvim Izgarası
+    const grid = $('calGrid'); grid.innerHTML = '';
+    const dow = $('dowRow'); dow.innerHTML = '';
+    ['PZT','SAL','ÇAR','PER','CUM','CTS','PAZ'].forEach(d => dow.innerHTML += `<div class="dow">${d}</div>`);
+
+    let start, daysCount;
+    if(state.mode === 'week') {
+      start = getStartOfWeek(state.anchor);
+      daysCount = 7;
+      $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`;
+    } else {
+      const y = state.anchor.getFullYear(), m = state.anchor.getMonth();
+      start = getStartOfWeek(new Date(y, m, 1));
+      daysCount = 35; // Basit 5 satır
+      $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'});
+    }
+
+    const todayK = toKey(new Date());
+    const selK = toKey(state.selected);
+
+    for(let i=0; i<daysCount; i++) {
+      const d = addDays(start, i);
+      const k = toKey(d);
+      const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
+      
+      const cell = document.createElement('div');
+      cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
+      
+      // Drag Events (Hücreye)
+      cell.ondragover = handleDragOver;
+      cell.ondragleave = handleDragLeave;
+      cell.ondrop = (e) => handleDrop(e, k);
+      cell.onclick = () => { state.selected = d; render(); };
+
+      // Hücre Başlığı
+      let html = `<div class="cell-head"><span class="day-num">${d.getDate()}</span> <button class="btn" style="padding:0 5px; font-size:16px; line-height:1;" onclick="quickAddModal('${k}', event)">+</button></div>`;
+      html += `<div class="cell-cards">`;
+      
+      // Kartlar
+      const tasks = db.days[k] || [];
+      const filter = $('filterTag').value;
+      
+      tasks.forEach(t => {
+        if(filter !== 'all' && t.tag !== filter) return;
+        const color = t.type==='termin' ? 'var(--frame-termin)' : t.type==='hedef' ? 'var(--frame-hedef)' : 'var(--frame-gorev)';
+        // Kart Oluşturma (DOM Element olarak) - string değil, eventler için
+      });
+      
+      cell.innerHTML = html + `</div>`; 
+      
+      // Kartları ekle (innerHTML sonrası DOM'a append etmeliyiz ki event listener'lar çalışsın)
+      const cardCont = cell.querySelector('.cell-cards');
+      tasks.forEach(t => {
+         if(filter !== 'all' && t.tag !== filter) return;
+         const el = createCardEl(t, 'day', k);
+         cardCont.appendChild(el);
+      });
+
+      grid.appendChild(cell);
+    }
+
+    renderPanels();
+    renderMobile();
+  }
+
+  function createCardEl(t, source, dateKey) {
+    const el = document.createElement('div');
+    el.className = `task-card ${t.done?'done':''}`;
+    el.draggable = true;
+    el.style.borderLeftColor = t.type==='termin'?'var(--frame-termin)':t.type==='hedef'?'var(--frame-hedef)':'var(--frame-gorev)';
+    el.innerHTML = `
+      <div style="font-weight:600; margin-bottom:2px; pointer-events:none;">${t.text}</div>
+      <div style="display:flex; justify-content:space-between; color:var(--muted); pointer-events:none;">
+        <span>${t.time||''}</span> <span>${t.tag||''}</span>
+      </div>
+    `;
+    
+    // Drag Events (Karta)
+    el.ondragstart = (e) => handleDragStart(e, t.id, source, dateKey);
+    el.ondragend = handleDragEnd;
+    
+    // Tıklama (Düzenle)
+    el.onclick = (e) => { e.stopPropagation(); openModal(t, source, dateKey); };
+    
+    return el;
+  }
+
+  function renderPanels() {
+    const k = toKey(state.selected);
+    $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
+    
+    // Alt Panel Listesi
+    const list = $('bottomTaskList'); list.innerHTML = '';
+    (db.days[k]||[]).forEach(t => {
+       const row = document.createElement('div');
+       row.style.display = 'flex'; row.style.gap='8px'; row.style.padding='6px'; row.style.background='#121215'; row.style.borderRadius='8px'; row.style.alignItems='center';
+       row.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:16px; height:16px;"> <span style="flex:1; font-size:13px; text-decoration:${t.done?'line-through':''}">${t.text}</span>`;
+       row.querySelector('input').onchange = () => { t.done=!t.done; save(); render(); };
+       row.ondblclick = () => openModal(t, 'day', k);
+       list.appendChild(row);
+    });
+
+    // Sidebar: Brain Dump
+    const ibx = $('inboxList'); ibx.innerHTML = '';
+    db.inbox.forEach(t => {
+      const el = createCardEl(t, 'inbox', null);
+      ibx.appendChild(el);
+    });
+
+    // Sidebar: Habits
+    const hList = $('habitList'); hList.innerHTML = '';
+    const today = toKey(new Date());
+    db.habits.forEach(h => {
+      const isDone = (db.habitLog[today]||[]).includes(h.id);
+      const row = document.createElement('div');
+      row.style.cssText = "display:flex; justify-content:space-between; background:#121215; padding:8px; border-radius:8px; align-items:center;";
+      row.innerHTML = `<span>${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
+      row.querySelector('input').onchange = (e) => {
+        if(!db.habitLog[today]) db.habitLog[today] = [];
+        if(e.target.checked) db.habitLog[today].push(h.id);
+        else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
+        save(); render();
+      };
+      hList.appendChild(row);
+    });
+
+    // Month Mode Side Slot Logic
+    const sideSlot = $('sideEntrySlot');
+    if(state.mode === 'month') {
+      sideSlot.classList.remove('hidden');
+      $('bottomEntryPanel').classList.add('hidden');
+      // Kopyala yapıştır yerine içeriği oluştur
+      sideSlot.innerHTML = `
+        <div style="font-weight:600; margin-bottom:10px;">${state.selected.toLocaleDateString('tr-TR')}</div>
+        <button onclick="addQuickMobile()" class="btn active w-full" style="margin-bottom:10px;">+ Görev Ekle</button>
+        <div id="sideTaskList" style="overflow:auto; flex:1; display:flex; flex-direction:column; gap:5px;"></div>
+      `;
+      // Side listeyi doldur (yukarıdaki list mantığının aynısı)
+      const sl = sideSlot.querySelector('#sideTaskList');
+      (db.days[k]||[]).forEach(t => {
+         const d = document.createElement('div');
+         d.className = 'task-card';
+         d.innerText = t.text;
+         d.style.opacity = t.done ? 0.5 : 1;
+         d.onclick = () => openModal(t, 'day', k);
+         sl.appendChild(d);
+      });
+    } else {
+      sideSlot.classList.add('hidden');
+      $('bottomEntryPanel').classList.remove('hidden');
+    }
+  }
+
+  function renderMobile() {
+    $('mHeaderTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long'});
+    $('mDateDisplay').innerText = state.selected.toLocaleDateString('tr-TR', {day:'numeric', month:'long'});
+    
+    // Habits Mobile
+    const mh = $('mHabitList'); mh.innerHTML = '';
+    const today = toKey(new Date());
+    db.habits.forEach(h => {
+      const isDone = (db.habitLog[today]||[]).includes(h.id);
+      const div = document.createElement('div');
+      div.style.cssText = "display:flex; gap:10px; padding:10px; background:#121215; border-radius:10px; align-items:center;";
+      div.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="font-size:14px;">${h.name}</span> <button style="margin-left:auto; background:none; border:0; color:#444;" onclick="delHabit('${h.id}')">🗑</button>`;
+      div.querySelector('input').onchange = (e) => {
+         if(!db.habitLog[today]) db.habitLog[today] = [];
+         if(e.target.checked) db.habitLog[today].push(h.id);
+         else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
+         save(); render();
+      };
+      mh.appendChild(div);
+    });
+
+    // Task Mobile
+    const mt = $('mTaskList'); mt.innerHTML = '';
+    const k = toKey(state.selected);
+    const tasks = db.days[k] || [];
+    $('mEmptyMsg').style.display = tasks.length ? 'none' : 'block';
+    
+    tasks.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'm-card'; div.style.margin = '0'; div.style.padding = '12px';
+      div.innerHTML = `
+        <div style="display:flex; gap:12px; align-items:center;">
+           <input type="checkbox" ${t.done?'checked':''} style="width:22px; height:22px;">
+           <div style="flex:1;" onclick="openModalById('${t.id}', 'day', '${k}')">
+             <div style="font-size:15px; font-weight:500; text-decoration:${t.done?'line-through':''}; opacity:${t.done?0.6:1}">${t.text}</div>
+             <div style="font-size:12px; color:var(--muted); margin-top:2px;">${t.time||''} • ${t.tag||''}</div>
+           </div>
+        </div>
+      `;
+      div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
+      mt.appendChild(div);
+    });
+  }
+
+  // --- CRUD & ACTIONS ---
+  $('addForm').onsubmit = (e) => {
+    e.preventDefault();
+    const txt = $('inpText').value;
+    if(!txt) return;
+    const task = { id: Date.now().toString(), text: txt, time: $('inpTime').value, type: $('inpType').value, tag: $('inpTag').value, done:false };
+    const k = toKey(state.selected);
+    if(!db.days[k]) db.days[k] = [];
+    db.days[k].push(task);
+    $('inpText').value = '';
+    save(); render();
+  };
+
+  function addInbox() { const t = prompt('Brain Dump:'); if(t) { db.inbox.push({id:Date.now().toString(), text:t, type:'gorev', done:false}); save(); render(); } }
+  function addHabit() { const t = prompt('Yeni Alışkanlık:'); if(t) { db.habits.push({id:Date.now().toString(), name:t}); save(); render(); } }
+  function delHabit(id) { if(confirm('Sil?')) { db.habits=db.habits.filter(x=>x.id!==id); save(); render(); } }
+  function addQuickMobile() {
+    const t = prompt('Yeni Görev:'); 
+    if(t) { 
+      const k = toKey(state.selected);
+      if(!db.days[k]) db.days[k]=[];
+      db.days[k].push({id:Date.now().toString(), text:t, type:'gorev', done:false}); 
+      save(); render(); 
+    }
+  }
+  function quickAddModal(k, e) {
+    e.stopPropagation();
+    state.selected = new Date(k);
+    render();
+    setTimeout(()=> $('inpText').focus(), 50); // Desktopta inputa odaklan
+  }
+  function clearDone() {
+    const k = toKey(state.selected);
+    if(db.days[k]) { db.days[k] = db.days[k].filter(t => !t.done); save(); render(); }
+  }
+
+  // --- MODAL & EDIT ---
+  let editCtx = null;
+  function openModal(task, source, dateKey) {
+    editCtx = { task, source, dateKey };
+    $('modalOverlay').style.display = 'flex';
+    $('mText').value = task.text;
+    $('mTime').value = task.time || '';
+    $('mType').value = task.type || 'gorev';
+    $('mTag').value = task.tag || '';
+    $('mDate').value = source === 'day' ? dateKey : ''; // Tarihi göster
+  }
+  function openModalById(id, source, dateKey) {
+    const list = source==='inbox' ? db.inbox : db.days[dateKey];
+    const t = list.find(x=>x.id === id);
+    if(t) openModal(t, source, dateKey);
+  }
+  function closeModal() { $('modalOverlay').style.display = 'none'; editCtx = null; }
+  
+  $('modalSave').onclick = () => {
+    if(!editCtx) return;
+    const { task, source, dateKey } = editCtx;
+    task.text = $('mText').value;
+    task.time = $('mTime').value;
+    task.type = $('mType').value;
+    task.tag = $('mTag').value;
+    
+    // Tarih Değiştirme Mantığı (Mobile Drag alternatifi)
+    const newDate = $('mDate').value;
+    const oldDate = source === 'day' ? dateKey : '';
+    
+    if(newDate && newDate !== oldDate) {
+      // Eskiden sil
+      if(source === 'inbox') db.inbox = db.inbox.filter(x=>x.id!==task.id);
+      else {
+        db.days[oldDate] = db.days[oldDate].filter(x=>x.id!==task.id);
+        if(db.days[oldDate].length===0) delete db.days[oldDate];
+      }
+      // Yeniye ekle
+      if(!db.days[newDate]) db.days[newDate] = [];
+      db.days[newDate].push(task);
+      state.selected = new Date(newDate); // O güne git
+    }
+
+    save(); render(); closeModal();
+  };
+  
+  $('modalDel').onclick = () => {
+    if(!editCtx) return;
+    if(confirm('Silinsin mi?')) {
+      const { task, source, dateKey } = editCtx;
+      if(source==='inbox') db.inbox = db.inbox.filter(x=>x.id!==task.id);
+      else db.days[dateKey] = db.days[dateKey].filter(x=>x.id!==task.id);
+      save(); render(); closeModal();
+    }
+  };
+
+  // --- VIEW SWITCHING ---
+  // Telefondan Takvim'e geçiş
+  $('forceDesktopBtn').onclick = () => {
+    document.body.classList.add('force-desktop');
+    // Takvim modunu aç ki tam ekran görsün
+    state.mode = 'month'; 
+    $('viewMonth').click();
+  };
+  // Geri dön
+  $('backMobile').onclick = () => {
+    document.body.classList.remove('force-desktop');
+  };
+
+  $('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week '+ (document.body.classList.contains('force-desktop')?'force-desktop':''); render(); };
+  $('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month '+ (document.body.classList.contains('force-desktop')?'force-desktop':''); render(); };
+  
+  $('navPrev').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); render(); };
+  $('navNext').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1); render(); };
+  $('navToday').onclick = () => { state.anchor=new Date(); state.selected=new Date(); render(); };
+  
+  $('filterTag').onchange = render;
+
+  // Swipe Mobile
+  let touchX = 0;
+  $('mTouchArea').ontouchstart = e => touchX = e.changedTouches[0].clientX;
+  $('mTouchArea').ontouchend = e => {
+    if(Math.abs(e.changedTouches[0].clientX - touchX) > 50) {
+      const dir = e.changedTouches[0].clientX < touchX ? 1 : -1;
+      state.selected = addDays(state.selected, dir);
+      render();
+    }
+  };
+
+  // --- INIT ---
+  async function init() {
+    const local = localStorage.getItem('todo_v3');
+    if(local) db = JSON.parse(local);
+    
+    // Auth Check
+    const { data } = await sb.auth.getSession();
+    if(data.session) {
+      state.user = data.session.user;
+      $('authOverlay').classList.add('hidden');
+      $('userEmail').innerText = state.user.email;
+      // Pull Data
+      const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single();
+      if(remote && remote.content) { db = remote.content; save(); }
+    }
+    
+    render();
+  }
+
+  $('btnLogin').onclick = async () => {
+    const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value });
+    if(error) $('authMsg').innerText = error.message; else location.reload();
+  };
+  $('btnReg').onclick = async () => {
+    const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value });
+    if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı! Giriş yapın.";
+  };
+  window.signOut = async () => { await sb.auth.signOut(); location.reload(); };
+
+  init();
 </script>
 </body>
 </html>
