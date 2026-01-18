@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#0f0f10" />
-  <title>TodoApp Pro Final v3.1</title>
+  <title>TodoApp Pro v4</title>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
@@ -16,9 +16,9 @@
       --month-cell-h: 110px;
       
       /* Type Colors */
-      --c-termin: #fb7185;
-      --c-hedef: #60a5fa;
-      --c-gorev: #34d399;
+      --c-termin: #fb7185; /* Kırmızı */
+      --c-hedef: #60a5fa;  /* Mavi */
+      --c-gorev: #34d399;  /* Yeşil */
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,8 +31,9 @@
     .btn:hover { border-color: #525252; background: var(--card-hover); }
     .btn.danger { color: #f87171; border-color: rgba(248,113,113,.2); }
     .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
-    .icon-btn { padding:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .icon-btn:hover { color:var(--text); background:rgba(255,255,255,0.1); border-radius:4px; }
+    
+    .icon-btn { padding:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+    .icon-btn:hover { color:var(--text); background:rgba(255,255,255,0.1); }
 
     input, select { background: #121212; color: var(--text); border: 1px solid #333; border-radius: 6px; padding: 8px; outline: none; font-size: 13px; }
     input:focus, select:focus { border-color: var(--accent); }
@@ -42,7 +43,7 @@
     .app-wrap { max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; width:100%; display: flex; flex-direction: column; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
     .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-shrink: 0; }
-    .main-grid { display: grid; grid-template-columns: 1fr 260px; gap: 16px; flex: 1; min-height: 0; }
+    .main-grid { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
     
     .left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
     .calendar-container { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; min-height: 0; border: 1px solid var(--line); border-radius: 12px; }
@@ -62,10 +63,12 @@
     .cell.today .day-num { color: var(--accent); }
     .cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
 
+    /* TASK CARD */
     .task-card {
       background: var(--card); border-radius: 6px; padding: 6px 8px;
       font-size: 12px; cursor: grab; user-select: none;
-      border-left: 4px solid transparent; transition: transform .1s; position:relative; margin-bottom: 0;
+      border-left: 4px solid transparent; /* Type Color */
+      transition: transform .1s; position:relative; margin-bottom: 0;
     }
     .task-card:active { cursor: grabbing; transform: scale(0.98); }
     .task-card.done { opacity: 0.5; text-decoration: line-through; filter:grayscale(1); }
@@ -86,7 +89,6 @@
     /* MOBILE */
     .mobile-view { display: none; height: 100vh; background: var(--bg); flex-direction:column; }
     .m-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:80px; }
-    
     .m-add-panel { background: #1c1c1f; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
     .m-day-container { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
 
@@ -111,6 +113,7 @@
       .mobile-view { display: flex; }
     }
     
+    /* Mode Specifics */
     body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
     body.mode-month .cell { height: var(--month-cell-h); }
     body.mode-month .bottom-panel-container { display: none; }
@@ -172,7 +175,7 @@
         <h3 style="margin:0;">Etiket Ayarları</h3>
         <button onclick="$('tagsModal').style.display='none'" class="icon-btn">✕</button>
       </div>
-      <div style="margin-bottom:10px; font-size:12px; color:var(--muted);">Listeyi oklarla sıralayabilirsin. En üstteki en yüksek önceliklidir.</div>
+      <div style="margin-bottom:10px; font-size:12px; color:var(--muted);">Sıralama (En üstteki = En yüksek öncelik)</div>
       <div id="tagsListConfig" style="margin-bottom:15px; max-height:300px; overflow-y:auto;"></div>
       <div style="display:flex; gap:8px; border-top:1px solid var(--line); padding-top:15px; flex-wrap:wrap;">
         <input id="newTagName" placeholder="Yeni Etiket" style="flex:1;">
@@ -204,7 +207,7 @@
           <button id="viewWeek" class="btn" style="border:0; border-radius:0;">Hafta</button>
           <button id="viewMonth" class="btn" style="border:0; border-radius:0;">Ay</button>
         </div>
-        <select id="filterTag" style="width:120px;"><option value="all">Tümü</option></select>
+        <select id="filterTag" style="width:120px;"></select>
       </div>
     </div>
 
@@ -214,19 +217,27 @@
           <div class="dow-row" id="dowRow"></div>
           <div class="cal-grid" id="calGrid"></div>
         </div>
+        
         <div class="bottom-panel-container" id="bottomEntryPanel">
           <div class="bp-col">
             <div class="bp-head">
               <span id="selDayTitle">Seçili Gün</span>
-              <button onclick="clearDone()" class="icon-btn" title="Tamamlananları Sil">🗑</button>
+              <button onclick="clearDone()" class="icon-btn" title="Temizle">🗑</button>
             </div>
             <form id="addForm" style="display:flex; gap:6px;">
               <input id="inpText" placeholder="Yeni görev..." style="flex:1;">
+              <input id="inpTime" type="time">
+              <select id="inpType">
+                <option value="gorev">Görev</option>
+                <option value="termin">Termin</option>
+                <option value="hedef">Hedef</option>
+              </select>
               <select id="inpTag" style="width:100px;"></select>
               <button type="submit" class="btn active">+</button>
             </form>
             <div id="bottomTaskList" class="bp-list"></div>
           </div>
+          
           <div class="bp-col habit-section" style="border-left:1px solid var(--line); padding-left:20px;">
             <div class="bp-head">
               <span>Brain Dump</span>
@@ -236,6 +247,7 @@
           </div>
         </div>
       </div>
+      
       <aside class="sidebar">
         <div id="sidebar-month-slot" class="panel hidden" style="border-color:var(--accent); max-height:none; height:100%;"></div>
         <div id="sidebar-habits" class="panel habit-section">
@@ -347,10 +359,11 @@
   
   function save() {
     if(!db.tags || db.tags.length===0) db.tags = defaultTags;
-    localStorage.setItem('todo_final_v3', JSON.stringify(db));
+    localStorage.setItem('todo_final_v4', JSON.stringify(db));
     if(state.user) { clearTimeout(window._sync); window._sync = setTimeout(() => { sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then(); }, 1500); }
   }
 
+  // SORTING: 1.Type, 2.Time, 3.Tag Order
   function getTaskScore(t) {
     let typeScore = t.type === 'termin' ? 1 : t.type === 'hedef' ? 2 : 3;
     let timeVal = t.time ? parseInt(t.time.replace(':','')) : 9999;
@@ -371,9 +384,16 @@
   }
 
   function renderCalendar() {
+    // Fill Tag Selects
     const tagOpts = db.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     $('inpTag').innerHTML = tagOpts; $('mTag').innerHTML = tagOpts; $('mAddTag').innerHTML = tagOpts;
-    $('filterTag').innerHTML = `<option value="all">Tümü</option>` + tagOpts;
+    
+    // Filter logic: In Month Mode, if "all" is selected but no user override, maybe we can force defaults?
+    // Actually user requested "Default Termin & Gorev visible". We will handle this in filterPass.
+    // Let's populate filter select:
+    // If Month mode, we add a specific "Varsayılan" option or just treat 'all' smartly.
+    // Simplified: Just show 'Tümü' and individual tags. The visibility logic is inside filterPass.
+    $('filterTag').innerHTML = `<option value="all">Filtre: Hepsi (Varsayılan)</option>` + tagOpts;
 
     const grid = $('calGrid'); grid.innerHTML = '';
     const dow = $('dowRow'); dow.innerHTML = '';
@@ -393,6 +413,7 @@
       cell.onclick = () => { state.selected = d; render(); };
       cell.innerHTML = `<div class="cell-head"><span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button></div><div class="cell-cards"></div>`;
       const cardCont = cell.querySelector('.cell-cards');
+      
       let tasks = (db.days[k]||[]).filter(t => filterPass(t));
       tasks.sort(sortTasks);
       tasks.forEach(t => cardCont.appendChild(createCardEl(t, 'day', k)));
@@ -400,14 +421,37 @@
     }
   }
 
-  function filterPass(t) { const f = $('filterTag').value; if(f === 'all') return true; return t.tag === f; }
+  function filterPass(t) {
+    const f = $('filterTag').value;
+    
+    // Month Mode Logic: Show "Termin" & "Gorev" by default if filter is 'all'. 
+    // Wait, user said "Termin and Görev". What about Hedef? 
+    // Let's assume if filter is 'all' in Month mode, we show everything, 
+    // BUT visually prioritize. Or, as requested, HIDE Hedef?
+    // User: "Aylık gorünümde varsayılan termin ve görevlerin gözükmesi olsun"
+    if (state.mode === 'month' && f === 'all') {
+      // If you strictly want ONLY Termin & Gorev:
+      return ['termin', 'gorev'].includes(t.type);
+      // If you want Hedef too, remove this if block.
+    }
+    
+    if(f === 'all') return true;
+    return t.tag === f;
+  }
+
   function getTagColor(id) { const t = db.tags.find(x => x.id === id); return t ? t.color : '#555'; }
 
   function createCardEl(t, source, dateKey) {
+    // Left Border = Type Color
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
+    // Background = Tag Color (Light)
     const bg = hexToRgba(getTagColor(t.tag), 0.15);
+    
     const el = document.createElement('div'); el.className = `task-card ${t.done?'done':''}`;
-    el.draggable = true; el.style.borderLeftColor = borderCol; el.style.background = bg;
+    el.draggable = true; 
+    el.style.borderLeftColor = borderCol; 
+    el.style.background = bg;
+
     el.innerHTML = `<div style="font-weight:500; margin-bottom:2px; pointer-events:none;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;"><span>${t.time||''}</span></div>`;
     el.ondragstart = (e) => { state.drag = { id: t.id, source, dateKey }; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; };
     el.ondragend = (e) => { e.target.style.opacity = '1'; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); };
@@ -421,14 +465,17 @@
     const bpList = $('bottomTaskList'); bpList.innerHTML = '';
     let dayTasks = (db.days[k]||[]).slice().sort(sortTasks);
     dayTasks.forEach(t => bpList.appendChild(createRowItem(t, 'day', k)));
+    
     const inboxList = $('inboxListBottom'); inboxList.innerHTML = '';
     let dumpTasks = db.inbox.slice().sort(sortTasks);
     dumpTasks.forEach(t => inboxList.appendChild(createRowItem(t, 'inbox', null)));
+    
     const mSlot = $('sidebar-month-slot'); 
     if(state.mode === 'month') {
       mSlot.innerHTML = `<div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div><form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;"><input class="w-full" placeholder="Hızlı Ekle..."><button class="btn active">+</button></form><div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>`;
       const cont = mSlot.querySelector('div:last-child'); dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
     }
+    
     const hList = $('habitList'); hList.innerHTML = '';
     const today = toKey(new Date());
     db.habits.forEach(h => {
@@ -445,6 +492,7 @@
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
     div.style.borderLeft = `3px solid ${borderCol}`;
     div.style.background = hexToRgba(getTagColor(t.tag), 0.1);
+    
     div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="cursor:pointer;"> <span style="flex:1; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span><span style="font-size:10px; color:var(--muted);">${t.time||''}</span>`;
     div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
     div.ondblclick = () => openModal(t, source, dateKey);
@@ -457,6 +505,11 @@
     if(tab==='day') { $('mViewDay').classList.remove('hidden'); if($('mViewDay').querySelector('.habit-section').classList.contains('hidden') && state.mode !== 'month') { $('mViewDay').querySelector('.habit-section').classList.remove('hidden'); } }
     if(tab==='cal') { $('mViewCal').classList.remove('hidden'); state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1); renderMobileCal(); }
     if(tab==='dump') $('mViewDump').classList.remove('hidden');
+  }
+
+  function mobileGoToday() {
+    state.selected = new Date(); state.anchor = new Date();
+    const dayBtn = document.querySelectorAll('.m-nav-item')[0]; switchMobileTab('day', dayBtn); render();
   }
 
   function renderMobileDay() {
@@ -515,7 +568,17 @@
     });
   }
 
-  $('addForm').onsubmit = (e) => { e.preventDefault(); const txt=$('inpText').value; if(!txt)return; addTask(txt, '', 'gorev', $('inpTag').value, 'day'); $('inpText').value=''; };
+  $('addForm').onsubmit = (e) => { 
+    e.preventDefault(); 
+    const txt=$('inpText').value; 
+    const time=$('inpTime').value;
+    const type=$('inpType').value;
+    const tag=$('inpTag').value;
+    if(!txt)return; 
+    addTask(txt, time, type, tag, 'day'); 
+    $('inpText').value=''; 
+  };
+
   function addTask(txt, time, type, tag, dest) {
     const t = { id: Date.now().toString(), text: txt, time, type, tag, done:false };
     if(dest==='inbox') db.inbox.push(t); else { const k=toKey(state.selected); if(!db.days[k]) db.days[k]=[]; db.days[k].push(t); }
@@ -530,11 +593,6 @@
   function navDay(d) { state.selected = addDays(state.selected, d); render(); }
   function navMonth(d) { state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1); renderMobileCal(); }
   
-  function mobileGoToday() {
-    state.selected = new Date(); state.anchor = new Date();
-    const dayBtn = document.querySelectorAll('.m-nav-item')[0]; switchMobileTab('day', dayBtn); render();
-  }
-
   function toggleMobileAdd() { const p = $('mAddPanel'); p.style.display = p.style.display === 'none' ? 'flex' : 'none'; if(p.style.display === 'flex') $('mAddText').focus(); }
   function submitMobileAdd() { const txt = $('mAddText').value; const time = $('mAddTime').value; const tag = $('mAddTag').value; const type = $('mAddType').value; if(txt) { addTask(txt, time, type, tag, 'day'); $('mAddText').value=''; toggleMobileAdd(); } }
   function addQuickMobile(dest) { if(dest === 'inbox') { const t = prompt('Brain Dump:'); if(t) addTask(t,'','gorev',db.tags[0].id,'inbox'); } }
@@ -571,7 +629,7 @@
   $('filterTag').onchange = render;
 
   async function init() {
-    const local = localStorage.getItem('todo_final_v3'); if(local) db = JSON.parse(local);
+    const local = localStorage.getItem('todo_final_v4'); if(local) db = JSON.parse(local);
     const { data } = await sb.auth.getSession();
     if(data.session) { state.user = data.session.user; $('authOverlay').classList.add('hidden'); $('userEmail').innerText = state.user.email; const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single(); if(remote && remote.content) { db = remote.content; save(); } }
     render();
