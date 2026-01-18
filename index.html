@@ -2,1906 +2,796 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#111111" />
-  <title>todoapp</title>
+  <title>TodoApp Pro</title>
 
-  <!-- Supabase v2 -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+  
   <style>
-    :root{
-      --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --frame-termin:#fb7185; --frame-hedef:#60a5fa; --frame-gorev:#34d399;
-      --monthCellH: 64px;
-    }
-    *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    html, body{ height:100%; }
-    body{ margin:0; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1440px; margin:0 auto; padding:16px; }
-    .hidden{ display:none !important; }
-
-    /* AUTH */
-    .auth-overlay{
-      position: fixed; inset: 0; background: var(--bg); z-index: 9999;
-      display:flex; align-items:center; justify-content:center;
-      padding:16px;
-    }
-    .auth-box{
-      width:min(380px, 100%);
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:18px;
-      box-shadow: var(--shadow);
-      display:flex; flex-direction:column; gap:10px;
-    }
-    .auth-box h2{ margin:0 0 6px; font-size:16px; }
-    .auth-input{
-      background:#101014; color:var(--text);
-      border:1px solid var(--line);
-      border-radius:12px; padding:10px 12px;
-      outline:none;
-    }
-    .auth-row{ display:flex; gap:8px; }
-    .auth-btn{
-      flex:1;
-      border:1px solid var(--line);
-      background:#1f1f24; color:var(--text);
-      border-radius:12px;
-      padding:10px 12px;
-      cursor:pointer;
-      font-weight:650;
-    }
-    .auth-btn.primary{ background:var(--text); color:var(--bg); border-color:transparent; }
-    .auth-msg{ min-height:18px; font-size:12px; color:var(--muted); white-space:pre-wrap; }
-    .auth-err{ color: #fb7185; }
-
-    /* HEADER / UI */
-    header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; }
-    .left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
-
-    .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; }
-    .btn:hover{ border-color:#3a3a44; }
-    .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
-
-    .seg{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-    .seg button{ border:0; background:transparent; color:var(--muted); padding:8px 12px; cursor:pointer; }
-    .seg button.active{ color:var(--text); background:#1f1f24; }
-
-    .bar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin:10px 0 12px; flex-wrap:wrap; }
-    .nav{ display:flex; gap:8px; align-items:center; }
-    .title{ font-size:14px; color:var(--muted); }
-    .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-
-    select, input[type="text"], input[type="search"], input[type="time"]{
-      background:#101014; color:var(--text);
-      border:1px solid var(--line); border-radius:12px;
-      padding:8px 10px; outline:none; font-size:13px;
+    :root {
+      --bg: #0f0f10;
+      --card: #17171a;
+      --card-hover: #1f1f24;
+      --muted: #a3a3a3;
+      --text: #f5f5f5;
+      --line: #2a2a2f;
+      --accent: #7dd3fc;
+      --shadow: 0 10px 30px rgba(0,0,0,.5);
+      
+      --frame-termin: #fb7185; /* Kırmızımsı */
+      --frame-hedef: #60a5fa;  /* Mavi */
+      --frame-gorev: #34d399;  /* Yeşil */
+      
+      --month-cell-h: 120px;
     }
 
-    .main{
-      display:grid;
-      grid-template-columns: 1fr 240px;
-      gap:12px;
-      align-items:start;
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; height: 100vh; overflow: hidden; }
+    
+    /* UTILS */
+    .hidden { display: none !important; }
+    .w-full { width: 100%; }
+    .btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all .2s; font-size: 13px; }
+    .btn:hover { border-color: #444; background: var(--card-hover); }
+    .btn.danger { color: #fb7185; border-color: rgba(251,113,133,.3); }
+    .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    
+    input, select { background: #101014; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; outline: none; font-size: 13px; }
+    input:focus, select:focus { border-color: var(--accent); }
+
+    /* LAYOUT DESKTOP */
+    .app-wrap {
+      max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; display: flex; flex-direction: column;
+      transition: filter .3s;
     }
 
-    .calendarArea{
-      height: calc(100vh - 210px);
-      overflow:auto;
-      padding-right:4px;
-    }
-    body.weekMode .calendarArea{ height: calc(100vh - 320px); }
-    body.monthMode .calendarArea{ height: calc(100vh - 140px); }
+    /* Header */
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+    .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    
+    /* Filters Bar */
+    .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; gap: 12px; flex-wrap: wrap; }
+    .nav-grp { display: flex; gap: 6px; }
+    .filter-grp { display: flex; gap: 8px; align-items: center; flex: 1; justify-content: flex-end; }
+    .range-title { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; font-weight: 500; min-width: 140px; text-align: center; }
 
-    .grid{ display:grid; gap:10px; }
-    .month{ grid-template-columns: repeat(7, 1fr); }
-    .week{ grid-template-columns: repeat(7, 1fr); }
-    .dow{ font-size:12px; color:var(--muted); padding:0 6px; }
-
-    .cell{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:10px;
-      cursor:pointer;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow:hidden;
-      min-width:0;
-    }
-    .cell.weekCell{ min-height:280px; }
-    .cell.monthCell{ height: var(--monthCellH); }
-    .cell.out{ opacity:.55; }
-    .cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
-    .cell.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
-
-    .dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; }
-    .date{ font-size:12px; color:var(--muted); }
-    .count{ font-size:12px; color:var(--accent); }
-
-    .plusBtn{
-      width:26px; height:26px;
-      display:grid; place-items:center;
-      border-radius:10px;
-      border:1px solid var(--line);
-      background:transparent;
-      color:var(--muted);
-      cursor:pointer;
-      flex:0 0 auto;
-    }
-    .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
-
-    .cards{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      overflow:auto;
-      min-height:0;
-      padding-right:2px;
+    /* Main Grid System */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 260px; /* Default Week Mode: Calendar | Sidebar */
+      gap: 16px;
+      flex: 1;
+      min-height: 0; /* Nested scroll fix */
     }
 
-    /* IMPORTANT: Week/day cards overflow fix */
-    .weekCell .cards{ max-height: 100%; overflow:auto; }
-
-    .card{
-      border:2px solid var(--frameColor, var(--line));
-      border-radius:12px;
-      padding:6px 8px;
-      background: var(--fillColor, rgba(255,255,255,0.04));
-      user-select:none;
-      min-width:0;
-      position:relative;
-    }
-    .card[draggable="true"]{ cursor:grab; }
-    .card.done{ opacity:.55; }
-
-    .cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
-    .checkBtn{
-      width:18px; height:18px;
-      display:grid; place-items:center;
-      border-radius:7px;
-      border:1px solid rgba(0,0,0,.25);
-      background:rgba(0,0,0,.10);
-      color:rgba(255,255,255,.85);
-      cursor:pointer;
-      flex:0 0 auto;
-      font-size:11px;
-      line-height:1;
-      margin-top:1px;
-    }
-    .cardBody{
-      flex:1 1 auto;
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      padding-right:22px;
-    }
-    .titleText{
-      font-size:12.8px;
-      line-height:1.2;
-      color: var(--text);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .timeText{
-      font-size:11px;
-      line-height:1.1;
-      color: rgba(255,255,255,.75);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+    /* LEFT SIDE: Calendar + Bottom Panel */
+    .left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    
+    .calendar-container {
+      flex: 1; 
+      display: flex; flex-direction: column; 
+      background: var(--bg); 
+      overflow: hidden; /* Scroll içeride olacak */
+      min-height: 0;
     }
 
-    body.monthMode .card{ padding:4px 6px; border-radius:10px; }
-    body.monthMode .cards{ gap:4px; }
-    body.monthMode .checkBtn{ width:14px; height:14px; border-radius:6px; font-size:9px; margin-top:0; }
-    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; }
-    body.monthMode .titleText{ font-size:11px; flex: 1 1 auto; }
-    body.monthMode .timeText{ font-size:9.5px; opacity:.85; flex: 0 0 auto; }
+    .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+    .dow { color: var(--muted); font-size: 12px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
 
-    .moreBtn{
-      position:absolute;
-      top:6px; right:6px;
-      width:18px; height:18px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(0,0,0,.12);
-      color:rgba(255,255,255,.85);
-      cursor:pointer;
-      display:grid; place-items:center;
-      font-size:14px;
-      line-height:1;
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; overflow-y: auto; padding-right: 4px; flex: 1; }
+    
+    /* WEEK CELL */
+    .cell {
+      background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px;
+      display: flex; flex-direction: column; gap: 6px; min-height: 120px; position: relative;
+      transition: border-color .2s;
+    }
+    .cell:hover { border-color: #333; }
+    .cell.today { border-color: var(--accent); background: rgba(125, 211, 252, 0.03); }
+    .cell.selected { outline: 2px solid var(--accent); }
+    .cell.out { opacity: 0.4; }
+    .cell-head { display: flex; justify-content: space-between; align-items: center; }
+    .day-num { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .add-tiny { width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 14px; line-height: 0; background: transparent; }
+    .add-tiny:hover { color: var(--text); border-color: var(--text); }
+    
+    .cell-cards { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; }
+
+    /* CARD STYLE */
+    .task-card {
+      background: rgba(255,255,255,0.03); border-left: 3px solid var(--line);
+      border-radius: 4px; padding: 6px; font-size: 12px; cursor: grab; user-select: none;
+      position: relative; display: flex; gap: 6px; align-items: flex-start;
+      transition: transform .1s, opacity .2s;
+    }
+    .task-card:active { cursor: grabbing; }
+    .task-card.done { opacity: 0.5; text-decoration: line-through; }
+    .task-card:hover .card-actions { opacity: 1; }
+    
+    .task-check { 
+      min-width: 14px; height: 14px; border: 1px solid var(--muted); border-radius: 4px; 
+      display: grid; place-items: center; cursor: pointer; margin-top: 2px;
+    }
+    .task-check.checked { background: var(--accent); border-color: var(--accent); color: #000; font-weight: bold; font-size: 10px; }
+
+    .card-content { flex: 1; min-width: 0; overflow: hidden; }
+    .card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .card-meta { font-size: 10px; color: var(--muted); display: flex; gap: 4px; margin-top: 2px; }
+
+    /* TASK ENTRY / BOTTOM PANEL */
+    .entry-panel {
+      background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      flex-shrink: 0; /* Küçülmesin */
+    }
+    .entry-form { display: flex; gap: 8px; flex-wrap: wrap; }
+    .task-row { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+
+    /* SIDEBAR */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 40vh; }
+    .panel h2 { font-size: 14px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .side-list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+
+    /* --- MODES --- */
+
+    /* MONTH MODE OVERRIDES */
+    body.mode-month .main-grid {
+      grid-template-columns: 1fr 340px; /* Sağ taraf genişler */
+    }
+    body.mode-month .cell {
+      min-height: var(--month-cell-h);
+      height: var(--month-cell-h);
+    }
+    body.mode-month .entry-panel {
+      /* Ay modunda entry panel sağ kolona (sidebar) taşınacak gibi davranmalı */
+      /* Ancak JS ile taşımak yerine, CSS Grid ile sağ kolonda göstereceğiz */
+      display: none; /* Sol alttakini gizle */
+    }
+    
+    /* Ay modunda sidebar içinde özel bir alan açılacak */
+    #sidebar-entry-slot { display: none; }
+    body.mode-month #sidebar-entry-slot { display: block; }
+    body.mode-month #sidebar-inbox { display: none; } /* Ay modunda Brain Dump gizlensin mi? Yer kazanmak için evet */
+    body.mode-month #sidebar-habits { display: none; }
+
+    /* MOBILE OVERRIDES (Max 900px) */
+    .mobile-view { display: none; padding: 16px; height: 100vh; overflow-y: auto; }
+    
+    @media (max-width: 900px) {
+      .app-wrap { display: none; } /* Masaüstü arayüzü gizle */
+      .mobile-view { display: block; } /* Mobil arayüzü aç */
+      
+      /* Mobile Card Style */
+      .m-card { background: var(--card); padding: 16px; border-radius: 20px; margin-bottom: 12px; border: 1px solid var(--line); }
+      .m-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .m-title { font-size: 20px; font-weight: 700; }
+      .m-nav { display: flex; gap: 8px; margin-bottom: 16px; }
     }
 
-    .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
-    .panelBox{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:12px;
-      box-shadow: var(--shadow);
+    /* AUTH OVERLAY */
+    .auth-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 999;
+      display: flex; align-items: center; justify-content: center;
     }
-    .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .panelHead h2{ margin:0; font-size:14px; }
-    .muted{ color:var(--muted); font-size:12px; }
-
-    .inboxList{ display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:40vh; padding-right:2px; }
-    .bottom{ margin-top: 0px; background:transparent; border:0; padding:0; }
-    body.weekMode .bottom{ margin-top: -64px; }
-
-    .bottomGrid{ display:block; }
-    body.weekMode .bottomGrid{
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:10px;
-      align-items:start;
+    .auth-box { width: 340px; background: var(--card); padding: 24px; border-radius: 24px; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px; }
+    
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
+      display: none; align-items: center; justify-content: center;
     }
-    .panelLike{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:12px;
-      box-shadow: var(--shadow);
-    }
-
-    form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .w{ min-width:160px; }
-    .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
-    .row{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      border:1px solid var(--line);
-      background:#121216;
-      padding:10px 12px;
-      border-radius:14px;
-    }
-    .rowLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
-    .row .txt{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-    /* Modal */
-    .overlay{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.55);
-      display:none;
-      align-items:center; justify-content:center;
-      padding:16px;
-      z-index:50;
-    }
-    .modal{
-      width:min(760px, 100%);
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:12px;
-      box-shadow: var(--shadow);
-      max-height: 86vh;
-      overflow:auto;
-    }
-    .modalTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .modalTop h3{ margin:0; font-size:14px; }
-    .modalGrid{ display:grid; grid-template-columns: 1fr 170px 170px 1fr; gap:8px; margin-top:10px; }
-    .modalGrid .full{ grid-column: 1 / -1; }
-    .modalActions{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
-
-    /* Habits */
-    .habitsList{ display:flex; flex-direction:column; gap:10px; }
-    .habitRow{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:8px 10px; border:1px solid var(--line); background:#121216; border-radius:14px;
-    }
-    .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; }
-    .habitRow span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .habitRow input[type="checkbox"]{ width:18px; height:18px; }
-    .iconBtn{
-      width:38px; height:34px; display:grid; place-items:center;
-      border-radius:12px; border:1px solid var(--line);
-      background:transparent; color:var(--muted); cursor:pointer;
-    }
-
-    /* Mobile Home */
-    #mobileHome{
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 12px;
-    }
-    .mobileTop{
-      display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;
-    }
-    .mobileTitleBox{ display:flex; flex-direction:column; gap:2px; }
-    .mobileTitle{ margin:0; font-size:16px; }
-    .mobileSub{ font-size:12px; color:var(--muted); }
-
-    @media (max-width: 900px){
-      .main{ grid-template-columns: 1fr; }
-      .side{ position:static; }
-      .calendarArea{ height:auto; max-height:none; }
-      body.weekMode .bottomGrid{ grid-template-columns: 1fr; }
-      body.weekMode .bottom{ margin-top: 0px; }
-    }
-    /* =========================
-   MONTH MODE CLEANUP
-   - Aylık görünümde Brain Dump + Habits gizle
-   - Alt paneli sağa al (sağ panel alanına)
-   - Aylık takvimi sayfaya sığdır (calendarArea scroll olmasın)
-========================= */
-
-/* 1) Aylık görünümde sağ panelde Brain Dump + Habits'i kaldır */
-body.monthMode #inbox,
-body.monthMode #habitsBox{
-  display: none !important;
-}
-
-/* 2) Aylık görünümde ana grid 2 kolon kalsın:
-      sol: aylık takvim
-      sağ: "görevler listesi / alt panel" (senin bottom panel) */
-body.monthMode .main{
-  grid-template-columns: 1fr 360px !important;
-  align-items: start;
-}
-
-/* 3) Aylık görünümde takvim alanı scroll olmasın (ekrana sığsın) */
-body.monthMode .calendarArea{
-  height: auto !important;
-  overflow: visible !important;
-}
-
-/* 4) Aylık görünümde bottom paneli sağ kolona taşı ve görünür yap */
-body.monthMode #bottom{
-  display: block !important;
-}
-
-body.monthMode #bottom .bottomGrid{
-  display: block !important; /* tek panel gibi */
-}
-
-/* bottom'ı sağ kolona "sticky" yap */
-body.monthMode #bottom{
-  position: sticky;
-  top: 12px;
-}
-
-/* 5) Aylık görünümde bottomInboxSlot (dock edilen inbox) zaten yok olsun */
-body.monthMode #bottomInboxSlot{
-  display: none !important;
-}
-
-/* 6) Mobilde (max 900px) aylık görünümde yine tek kolon (sağ panel yok) */
-@media (max-width: 900px){
-  body.monthMode .main{
-    grid-template-columns: 1fr !important;
-  }
-  body.monthMode #bottom{
-    position: static !important;
-  }
-}
-    /* === PC Month: Bottom paneli sağa al (task panel + input) === */
-@media (min-width: 901px){
-  body.monthMode .main{
-    grid-template-columns: 1fr 360px;   /* sol: ay takvimi, sağ: panel */
-    align-items:start;
-  }
-
-  /* sağ kolon gibi davran */
-  body.monthMode #bottom{
-    margin-top: 0 !important;
-    position: sticky;
-    top: 12px;
-  }
-
-  /* bottom içindeki grid'i tek kolon yap (sadece sol panel kalsın) */
-  body.monthMode #bottomGrid{
-    display:block !important;
-  }
-
-  /* ay modunda Brain dump/habit istemiyorsun diye bunlar zaten gizliydi:
-     ama bottomInboxSlot gibi boş yer varsa kapat */
-  body.monthMode #bottomInboxSlot{
-    display:none !important;
-  }
-
-  /* ay modunda calendar alanını kaydırmasız yapmıştık; bu kalsın */
-  body.monthMode .calendarArea{
-    height:auto !important;
-    overflow:visible !important;
-  }
-}
-    /* Aylık görünümde görev panelini sağa al */
-body.monthMode .main {
-  grid-template-columns: 1fr 360px;
-}
-
-/* Aylık görünümde alt panel artık altta değil */
-body.monthMode .bottom {
-  margin-top: 0;
-}
-
-/* Aylık görünümde bottom içeriği görünür olsun */
-body.monthMode #bottomInboxSlot {
-  display: block;
-}
-    /* Ay görünümünde sağda “Seçili gün” paneli */
-body.monthMode #monthTasksSlot .panelLike{
-  height: calc(100vh - 210px);
-  overflow: auto;
-}
-
-/* Ay görünümünde soldaki alanda bottom görünmesin (çünkü sağa taşıyacağız) */
-body.monthMode .main > div > #bottom{
-  display:none;
-}
-
-/* Ay görünümünde sağ slot görünür */
-body.monthMode #monthTasksSlot > #bottom{
-  display:block;
-}
-    /* AY MODU: bottom paneli sağ kolona sabitle (HTML taşımadan) */
-body.monthMode #bottom{
-  position: fixed;
-  top: 128px;                 /* header+bar yüksekliği gibi düşün */
-  right: 16px;
-  width: 360px;
-  max-height: calc(100vh - 150px);
-  overflow: auto;
-  z-index: 20;
-}
-
-/* AY MODU: takvimi sağ panel kadar daralt, üstüne binmesin */
-body.monthMode .main > div{
-  margin-right: 4px;        /* bottom genişliği + biraz boşluk */
-}
-   /* =====================
-   MOBILE: tek üst bar
-   ===================== */
-.mTop{ display:none; }
-
-@media (max-width: 900px){
-  /* Desktop header + filtre barı mobilde kapat (ekranda ikinci kez görünmesin) */
-  .wrap > header{ display:none !important; }
-  .wrap > .bar{ display:none !important; }
-
-  /* Mobil üst bar aç */
-  .mTop{
-    display:block;
-    position: sticky;
-    top: 0;
-    z-index: 9999;
-    background: var(--bg);
-    padding: 12px 16px 8px;
-    border-bottom: 1px solid rgba(255,255,255,.06);
-  }
-  .mTopRow{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap: 10px;
-  }
-  .mTitle{ font-size: 18px; font-weight: 750; }
-  .mSub{ font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .mRight{ display:flex; align-items:center; gap:10px; }
-
-  .mSeg{
-    display:flex;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    overflow:hidden;
-  }
-  .mSegBtn{
-    border:0;
-    background: transparent;
-    color: var(--muted);
-    padding: 8px 12px;
-    cursor:pointer;
-  }
-  .mSegBtn.active{
-    background:#1f1f24;
-    color: var(--text);
-  }
-
-  /* Mobilde içerik üst barın altına düzgün otursun */
-  .wrap{ padding-top: 8px; }
-
-  /* Mobilde side zaten saklanıyordu; kalsın */
-  .side{ display:none !important; }
-}
-    /* =========================
-   MOBILE: duplicate headers off
-   ========================= */
-@media (max-width: 900px){
-
-  /* Günlük paneldeki tarih başlığını kapat */
-  .bottomTop h2,
-  #panelTitle{
-    display: none !important;
-  }
-
-  /* Günlük paneldeki "Bugün için kart yok" üst boşluğunu azalt */
-  .panelLike{
-    margin-top: 8px;
-  }
-}
+    .modal { width: 400px; background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
   </style>
 </head>
 
-<body>
-  <!-- MOBILE TOP BAR -->
-<div id="mobileTop" class="mTop">
-  <div class="mTopRow">
-    <div>
-      <div id="mTitle" class="mTitle">Bugün</div>
-      <div class="mSub">Sağa/sola kaydır: gün değiştir</div>
-    </div>
+<body class="mode-week">
 
-    <div class="mRight">
-      <div class="mSeg">
-        <button id="mDayBtn" type="button" class="mSegBtn active">Gün</button>
-        <button id="mMonthBtn" type="button" class="mSegBtn">Ay</button>
-      </div>
-      <button id="menuBtn" class="btn" type="button">☰</button>
-    </div>
-  </div>
-</div>
-  <!-- AUTH -->
   <div id="authOverlay" class="auth-overlay">
     <div class="auth-box">
-      <h2>Minimal To-Do Sync</h2>
-      <div id="authMsg" class="auth-msg"></div>
-      <input id="emailInput" class="auth-input" type="email" placeholder="E-posta" />
-      <input id="passInput" class="auth-input" type="password" placeholder="Şifre (min 6)" />
-      <div class="auth-row">
-        <button id="btnLogin" class="auth-btn primary" type="button">Giriş</button>
-        <button id="btnRegister" class="auth-btn" type="button">Kayıt</button>
+      <h2 style="margin:0; text-align:center;">Todo Sync</h2>
+      <div id="authMsg" style="color:var(--frame-termin); font-size:12px; min-height:16px; text-align:center;"></div>
+      <input id="emailInput" type="email" placeholder="E-posta" />
+      <input id="passInput" type="password" placeholder="Şifre" />
+      <button id="btnLogin" class="btn active">Giriş Yap</button>
+      <button id="btnRegister" class="btn">Kayıt Ol</button>
+      <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:5px;">Supabase keys kod içinde tanımlı.</div>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <h3 id="modalTitle" style="margin:0;">Düzenle</h3>
+        <button onclick="closeModal()" class="btn" style="padding:4px 8px;">✕</button>
+      </div>
+      <input id="mText" class="w-full" placeholder="Ne yapılacak?" autofocus />
+      <div class="modal-grid">
+        <input id="mTime" type="time" />
+        <select id="mType">
+          <option value="gorev">Görev</option>
+          <option value="termin">Termin</option>
+          <option value="hedef">Hedef</option>
+        </select>
+        <select id="mTag"></select>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <button id="modalDel" class="btn danger" style="display:none;">Sil</button>
+        <button id="modalSave" class="btn active" style="margin-left:auto;">Kaydet</button>
       </div>
     </div>
   </div>
 
-  <!-- MOBILE HOME -->
-  <div id="mobileHome" class="hidden">
-    <div class="mobileTop">
-      <div class="mobileTitleBox">
-        <h2 id="mobileTitle" class="mobileTitle">Bugün</h2>
-        <div id="mobileSub" class="mobileSub"></div>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button id="mGoDaily" class="btn" type="button">Gün</button>
-        <button id="mGoMonth" class="btn" type="button">Ay</button>
-      </div>
-    </div>
-
-    <div class="panelBox" style="margin-bottom:12px;">
-      <div class="panelHead">
-        <div>
-          <h2>Bugün</h2>
-          <div class="muted" id="mHabitsSub">Her gün sıfırlanır</div>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button id="mHabitAdd" class="plusBtn" type="button">+</button>
-          <button id="mHabitReset" class="btn" type="button">Reset</button>
-        </div>
-      </div>
-      <div id="mHabitsList" class="habitsList"></div>
-    </div>
-
-    <div class="panelBox">
-      <div id="mobileDayCard"></div>
-    </div>
-  </div>
-
-  <!-- APP -->
-  <div class="wrap" id="appWrap" style="filter:blur(5px); pointer-events:none;">
+  <div class="app-wrap" id="desktopApp">
     <header>
-      <div class="left">
-        <h1>todoapp</h1>
-        <div class="seg" role="tablist">
-          <button id="btnWeek" class="active" type="button">Hafta</button>
-          <button id="btnMonth" type="button">Ay</button>
-        </div>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <div class="muted" id="statusText">Offline</div>
-        <button id="tagSettingsBtn" class="btn" type="button">Taglar</button>
-        <button id="btnLogout" class="btn danger" type="button">Çıkış</button>
+      <div class="logo">todo<span style="color:var(--accent)">app</span></div>
+      <div class="top-actions">
+        <div id="statusText" style="font-size:12px; color:var(--muted);">Offline</div>
+        <button id="btnLogout" class="btn danger">Çıkış</button>
       </div>
     </header>
 
     <div class="bar">
-      <div class="nav">
-        <button id="prev" class="btn" type="button">◀</button>
-        <button id="today" class="btn" type="button">Bugün</button>
-        <button id="next" class="btn" type="button">▶</button>
+      <div class="nav-grp">
+        <button id="btnPrev" class="btn">◀</button>
+        <button id="btnToday" class="btn">Bugün</button>
+        <button id="btnNext" class="btn">▶</button>
       </div>
-      <div class="filters">
-        <div class="title" id="rangeTitle"></div>
-        <select id="tagFilter"><option value="__all__">Tag: Hepsi</option></select>
-        <select id="typeFilter">
-          <option value="__preset__">Tür: Görünüm</option>
-          <option value="__all__">Tür: Hepsi</option>
-          <option value="termin">Sadece termin</option>
-          <option value="hedef">Sadece hedef</option>
-          <option value="gorev">Sadece görev</option>
-        </select>
-        <input id="search" type="search" placeholder="Ara…" />
+      <div class="range-title" id="rangeTitle">...</div>
+      
+      <div class="filter-grp">
+        <div style="background:var(--card); border:1px solid var(--line); border-radius:10px; display:flex; overflow:hidden;">
+          <button id="viewWeek" class="btn" style="border:0; border-radius:0;">Hafta</button>
+          <button id="viewMonth" class="btn" style="border:0; border-radius:0;">Ay</button>
+        </div>
+        <select id="filterTag"><option value="all">Tag: Tümü</option></select>
+        <input id="searchBox" type="search" placeholder="Ara..." style="width:140px;" />
       </div>
     </div>
 
-    <div class="main">
-      <div>
-        <div id="calendarArea" class="calendarArea">
-          <div class="grid" id="dowRow"></div>
-          <div class="grid week" id="grid"></div>
+    <div class="main-grid">
+      <div class="left-col">
+        <div class="calendar-container">
+          <div class="dow-row" id="dowRow"></div>
+          <div class="cal-grid" id="calGrid"></div>
         </div>
 
-        <section class="bottom" id="bottom">
-          <div class="bottomGrid" id="bottomGrid">
-            <div class="panelLike">
-              <div class="panelHead">
-                <div>
-                  <h2 id="panelTitle">Seçili gün</h2>
-                  <div class="muted">Sıralama: Termin → Hedef → Görev • Saat • Tag</div>
-                </div>
-                <button id="clearDone" class="btn" type="button">Tamamlananları temizle</button>
-              </div>
-
-              <form id="addForm" autocomplete="off">
-                <input class="w" id="taskInput" type="text" placeholder="Başlık…" maxlength="120" />
-                <input class="w" id="timeInput" type="time" title="Saat" />
-                <select class="w" id="typeInput" title="Tür">
-                  <option value="termin">Termin</option>
-                  <option value="hedef">Hedef</option>
-                  <option value="gorev">Görev</option>
-                </select>
-                <select class="w" id="tagInput" title="Tag"></select>
-                <select class="w" id="whereInput" title="Hedef">
-                  <option value="selected">Seçili güne</option>
-                  <option value="inbox">Inbox</option>
-                </select>
-                <button id="addSubmit" class="btn" type="submit">Ekle</button>
-              </form>
-
-              <div class="list" id="taskList"></div>
-            </div>
-
-            <div id="bottomInboxSlot" class="panelLike"></div>
+        <div class="entry-panel" id="bottomPanel">
+          <div class="cell-head">
+            <h3 style="margin:0; font-size:14px;" id="selDateTitle">Seçili Gün</h3>
+            <button id="clearDoneBtn" class="add-tiny" style="width:auto; padding:0 6px; font-size:11px;">Temizle</button>
           </div>
-        </section>
+          <form id="addForm" class="entry-form" autocomplete="off">
+            <input id="inpText" type="text" placeholder="Yeni kayıt..." class="w-full" style="flex:2;" />
+            <input id="inpTime" type="time" />
+            <select id="inpType"><option value="gorev">Görev</option><option value="termin">Termin</option><option value="hedef">Hedef</option></select>
+            <select id="inpTag"></select>
+            <button type="submit" class="btn active">+</button>
+          </form>
+          <div id="selDayList" class="side-list" style="max-height:150px;"></div>
+        </div>
       </div>
 
-      <aside class="side">
-        <div id="monthTasksSlot"></div>
-        <div id="inbox" class="panelBox">
-          <div class="panelHead">
-            <div>
-              <h2>Brain Dump</h2>
-              <div class="muted">Güne atanmamış kartlar</div>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <button id="inboxAdd" class="plusBtn" type="button">+</button>
-              <button id="clearInboxDone" class="btn" type="button">Temizle</button>
-            </div>
+      <aside class="sidebar">
+        <div id="sidebar-entry-slot" class="entry-panel" style="border-color:var(--accent);">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">Ay görünümü: Hızlı Ekle</div>
           </div>
-          <div class="muted" id="inboxCount"></div>
-          <div id="inboxList" class="inboxList"></div>
+
+        <div id="sidebar-inbox" class="panel">
+          <div class="cell-head"><h2>Brain Dump</h2> <button id="addInbox" class="add-tiny">+</button></div>
+          <div id="inboxList" class="side-list"></div>
         </div>
 
-        <div id="habitsBox" class="panelBox">
-          <div class="panelHead">
-            <div>
-              <h2>Habits</h2>
-              <div class="muted" id="habitsSub">Her gün sıfırlanır</div>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <button id="habitAddBtn" class="plusBtn" type="button">+</button>
-              <button id="habitResetBtn" class="btn" type="button">Reset</button>
-            </div>
-          </div>
-          <div class="habitsList" id="habitsList"></div>
+        <div id="sidebar-habits" class="panel">
+          <div class="cell-head"><h2>Habits</h2> <button id="addHabit" class="add-tiny">+</button></div>
+          <div id="habitsList" class="side-list"></div>
         </div>
       </aside>
     </div>
   </div>
 
-  <!-- MODAL -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modalTop">
-        <h3 id="modalTitle">Ekle</h3>
-        <button id="modalClose" class="btn" type="button">Kapat</button>
+  <div class="mobile-view" id="mobileApp">
+    <div class="m-head">
+      <div>
+        <div class="m-title" id="mTitle">Bugün</div>
+        <div style="font-size:12px; color:var(--muted);">Kaydırarak günü değiştir</div>
       </div>
+      <button onclick="logout()" class="btn danger" style="padding:4px 8px;">Çıkış</button>
+    </div>
 
-      <div class="muted" id="modalWhere"></div>
+    <div class="m-nav">
+      <button id="mGoWeek" class="btn active w-full">Günlük</button>
+      <button id="mGoMonth" class="btn w-full">Takvim</button>
+    </div>
 
-      <div class="modalGrid" style="margin-top:10px;">
-        <input id="mText" class="full" type="text" placeholder="Başlık…" maxlength="120" />
-        <input id="mTime" type="time" />
-        <select id="mType">
-          <option value="termin">Termin</option>
-          <option value="hedef">Hedef</option>
-          <option value="gorev">Görev</option>
-        </select>
-        <select id="mTag"></select>
-        <div class="full muted">Enter = Kaydet/Ekle</div>
+    <div class="m-card">
+      <div class="cell-head" style="margin-bottom:8px;">
+        <span style="font-weight:600; font-size:14px;">Alışkanlıklar</span>
+        <button id="mAddHabit" class="add-tiny">+</button>
       </div>
+      <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
 
-      <div class="modalActions">
-        <button id="modalDelete" class="btn danger" type="button" style="display:none;">Sil</button>
-        <div style="display:flex; gap:8px; margin-left:auto;">
-          <button id="modalSave" class="btn" type="button">Kaydet</button>
-        </div>
+    <div class="m-card" id="mDayCard" style="min-height:200px;">
+      <div class="cell-head" style="margin-bottom:12px;">
+        <span id="mDateStr" style="color:var(--accent)">...</span>
+        <button id="mAddJob" class="btn active" style="font-size:12px; padding:4px 10px;">+ Ekle</button>
       </div>
+      <div id="mTaskList" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
   </div>
 
-  <script>
-  // =======================
-  // 0) SUPABASE SETTINGS
-  // =======================
+<script>
+  // --- CONFIG ---
   const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
+  const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM'; // Public key
+  
+  // --- STATE ---
+  let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
+  const defaultTags = [
+    {name:'İş', color:'#60a5fa'}, {name:'Ev', color:'#fb7185'}, 
+    {name:'Okul', color:'#34d399'}, {name:'Finans', color:'#fbbf24'}
+  ];
+  
+  let state = {
+    mode: 'week', // week | month
+    anchor: new Date(),
+    selected: new Date(),
+    user: null,
+    dragItem: null
+  };
 
-  // =======================
-  // 1) HELPERS (date, sort)
-  // =======================
-  function dayKey(d){
-    const y=d.getFullYear();
-    const m=String(d.getMonth()+1).padStart(2,'0');
-    const da=String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${da}`;
+  const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  
+  // --- HELPERS ---
+  const $ = (id) => document.getElementById(id);
+  const toKey = (d) => d.toISOString().split('T')[0];
+  const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+  const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
+  
+  function saveLocal() {
+    localStorage.setItem('todo_db_v2', JSON.stringify(db));
+    syncRemote();
   }
-  function todayKey(){ return dayKey(new Date()); }
-  function startOfWeek(date){
-    const d=new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const day=(d.getDay()+6)%7;
-    d.setDate(d.getDate()-day);
-    return d;
+  
+  let syncTimer;
+  function syncRemote() {
+    if(!state.user || !sb) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(async () => {
+      $('statusText').innerText = 'Syncing...';
+      const { error } = await sb.from('user_data').upsert({ id: state.user.id, content: db, updated_at: new Date() });
+      $('statusText').innerText = error ? 'Sync Error' : state.user.email;
+    }, 1000);
   }
-  function addDays(date,n){
-    const d=new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    d.setDate(d.getDate()+n);
-    return d;
-  }
-  function startOfMonth(date){ return new Date(date.getFullYear(), date.getMonth(), 1); }
-  function endOfMonth(date){ return new Date(date.getFullYear(), date.getMonth()+1, 0); }
-  function fmtRange(a,b){
-    return `${a.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})} – ${b.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',year:'numeric'})}`;
-  }
-  function fmtDay(d){
-    return d.toLocaleDateString('tr-TR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  }
-  function defaultTags(){
-    return [
-      { name:'akademik',  color:'#7dd3fc', order:1 },
-      { name:'praktikum', color:'#34d399', order:2 },
-      { name:'finans',    color:'#fbbf24', order:3 },
-      { name:'ev',        color:'#fb7185', order:4 },
-    ];
-  }
-  function fixItem(t){
-    const id = t.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random());
-    const type = (['gorev','termin','hedef'].includes(t.type) ? t.type : 'gorev');
-    return {
-      id,
-      text: (t.text||'').trim(),
-      done: !!t.done,
-      type,
-      tag: (t.tag||''),
-      time: (t.time||''),
-      created: t.created || Date.now()
+
+  // --- RENDER ---
+  function render() {
+    // 1. Setup Tags
+    if(!db.tags || db.tags.length===0) db.tags = defaultTags;
+    const fillTags = (sel) => {
+      sel.innerHTML = '<option value="">Etiket Yok</option>';
+      db.tags.forEach(t => sel.innerHTML += `<option value="${t.name}">${t.name}</option>`);
     };
-  }
-  function getCssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  function typeFrameColor(type){
-    if (type === 'termin') return getCssVar('--frame-termin');
-    if (type === 'hedef') return getCssVar('--frame-hedef');
-    return getCssVar('--frame-gorev');
-  }
-  function hexToRgba(hex, alpha){
-    if (!hex) return `rgba(255,255,255,${alpha})`;
-    const h = hex.replace('#','').trim();
-    const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
-    const r = parseInt(full.slice(0,2),16);
-    const g = parseInt(full.slice(2,4),16);
-    const b = parseInt(full.slice(4,6),16);
-    return `rgba(${r},${g},${b},${alpha})`;
-  }
-  function typeRank(type){ return type==='termin'?0 : type==='hedef'?1 : 2; }
-  function tagMeta(name){ return db.tags.find(x=>x.name===name); }
-  function tagOrder(name){ const m=tagMeta(name); return m ? (m.order ?? 9999) : 9999; }
-  function itemSort(a,b){
-    const ra=typeRank(a.type), rb=typeRank(b.type);
-    if (ra!==rb) return ra-rb;
-    const ta=a.time||'99:99', tb=b.time||'99:99';
-    if (ta<tb) return -1; if (ta>tb) return 1;
-    const oa=tagOrder(a.tag), ob=tagOrder(b.tag);
-    if (oa!==ob) return oa-ob;
-    return (a.created||0)-(b.created||0);
-  }
+    fillTags($('inpTag')); fillTags($('mTag'));
+    
+    // 2. Setup Mode & Grid
+    document.body.className = state.mode === 'month' ? 'mode-month' : 'mode-week';
+    $('viewWeek').className = state.mode === 'week' ? 'btn active' : 'btn';
+    $('viewMonth').className = state.mode === 'month' ? 'btn active' : 'btn';
 
-  // =======================
-  // 2) DB (local + cloud)
-  // =======================
-  const KEY = 'todoapp_cloud_v1';
-  let db = { days:{}, inbox:[], tags: defaultTags(), habits:[], habitState:{ date:'', doneIds:[] } };
-  db.habitState.date = todayKey();
+    const grid = $('calGrid');
+    const dow = $('dowRow');
+    grid.innerHTML = ''; dow.innerHTML = '';
 
-  function saveLocal(){ localStorage.setItem(KEY, JSON.stringify(db)); }
-  function loadLocal(){
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return;
-    try { db = JSON.parse(raw); } catch {}
-  }
+    const days = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
+    days.forEach(d => dow.innerHTML += `<div class="dow">${d}</div>`);
 
-  function ensureHabitReset(){
-    const t = todayKey();
-    db.habitState = db.habitState || { date:t, doneIds:[] };
-    if (db.habitState.date !== t){
-      db.habitState = { date:t, doneIds:[] };
-      saveLocal();
-    }
-  }
-
-  // =======================
-  // 3) SUPABASE INIT
-  // =======================
-  const authOverlay = document.getElementById('authOverlay');
-  const appWrap = document.getElementById('appWrap');
-  const statusText = document.getElementById('statusText');
-  const authMsg = document.getElementById('authMsg');
-
-  let supabaseClient = null;
-  let user = null;
-  let syncTimer = null;
-
-  function setAuthUI(loggedIn){
-    if (loggedIn){
-      authOverlay.classList.add('hidden');
-      appWrap.style.filter = 'none';
-      appWrap.style.pointerEvents = 'auto';
+    let start, end, cellCount;
+    if(state.mode === 'week') {
+      start = getStartOfWeek(state.anchor);
+      cellCount = 7;
+      $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR', {month:'long'})}`;
     } else {
-      authOverlay.classList.remove('hidden');
-      appWrap.style.filter = 'blur(5px)';
-      appWrap.style.pointerEvents = 'none';
-    }
-  }
-
-  function mustHaveSupabase(){
-    if (!window.supabase){
-      authMsg.textContent = 'Supabase kütüphanesi yüklenemedi. AdBlock/Internet kontrol et.';
-      authMsg.classList.add('auth-err');
-      return false;
-    }
-    if (!SUPABASE_URL.startsWith('https://') || SUPABASE_URL.includes('PASTE_')){
-      authMsg.textContent = 'SUPABASE_URL doldurulmamış.';
-      authMsg.classList.add('auth-err');
-      return false;
-    }
-    if (!SUPABASE_KEY || SUPABASE_KEY.includes('PASTE_')){
-      authMsg.textContent = 'SUPABASE_KEY doldurulmamış.';
-      authMsg.classList.add('auth-err');
-      return false;
-    }
-    return true;
-  }
-
-  function initSupabase(){
-    if (!mustHaveSupabase()) return;
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-
-  // =======================
-  // 4) UI refs
-  // =======================
-  const DOW = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
-  let mode = 'week';
-  let anchor = new Date();
-  let selected = new Date();
-  let dragPayload = null;
-
-  const calendarArea = document.getElementById('calendarArea');
-  const grid = document.getElementById('grid');
-  const dowRow = document.getElementById('dowRow');
-  const rangeTitle = document.getElementById('rangeTitle');
-  const btnWeek = document.getElementById('btnWeek');
-  const btnMonth = document.getElementById('btnMonth');
-
-  const panelTitle = document.getElementById('panelTitle');
-  const taskList = document.getElementById('taskList');
-
-  const addForm = document.getElementById('addForm');
-  const taskInput = document.getElementById('taskInput');
-  const timeInput = document.getElementById('timeInput');
-  const typeInput = document.getElementById('typeInput');
-  const tagInput = document.getElementById('tagInput');
-  const whereInput = document.getElementById('whereInput');
-  const addSubmit = document.getElementById('addSubmit');
-
-  const tagFilter = document.getElementById('tagFilter');
-  const typeFilter = document.getElementById('typeFilter');
-  const search = document.getElementById('search');
-
-  const inbox = document.getElementById('inbox');
-  const inboxList = document.getElementById('inboxList');
-  const inboxCount = document.getElementById('inboxCount');
-  const clearInboxDone = document.getElementById('clearInboxDone');
-  const inboxAdd = document.getElementById('inboxAdd');
-  const bottomInboxSlot = document.getElementById('bottomInboxSlot');
-
-  const habitsList = document.getElementById('habitsList');
-  const habitAddBtn = document.getElementById('habitAddBtn');
-  const habitResetBtn = document.getElementById('habitResetBtn');
-  const habitsSub = document.getElementById('habitsSub');
-
-  const monthTasksSlot = document.getElementById('monthTasksSlot');
-  const bottom = document.getElementById('bottom');
-
-  // Modal
-  const overlay = document.getElementById('overlay');
-  const modalClose = document.getElementById('modalClose');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalWhere = document.getElementById('modalWhere');
-  const mText = document.getElementById('mText');
-  const mTime = document.getElementById('mTime');
-  const mType = document.getElementById('mType');
-  const mTag = document.getElementById('mTag');
-  const modalSave = document.getElementById('modalSave');
-  const modalDelete = document.getElementById('modalDelete');
-
-  let modalContext = { mode:'add', dest:'day', dayKey:null, origin:null, itemId:null };
-
-  function closeModal(){ overlay.style.display = 'none'; }
-  modalClose.addEventListener('click', closeModal);
-  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) closeModal(); });
-  overlay.addEventListener('keydown', (e)=>{
-    if (overlay.style.display !== 'flex') return;
-    if (e.key === 'Enter'){ e.preventDefault(); modalSave.click(); }
-  });
-
-  // =======================
-  // 5) Filters + tags
-  // =======================
-  function presetTypesForMode(){ return mode==='month' ? new Set(['termin','hedef']) : new Set(['termin','hedef','gorev']); }
-  function passesFilters(item){
-    const q = (search.value||'').trim().toLowerCase();
-    if (q && !(item.text||'').toLowerCase().includes(q)) return false;
-    const tf = tagFilter.value;
-    if (tf && tf!=='__all__' && item.tag!==tf) return false;
-    const tpf = typeFilter.value;
-    if (tpf==='__preset__'){ if (!presetTypesForMode().has(item.type)) return false; }
-    else if (tpf!=='__all__' && item.type!==tpf) return false;
-    return true;
-  }
-
-  function rebuildTagDropdowns(){
-    db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
-
-    function fill(sel){
-      sel.innerHTML='';
-      const z=document.createElement('option'); z.value='__none__'; z.textContent='Tag: yok';
-      sel.appendChild(z);
-      for (const t of db.tags){
-        const o=document.createElement('option');
-        o.value=t.name; o.textContent=t.name;
-        sel.appendChild(o);
-      }
-    }
-    fill(tagInput);
-    fill(mTag);
-
-    const cur = tagFilter.value || '__all__';
-    tagFilter.innerHTML='';
-    const all=document.createElement('option'); all.value='__all__'; all.textContent='Tag: Hepsi';
-    tagFilter.appendChild(all);
-    for (const t of db.tags){
-      const o=document.createElement('option');
-      o.value=t.name; o.textContent=`Tag: ${t.name}`;
-      tagFilter.appendChild(o);
-    }
-    tagFilter.value = db.tags.some(x=>x.name===cur) ? cur : '__all__';
-  }
-
-  // =======================
-  // 6) CRUD
-  // =======================
-  function addItemTo(dest, dayK, item){
-    item = fixItem(item);
-    if (dest==='inbox'){
-      db.inbox = db.inbox || [];
-      db.inbox.push(item);
-    } else {
-      db.days[dayK] = db.days[dayK] || [];
-      db.days[dayK].push(item);
-    }
-    saveDB(db);
-  }
-  function findItem(origin, itemId){
-    if (!origin || !itemId) return null;
-    if (origin.from==='inbox') return (db.inbox||[]).find(x=>x.id===itemId)||null;
-    if (origin.from==='day') return (db.days[origin.dayKey]||[]).find(x=>x.id===itemId)||null;
-    return null;
-  }
-  function deleteItem(origin, itemId){
-    if (origin.from==='inbox'){
-      db.inbox = (db.inbox||[]).filter(x=>x.id!==itemId);
-    } else if (origin.from==='day'){
-      const k=origin.dayKey;
-      const arr=db.days[k]||[];
-      const kept=arr.filter(x=>x.id!==itemId);
-      if (kept.length) db.days[k]=kept; else delete db.days[k];
-    }
-    saveDB(db);
-    render();
-    renderMobileDaily();
-  }
-
-  // =======================
-  // 7) Modal add/edit
-  // =======================
-  function openModalAdd(ctx){
-    modalContext = { mode:'add', dest:ctx.dest, dayKey:ctx.dayKey, origin:null, itemId:null };
-    modalTitle.textContent = (ctx.dest==='inbox') ? 'Inbox’a ekle' : 'Güne ekle';
-    modalWhere.textContent = (ctx.dest==='inbox') ? 'Hedef: Brain Dump' : `Hedef gün: ${ctx.dayKey}`;
-    overlay.style.display = 'flex';
-
-    rebuildTagDropdowns();
-    mText.value=''; mTime.value='';
-    mTag.value='__none__';
-    mType.value = (ctx.dest==='inbox') ? 'gorev' : (mode==='month' ? 'termin' : 'gorev');
-
-    modalDelete.style.display='none';
-    modalSave.textContent='Ekle';
-    setTimeout(()=>mText.focus(),0);
-  }
-  function openModalEdit(origin, itemId){
-    const it = findItem(origin, itemId);
-    if (!it) return;
-    modalContext = { mode:'edit', dest:null, dayKey:null, origin, itemId };
-    modalTitle.textContent='Düzenle';
-    modalWhere.textContent = origin.from==='inbox' ? 'Konum: Brain Dump' : `Konum: ${origin.dayKey}`;
-    overlay.style.display='flex';
-
-    rebuildTagDropdowns();
-    mText.value = it.text || '';
-    mTime.value = it.time || '';
-    mType.value = it.type || 'gorev';
-    mTag.value = it.tag ? it.tag : '__none__';
-
-    modalDelete.style.display='inline-block';
-    modalSave.textContent='Kaydet';
-    setTimeout(()=>mText.focus(),0);
-  }
-  modalSave.addEventListener('click', ()=>{
-    const text=(mText.value||'').trim();
-    if (!text) return;
-
-    if (modalContext.mode==='add'){
-      addItemTo(modalContext.dest, modalContext.dayKey, {
-        text, time:mTime.value||'', type:mType.value, tag:(mTag.value==='__none__'?'':mTag.value),
-        done:false, created:Date.now()
-      });
-      closeModal(); render(); renderMobileDaily(); return;
+      const y = state.anchor.getFullYear(), m = state.anchor.getMonth();
+      const firstDay = new Date(y, m, 1);
+      const lastDay = new Date(y, m+1, 0);
+      start = getStartOfWeek(firstDay);
+      // Ay görünümünde 5 veya 6 satır (35 veya 42 gün)
+      cellCount = 35; // Basitlik için
+      if(addDays(start, 35) < lastDay) cellCount = 42;
+      $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
     }
 
-    if (modalContext.mode==='edit'){
-      const it = findItem(modalContext.origin, modalContext.itemId);
-      if (!it) { closeModal(); return; }
-      it.text=text; it.time=mTime.value||''; it.type=mType.value; it.tag=(mTag.value==='__none__'?'':mTag.value);
-      saveDB(db);
-      closeModal(); render(); renderMobileDaily();
-    }
-  });
-  modalDelete.addEventListener('click', ()=>{
-    if (modalContext.mode!=='edit') return;
-    if (!confirm('Silinsin mi?')) return;
-    deleteItem(modalContext.origin, modalContext.itemId);
-    closeModal();
-  });
+    const selKey = toKey(state.selected);
+    const todayKey = toKey(new Date());
 
-  // =======================
-  // 8) Render bits
-  // =======================
-  function renderDOW(){
-    dowRow.innerHTML='';
-    dowRow.className='grid ' + (mode==='month'?'month':'week');
-    for (const name of DOW){
-      const el=document.createElement('div');
-      el.className='dow'; el.textContent=name;
-      dowRow.appendChild(el);
-    }
-  }
-  function dockInboxForMode(){
-    const side=document.querySelector('.side');
-    if (mode==='week'){
-      document.body.classList.add('weekMode');
-      document.body.classList.remove('monthMode');
-    // AY görünümünde: seçili gün panelini sağa taşı
-    if (mode === 'month') {
-  if (monthTasksSlot && bottom && bottom.parentElement !== monthTasksSlot) {
-    monthTasksSlot.appendChild(bottom);
-  }
-} else {
-  // HAFTA görünümünde: tekrar takvimin altına geri koy
-  const leftCol = document.querySelector('.main > div'); // takvim+bottom’un olduğu sol kolon
-  if (leftCol && bottom && bottom.parentElement !== leftCol) {
-    leftCol.appendChild(bottom);
-  }
-}
-      if (bottomInboxSlot && inbox.parentElement !== bottomInboxSlot) bottomInboxSlot.appendChild(inbox);
-    } else {
-      document.body.classList.remove('weekMode');
-      document.body.classList.add('monthMode');
-      if (side && inbox.parentElement !== side) side.insertBefore(inbox, side.firstChild);
-    }
-  }
-  function adjustMonthCellHeight(totalCells){
-    const rows = Math.max(5, Math.min(6, Math.ceil(totalCells/7)));
-    const areaH = calendarArea.clientHeight || 600;
-    const dowH = dowRow.getBoundingClientRect().height || 18;
-    const gaps = (rows-1)*10 + 10;
-    const cellH = Math.floor((areaH - dowH - gaps - 14) / rows);
-    const clamped = Math.max(115, Math.min(185, cellH));
-    document.documentElement.style.setProperty('--monthCellH', clamped+'px');
-  }
-
-  function makeCard(item, origin){
-    const meta = tagMeta(item.tag);
-    const tagColor = meta?.color || null;
-
-    const card=document.createElement('div');
-    card.className='card' + (item.done?' done':'');
-    card.draggable=true;
-
-    card.style.setProperty('--frameColor', typeFrameColor(item.type));
-    card.style.setProperty('--fillColor', tagColor ? hexToRgba(tagColor, 0.22) : 'rgba(255,255,255,0.04)');
-
-    const more=document.createElement('button');
-    more.className='moreBtn';
-    more.type='button';
-    more.textContent='⋯';
-    more.addEventListener('click',(e)=>{ e.stopPropagation(); openModalEdit(origin, item.id); });
-
-    const row=document.createElement('div');
-    row.className='cardRow';
-
-    const check=document.createElement('button');
-    check.className='checkBtn';
-    check.type='button';
-    check.textContent = item.done ? '↩' : '✓';
-    check.addEventListener('click',(e)=>{
-      e.stopPropagation();
-      item.done = !item.done;
-      saveDB(db);
-      render(); renderMobileDaily();
-    });
-
-    const body=document.createElement('div');
-    body.className='cardBody';
-
-    const title=document.createElement('div');
-    title.className='titleText';
-    title.textContent = item.text || '(başlıksız)';
-    body.appendChild(title);
-
-    if (item.time){
-      const time=document.createElement('div');
-      time.className='timeText';
-      time.textContent=item.time;
-      body.appendChild(time);
-    }
-
-    row.appendChild(check);
-    row.appendChild(body);
-
-    card.appendChild(more);
-    card.appendChild(row);
-
-    card.addEventListener('dragstart',(e)=>{
-      dragPayload = { ...origin, itemId:item.id };
-      e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
-      e.dataTransfer.effectAllowed='move';
-    });
-
-    return card;
-  }
-
-  function renderInbox(){
-    inboxList.innerHTML='';
-    const items=(db.inbox||[]).map(fixItem).filter(passesFilters).sort(itemSort);
-    const openCount=items.filter(x=>!x.done).length;
-    inboxCount.textContent = items.length ? `Açık: ${openCount} • Toplam: ${items.length}` : 'Boş';
-
-    if (!items.length){
-      const empty=document.createElement('div');
-      empty.className='muted';
-      empty.textContent='Inbox boş. + ile hızlı ekle.';
-      inboxList.appendChild(empty);
-      return;
-    }
-    for (const it of items) inboxList.appendChild(makeCard(it,{from:'inbox'}));
-  }
-
-  function renderHabits(){
-    ensureHabitReset();
-    habitsList.innerHTML='';
-    const done = new Set(db.habitState?.doneIds || []);
-    const total = (db.habits||[]).length;
-    habitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
-
-    if (!total){
-      const empty=document.createElement('div');
-      empty.className='muted';
-      empty.textContent='Alışkanlık eklemek için +';
-      habitsList.appendChild(empty);
-      return;
-    }
-
-    for (const h of db.habits){
-      const row=document.createElement('div');
-      row.className='habitRow';
-      const lab=document.createElement('label');
-      const cb=document.createElement('input');
-      cb.type='checkbox';
-      cb.checked = done.has(h.id);
-      cb.addEventListener('change', ()=>{
-        ensureHabitReset();
-        const s=new Set(db.habitState.doneIds||[]);
-        cb.checked ? s.add(h.id) : s.delete(h.id);
-        db.habitState.doneIds=[...s];
-        saveDB(db);
-        renderHabits();
-        renderMobileDaily();
-      });
-      const name=document.createElement('span');
-      name.textContent=h.name;
-      lab.appendChild(cb); lab.appendChild(name);
-
-      const del=document.createElement('button');
-      del.className='iconBtn';
-      del.type='button';
-      del.textContent='🗑';
-      del.addEventListener('click', ()=>{
-        if (!confirm(`"${h.name}" silinsin mi?`)) return;
-        db.habits=(db.habits||[]).filter(x=>x.id!==h.id);
-        db.habitState.doneIds=(db.habitState.doneIds||[]).filter(id=>id!==h.id);
-        saveDB(db);
-        renderHabits();
-        renderMobileDaily();
+    for(let i=0; i<cellCount; i++) {
+      const date = addDays(start, i);
+      const key = toKey(date);
+      const isOut = state.mode==='month' && date.getMonth() !== state.anchor.getMonth();
+      const isSel = key === selKey;
+      
+      const cell = document.createElement('div');
+      cell.className = `cell ${isOut?'out':''} ${key===todayKey?'today':''} ${isSel?'selected':''}`;
+      cell.innerHTML = `<div class="cell-head"><span class="day-num">${date.getDate()}</span></div><div class="cell-cards"></div>`;
+      
+      // Render Tasks inside Cell
+      const list = db.days[key] || [];
+      const cont = cell.querySelector('.cell-cards');
+      
+      list.forEach(task => {
+        if(filterPass(task)) cont.appendChild(createCardUI(task, 'day', key));
       });
 
-      row.appendChild(lab);
-      row.appendChild(del);
-      habitsList.appendChild(row);
-    }
-  }
-
-  function renderPanel(){
-    const k=dayKey(selected);
-    panelTitle.textContent=fmtDay(selected);
-    const items=(db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
-
-    taskList.innerHTML='';
-    if (!items.length){
-      const empty=document.createElement('div');
-      empty.className='muted';
-      empty.style.padding='10px 2px';
-      empty.textContent='Bu gün için (filtreye göre) kart yok.';
-      taskList.appendChild(empty);
-      return;
-    }
-
-    for (const it of items){
-      const row=document.createElement('div');
-      row.className='row';
-
-      const left=document.createElement('div');
-      left.className='rowLeft';
-
-      const cb=document.createElement('input');
-      cb.type='checkbox';
-      cb.checked=!!it.done;
-      cb.addEventListener('change', ()=>{
-        it.done = cb.checked;
-        saveDB(db);
-        render(); renderMobileDaily();
-      });
-
-      const txt=document.createElement('div');
-      txt.className='txt';
-      txt.textContent = it.text + (it.time ? ` • ${it.time}` : '');
-      txt.style.color = it.done ? 'var(--muted)' : 'var(--text)';
-
-      left.appendChild(cb);
-      left.appendChild(txt);
-
-      row.appendChild(left);
-      taskList.appendChild(row);
-    }
-  }
-
-  function render(){
-    // normalize
-    for (const k of Object.keys(db.days||{})) db.days[k] = (db.days[k]||[]).map(fixItem);
-    db.inbox = (db.inbox||[]).map(fixItem);
-
-    rebuildTagDropdowns();
-    renderDOW();
-    dockInboxForMode();
-
-    grid.className = 'grid ' + (mode==='month'?'month':'week');
-    grid.innerHTML='';
-
-    let cells=[];
-    if (mode==='week'){
-      const start=startOfWeek(anchor);
-      const end=addDays(start,6);
-      rangeTitle.textContent=fmtRange(start,end);
-      for (let i=0;i<7;i++) cells.push({date:addDays(start,i), out:false});
-    } else {
-      const first=startOfMonth(anchor);
-      const last=endOfMonth(anchor);
-      const start=startOfWeek(first);
-      const end=addDays(startOfWeek(last),6);
-      rangeTitle.textContent=anchor.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
-      const totalDays = Math.round((end-start)/(24*3600*1000))+1;
-      for (let i=0;i<totalDays;i++){
-        const d=addDays(start,i);
-        cells.push({date:d, out:d.getMonth()!==anchor.getMonth()});
-      }
-      adjustMonthCellHeight(cells.length);
-    }
-
-    const selKey=dayKey(selected);
-
-    for (const c of cells){
-      const k=dayKey(c.date);
-      const items=(db.days[k]||[]).filter(passesFilters).sort(itemSort);
-      const openCount=items.filter(x=>!x.done).length;
-
-      const cell=document.createElement('div');
-      cell.className='cell ' + (mode==='month'?'monthCell':'weekCell') + (c.out?' out':'') + (k===selKey?' sel':'');
-      cell.dataset.key=k;
-
-      const top=document.createElement('div');
-      top.className='dateRow';
-
-      const left=document.createElement('div');
-      left.className='dateLeft';
-
-      const dateEl=document.createElement('div');
-      dateEl.className='date';
-      dateEl.textContent=String(c.date.getDate()).padStart(2,'0');
-
-      const plus=document.createElement('button');
-      plus.className='plusBtn';
-      plus.type='button';
-      plus.textContent='+';
-      plus.addEventListener('click',(e)=>{ e.stopPropagation(); openModalAdd({dest:'day', dayKey:k}); });
-
-      left.appendChild(dateEl);
-      left.appendChild(plus);
-
-      const count=document.createElement('div');
-      count.className='count';
-      count.textContent = openCount ? `${openCount}` : '';
-
-      top.appendChild(left);
-      top.appendChild(count);
-
-      const cards=document.createElement('div');
-      cards.className='cards';
-      for (const it of items) cards.appendChild(makeCard(it,{from:'day',dayKey:k}));
-
-      cell.appendChild(top);
-      cell.appendChild(cards);
-
-      cell.addEventListener('click', ()=>{
-        selected=c.date;
-        if (mode==='month' && c.out) anchor=new Date(c.date.getFullYear(), c.date.getMonth(), 1);
-        render();
-        renderMobileDaily();
-      });
-
-      // drag/drop
-      cell.addEventListener('dragover',(e)=>{ e.preventDefault(); cell.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
-      cell.addEventListener('dragleave',()=>cell.classList.remove('dragOver'));
-      cell.addEventListener('drop',(e)=>{
-        e.preventDefault();
-        cell.classList.remove('dragOver');
-
-        let payload = dragPayload;
-        try{
-          const txt=e.dataTransfer.getData('text/plain');
-          if (txt) payload=JSON.parse(txt);
-        }catch{}
-        if (!payload?.itemId) return;
-
-        const toKey=k;
-
-        if (payload.from==='inbox'){
-          const idx=(db.inbox||[]).findIndex(x=>x.id===payload.itemId);
-          if (idx<0) return;
-          const [moved]=db.inbox.splice(idx,1);
-          db.days[toKey]=db.days[toKey]||[];
-          db.days[toKey].push(moved);
-        } else if (payload.from==='day'){
-          const fromKey=payload.dayKey;
-          if (!fromKey || fromKey===toKey) return;
-          const fromArr=db.days[fromKey]||[];
-          const idx=fromArr.findIndex(x=>x.id===payload.itemId);
-          if (idx<0) return;
-          const [moved]=fromArr.splice(idx,1);
-          if (!fromArr.length) delete db.days[fromKey];
-          db.days[toKey]=db.days[toKey]||[];
-          db.days[toKey].push(moved);
-        }
-
-        saveDB(db);
-        dragPayload=null;
-        selected=c.date;
-        render();
-        renderMobileDaily();
-      });
+      // Events
+      cell.onclick = () => {
+        state.selected = date;
+        // Ay modundaysak ve farklı aya tıkladıysak anchor'ı güncelleme (opsiyonel)
+        render(); 
+        renderRightPanel(); // Panel güncelle
+        renderMobile();
+      };
+      
+      // Drop Zone
+      cell.ondragover = e => { e.preventDefault(); cell.style.background = '#1f1f24'; };
+      cell.ondragleave = e => { cell.style.background = ''; };
+      cell.ondrop = e => {
+        e.preventDefault(); cell.style.background = '';
+        handleDrop(key);
+      };
 
       grid.appendChild(cell);
     }
 
+    renderRightPanel();
     renderInbox();
     renderHabits();
-    renderPanel();
+    renderMobile();
   }
 
-  // =======================
-  // 9) MOBILE DAILY (simple)
-  // =======================
-  function isMobile(){ return window.matchMedia('(max-width: 900px)').matches; }
-  function showDesktopUI(){
-    document.getElementById('mobileHome')?.classList.add('hidden');
-    const main=document.querySelector('.main');
-    const bar=document.querySelector('.bar');
-    if (main) main.style.display='grid';
-    if (bar) bar.style.display='flex';
-  }
-  function showMobileUI(){
-    const main=document.querySelector('.main');
-    const bar=document.querySelector('.bar');
-    if (main) main.style.display='none';
-    if (bar) bar.style.display='none';
-    document.getElementById('mobileHome')?.classList.remove('hidden');
-  }
-
-  function renderMobileDaily(){
-    if (!isMobile()) { showDesktopUI(); return; }
-
-    const mh=document.getElementById('mobileHome');
-    const mt=document.getElementById('mobileTitle');
-    const ms=document.getElementById('mobileSub');
-    const mcard=document.getElementById('mobileDayCard');
-    const mHabitsSub=document.getElementById('mHabitsSub');
-    const mHabitsList=document.getElementById('mHabitsList');
-
-    if (!mh || !mt || !mcard) return;
-
-    showMobileUI();
-    mt.textContent = fmtDay(selected);
-    if (ms) ms.textContent = 'Sağa/sola kaydır: gün değiştir';
-
-    // habits
-    ensureHabitReset();
-    const done=new Set(db.habitState?.doneIds||[]);
-    const total=(db.habits||[]).length;
-    if (mHabitsSub) mHabitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
-
-    if (mHabitsList){
-      mHabitsList.innerHTML='';
-      if (!total){
-        const empty=document.createElement('div');
-        empty.className='muted';
-        empty.textContent='Alışkanlık eklemek için +';
-        mHabitsList.appendChild(empty);
-      } else {
-        for (const h of db.habits){
-          const row=document.createElement('div');
-          row.className='habitRow';
-          row.innerHTML = `
-            <label><input type="checkbox" ${done.has(h.id)?'checked':''}><span>${h.name}</span></label>
-            <button class="iconBtn" type="button">🗑</button>
-          `;
-          row.querySelector('input').addEventListener('change',(e)=>{
-            const s=new Set(db.habitState.doneIds||[]);
-            e.target.checked ? s.add(h.id) : s.delete(h.id);
-            db.habitState.doneIds=[...s];
-            saveDB(db);
-            renderMobileDaily();
-          });
-          row.querySelector('button').addEventListener('click',()=>{
-            if (!confirm(`"${h.name}" silinsin mi?`)) return;
-            db.habits=(db.habits||[]).filter(x=>x.id!==h.id);
-            db.habitState.doneIds=(db.habitState.doneIds||[]).filter(id=>id!==h.id);
-            saveDB(db);
-            renderMobileDaily();
-          });
-          mHabitsList.appendChild(row);
-        }
+  function renderRightPanel() {
+    const key = toKey(state.selected);
+    $('selDateTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
+    
+    // Desktop Bottom List
+    const listCont = $('selDayList');
+    listCont.innerHTML = '';
+    const tasks = db.days[key] || [];
+    
+    if(tasks.length === 0) listCont.innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px;">Görev yok.</div>';
+    
+    tasks.forEach(task => {
+      if(filterPass(task)) {
+        const row = document.createElement('div');
+        row.className = 'task-row';
+        row.innerHTML = `
+          <input type="checkbox" ${task.done?'checked':''}>
+          <span style="flex:1; font-size:13px; text-decoration:${task.done?'line-through':''}; opacity:${task.done?0.5:1}">${task.text}</span>
+          <button class="add-tiny" style="border:0;">⋮</button>
+        `;
+        row.querySelector('input').onchange = () => toggleTask('day', key, task.id);
+        row.querySelector('button').onclick = () => openModal(task, 'day', key);
+        listCont.appendChild(row);
       }
+    });
+
+    // Month Mode Side Slot Logic
+    // Ay modunda, normal entry panel gizlenir. Sağ taraftaki sidebar-entry-slot içine basit bir form koyarız.
+    const sideSlot = $('sidebar-entry-slot');
+    if(state.mode === 'month') {
+      sideSlot.innerHTML = '';
+      // Clone form logic simple
+      const clone = $('addForm').cloneNode(true);
+      clone.id = "sideFormClone";
+      clone.onsubmit = (e) => {
+        e.preventDefault();
+        const inputs = clone.querySelectorAll('input, select');
+        // Değerleri asıl fonksiyona pasla
+        addTask(inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value);
+        inputs[0].value = '';
+      };
+      sideSlot.appendChild(clone);
+      
+      // Seçili gün listesi de burada olsun
+      const listClone = listCont.cloneNode(true);
+      // Event listenerlar clone ile gelmez, basitçe tekrar render edilebilir ama
+      // Pratik çözüm: Month modunda sadece listeyi göster, editleme modal üzerinden.
+      sideSlot.appendChild(listClone);
     }
+  }
 
-    // day cards
-    const k=dayKey(selected);
-    const items=(db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
-    const openCount=items.filter(x=>!x.done).length;
+  function renderInbox() {
+    const cont = $('inboxList');
+    cont.innerHTML = '';
+    db.inbox.forEach(task => {
+      cont.appendChild(createCardUI(task, 'inbox', null));
+    });
+  }
 
-    mcard.innerHTML = `
-      <div class="dateRow" style="margin-bottom:8px;">
-        <div class="dateLeft">
-          <div class="date">${k}</div>
-          <button id="mPlus" class="plusBtn" type="button">+</button>
+  function renderHabits() {
+    const cont = $('habitsList');
+    const mCont = $('mHabitList');
+    cont.innerHTML = ''; mCont.innerHTML = '';
+    const key = toKey(new Date()); // Habits track today
+    
+    db.habits.forEach(h => {
+      const isDone = db.habitLog[key] && db.habitLog[key].includes(h.id);
+      
+      const ui = document.createElement('div');
+      ui.className = 'task-row';
+      ui.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="font-size:13px;">${h.name}</span> <button class="add-tiny" style="margin-left:auto">x</button>`;
+      
+      ui.querySelector('input').onchange = (e) => toggleHabit(h.id, e.target.checked);
+      ui.querySelector('button').onclick = () => { db.habits = db.habits.filter(x=>x.id!==h.id); saveLocal(); renderHabits(); };
+      
+      cont.appendChild(ui);
+      mCont.appendChild(ui.cloneNode(true)); // Mobile kopyası (eventleri tekrar bağlamak gerekir ama basitlik için geçiyorum)
+      // Mobilde eventleri tekrar bağlamak:
+      const mCheck = mCont.lastChild.querySelector('input');
+      mCheck.onchange = (e) => toggleHabit(h.id, e.target.checked);
+      const mDel = mCont.lastChild.querySelector('button');
+      mDel.onclick = () => { db.habits = db.habits.filter(x=>x.id!==h.id); saveLocal(); renderHabits(); };
+    });
+  }
+
+  function renderMobile() {
+    // Sadece veri güncelleme
+    $('mTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long'});
+    $('mDateStr').innerText = state.selected.toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'});
+    
+    const key = toKey(state.selected);
+    const list = db.days[key] || [];
+    const cont = $('mTaskList');
+    cont.innerHTML = '';
+    
+    if(list.length === 0) cont.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted)">Bugün boş.</div>';
+    
+    list.forEach(task => {
+      const el = document.createElement('div');
+      el.className = 'm-card'; 
+      el.style.marginBottom='8px'; el.style.padding='10px';
+      el.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" ${task.done?'checked':''} style="width:20px; height:20px;">
+          <div style="flex:1;">
+            <div style="font-size:14px; text-decoration:${task.done?'line-through':''}">${task.text}</div>
+            <div style="font-size:11px; color:var(--muted)">${task.time || ''} ${task.tag ? '• '+task.tag : ''}</div>
+          </div>
         </div>
-        <div class="count">${openCount ? openCount : ''}</div>
+      `;
+      el.querySelector('input').onchange = () => toggleTask('day', key, task.id);
+      el.onclick = (e) => { if(e.target.tagName!=='INPUT') openModal(task, 'day', key); };
+      cont.appendChild(el);
+    });
+  }
+
+  function createCardUI(task, source, dayKey) {
+    const el = document.createElement('div');
+    el.className = `task-card ${task.done?'done':''}`;
+    el.style.borderLeftColor = task.type === 'termin' ? 'var(--frame-termin)' : task.type === 'hedef' ? 'var(--frame-hedef)' : 'var(--frame-gorev)';
+    el.draggable = true;
+    
+    el.innerHTML = `
+      <div class="task-check ${task.done?'checked':''}">${task.done?'✓':''}</div>
+      <div class="card-content">
+        <div class="card-title">${task.text}</div>
+        <div class="card-meta">${task.time || ''} ${task.tag ? '• '+task.tag : ''}</div>
       </div>
-      <div class="cards" id="mCards"></div>
     `;
 
-    const mPlus=document.getElementById('mPlus');
-    const mCards=document.getElementById('mCards');
+    // Events
+    const checkBtn = el.querySelector('.task-check');
+    checkBtn.onclick = (e) => { e.stopPropagation(); toggleTask(source, dayKey, task.id); };
+    
+    el.ondragstart = (e) => {
+      state.dragItem = { id: task.id, source, dayKey };
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(()=>el.style.opacity='0.5',0);
+    };
+    el.ondragend = () => el.style.opacity='';
+    el.onclick = () => openModal(task, source, dayKey);
 
-    mPlus?.addEventListener('click', ()=>openModalAdd({dest:'day', dayKey:k}));
-
-    if (!items.length){
-      mCards.innerHTML = '<div class="muted">Bugün için kart yok.</div>';
-    } else {
-      for (const it of items) mCards.appendChild(makeCard(it,{from:'day', dayKey:k}));
-    }
+    return el;
   }
 
-  // mobile buttons
-  document.getElementById('mGoDaily')?.addEventListener('click', ()=>{
-    mode='week';
-    anchor=new Date(selected);
-    render();
-    renderMobileDaily();
-  });
-  document.getElementById('mGoMonth')?.addEventListener('click', ()=>{
-    showDesktopUI();
-    mode='month';
-    anchor=new Date(selected.getFullYear(), selected.getMonth(), 1);
-    render();
-  });
-  document.getElementById('mHabitAdd')?.addEventListener('click', ()=>{
-    const name=prompt('Yeni alışkanlık:');
-    if (!name) return;
-    db.habits=db.habits||[];
-    db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name:name.trim() });
-    saveDB(db);
-    renderMobileDaily();
-  });
-  document.getElementById('mHabitReset')?.addEventListener('click', ()=>{
-    db.habitState={ date:todayKey(), doneIds:[] };
-    saveDB(db);
-    renderMobileDaily();
-  });
+  // --- LOGIC ---
+  function addTask(text, time, type, tag, dest='day') {
+    if(!text) return;
+    const item = { id: Date.now().toString(), text, time, type, tag, done: false };
+    
+    if(dest === 'inbox') {
+      db.inbox.push(item);
+    } else {
+      const key = toKey(state.selected);
+      if(!db.days[key]) db.days[key] = [];
+      db.days[key].push(item);
+    }
+    saveLocal(); render();
+  }
 
-  // swipe on mobile home
-  (function(){
-    const area=document.getElementById('mobileDayCard');
-    if (!area) return;
-    let x0=null;
-    area.addEventListener('touchstart',(e)=>{ x0=e.touches?.[0]?.clientX ?? null; }, {passive:true});
-    area.addEventListener('touchend',(e)=>{
-      const x1=e.changedTouches?.[0]?.clientX ?? null;
-      if (x0==null || x1==null) return;
-      const dx=x1-x0;
-      if (Math.abs(dx)<50) return;
-      selected = (dx>0) ? addDays(selected,-1) : addDays(selected,+1);
-      anchor = new Date(selected);
-      render();
-      renderMobileDaily();
-    }, {passive:true});
-  })();
+  function toggleTask(source, dayKey, id) {
+    let list = source === 'inbox' ? db.inbox : db.days[dayKey];
+    const task = list.find(t => t.id === id);
+    if(task) task.done = !task.done;
+    saveLocal(); render();
+  }
 
-  // =======================
-  // 10) SAVE (local + cloud)
-  // =======================
-  function saveDB(newDb){
-    db = newDb;
+  function handleDrop(targetKey) {
+    if(!state.dragItem) return;
+    const { id, source, dayKey } = state.dragItem;
+    
+    // Remove from old
+    let task;
+    if(source === 'inbox') {
+      const idx = db.inbox.findIndex(t => t.id === id);
+      if(idx > -1) task = db.inbox.splice(idx, 1)[0];
+    } else {
+      const list = db.days[dayKey];
+      const idx = list.findIndex(t => t.id === id);
+      if(idx > -1) task = list.splice(idx, 1)[0];
+    }
+
+    // Add to new
+    if(task) {
+      if(!db.days[targetKey]) db.days[targetKey] = [];
+      db.days[targetKey].push(task);
+      saveLocal(); render();
+    }
+  }
+  
+  function toggleHabit(id, val) {
+    const key = toKey(new Date());
+    if(!db.habitLog[key]) db.habitLog[key] = [];
+    
+    if(val) {
+      if(!db.habitLog[key].includes(id)) db.habitLog[key].push(id);
+    } else {
+      db.habitLog[key] = db.habitLog[key].filter(x => x !== id);
+    }
     saveLocal();
-    saveRemoteDebounced();
   }
 
-  function saveRemoteDebounced(){
-    if (!user || !supabaseClient) return;
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(saveRemote, 800);
+  function filterPass(task) {
+    const tagF = $('filterTag').value;
+    const search = $('searchBox').value.toLowerCase();
+    
+    if(tagF !== 'all' && task.tag !== tagF) return false;
+    if(search && !task.text.toLowerCase().includes(search)) return false;
+    return true;
   }
 
-  async function saveRemote(){
-    if (!user || !supabaseClient) return;
-    const payload = { id: user.id, content: db, updated_at: new Date().toISOString() };
-    const { error } = await supabaseClient.from('user_data').upsert(payload);
-    if (error) console.error('Sync error:', error);
+  // --- MODAL ---
+  let editContext = null;
+  function openModal(task, source, dayKey) {
+    editContext = { task, source, dayKey };
+    $('modalOverlay').style.display = 'flex';
+    $('mText').value = task.text;
+    $('mTime').value = task.time;
+    $('mType').value = task.type;
+    $('mTag').value = task.tag || '';
+    $('modalDel').style.display = 'block';
   }
-
-  async function loadRemoteData(){
-    if (!user || !supabaseClient) return;
-
-    // local first (fast)
-    loadLocal();
-    render();
-    renderMobileDaily();
-
-    const { data, error } = await supabaseClient
-      .from('user_data')
-      .select('content')
-      .eq('id', user.id)
-      .single();
-
-    if (error){
-      // first time => create row
-      console.warn('Remote load:', error);
-      await saveRemote();
-      return;
+  function closeModal() { $('modalOverlay').style.display = 'none'; editContext = null; }
+  
+  $('modalSave').onclick = () => {
+    if(!editContext) return;
+    const { task } = editContext;
+    task.text = $('mText').value;
+    task.time = $('mTime').value;
+    task.type = $('mType').value;
+    task.tag = $('mTag').value;
+    saveLocal(); render(); closeModal();
+  };
+  
+  $('modalDel').onclick = () => {
+    if(!editContext) return;
+    const { task, source, dayKey } = editContext;
+    if(confirm('Silinsin mi?')) {
+      if(source==='inbox') db.inbox = db.inbox.filter(t=>t.id!==task.id);
+      else db.days[dayKey] = db.days[dayKey].filter(t=>t.id!==task.id);
+      saveLocal(); render(); closeModal();
     }
-    if (data?.content){
-      db = data.content;
-      saveLocal();
+  };
+
+  // --- EVENTS ---
+  $('addForm').onsubmit = (e) => {
+    e.preventDefault();
+    addTask($('inpText').value, $('inpTime').value, $('inpType').value, $('inpTag').value);
+    $('inpText').value = '';
+  };
+  
+  $('viewWeek').onclick = () => { state.mode='week'; state.anchor = new Date(state.selected); render(); };
+  $('viewMonth').onclick = () => { state.mode='month'; state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1); render(); };
+  $('btnToday').onclick = () => { state.selected = new Date(); state.anchor = new Date(); render(); };
+  $('btnPrev').onclick = () => { 
+    state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); 
+    render(); 
+  };
+  $('btnNext').onclick = () => { 
+    state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1); 
+    render(); 
+  };
+  
+  $('filterTag').onchange = render;
+  $('searchBox').oninput = render;
+
+  $('addInbox').onclick = () => {
+    const txt = prompt('Brain Dump:');
+    if(txt) addTask(txt, '', 'gorev', '', 'inbox');
+  };
+  $('addHabit').onclick = () => {
+    const txt = prompt('Yeni Alışkanlık:');
+    if(txt) { db.habits.push({id:Date.now().toString(), name:txt}); saveLocal(); renderHabits(); }
+  };
+
+  // Mobile Nav
+  $('mGoWeek').onclick = () => { $('mobileApp').scrollTo(0,0); };
+  $('mGoMonth').onclick = () => { alert('Mobilde tam takvim için telefonu yan çevirin veya masaüstüne geçin.'); };
+  $('mAddJob').onclick = () => {
+    const txt = prompt('Hızlı Ekle:');
+    if(txt) addTask(txt, '', 'gorev', '');
+  };
+
+  // Swipe Logic
+  let touchStartX = 0;
+  $('mDayCard').ontouchstart = e => touchStartX = e.changedTouches[0].screenX;
+  $('mDayCard').ontouchend = e => {
+    if(Math.abs(e.changedTouches[0].screenX - touchStartX) > 50) {
+      const dir = e.changedTouches[0].screenX < touchStartX ? 1 : -1;
+      state.selected = addDays(state.selected, dir);
       render();
-      renderMobileDaily();
     }
-  }
+  };
 
-  // =======================
-  // 11) AUTH FLOW
-  // =======================
-  function setMsg(text, isErr=false){
-    authMsg.textContent = text || '';
-    authMsg.classList.toggle('auth-err', !!isErr);
-  }
+  // --- AUTH & INIT ---
+  async function init() {
+    // Load Local
+    const local = localStorage.getItem('todo_db_v2');
+    if(local) db = JSON.parse(local);
 
-  async function checkUser(){
-    if (!supabaseClient) return;
-    const { data, error } = await supabaseClient.auth.getSession();
-    if (error) console.error('Session error:', error);
-    user = data.session?.user || null;
-
-    if (user){
-      setAuthUI(true);
-      statusText.textContent = user.email;
-      await loadRemoteData();
+    // Auth Check
+    if(sb) {
+      const { data } = await sb.auth.getSession();
+      if(data.session) {
+        state.user = data.session.user;
+        $('authOverlay').classList.add('hidden');
+        $('statusText').innerText = state.user.email;
+        // Load Remote
+        const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single();
+        if(remote && remote.content) { db = remote.content; saveLocal(); }
+      }
     } else {
-      setAuthUI(false);
-      statusText.textContent = 'Offline';
+      $('authMsg').innerText = "Supabase bağlantısı kurulamadı (Adblock?)";
     }
+    
+    render();
   }
 
-  document.getElementById('btnLogin').addEventListener('click', async ()=>{
-    if (!supabaseClient) { setMsg('Supabase hazır değil.', true); return; }
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passInput').value;
-    if (!email || !password) { setMsg('Email + şifre gir.', true); return; }
-    setMsg('Giriş yapılıyor...');
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) { setMsg(error.message, true); return; }
-    setMsg('');
-    await checkUser();
-  });
+  $('btnLogin').onclick = async () => {
+    if(!sb) return;
+    const { error } = await sb.auth.signInWithPassword({ email: $('emailInput').value, password: $('passInput').value });
+    if(error) $('authMsg').innerText = error.message;
+    else location.reload();
+  };
+  
+  $('btnRegister').onclick = async () => {
+    if(!sb) return;
+    const { error } = await sb.auth.signUp({ email: $('emailInput').value, password: $('passInput').value });
+    if(error) $('authMsg').innerText = error.message;
+    else $('authMsg').innerText = "Kayıt başarılı! Giriş yapabilirsin.";
+  };
+  
+  $('btnLogout').onclick = async () => {
+    if(sb) await sb.auth.signOut();
+    location.reload();
+  };
 
-  document.getElementById('btnRegister').addEventListener('click', async ()=>{
-    if (!supabaseClient) { setMsg('Supabase hazır değil.', true); return; }
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passInput').value;
-    if (!email || !password) { setMsg('Email + şifre gir.', true); return; }
-    if (password.length < 6) { setMsg('Şifre en az 6 karakter.', true); return; }
-    setMsg('Kayıt olunuyor...');
-    const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) { setMsg(error.message, true); return; }
-    setMsg('Kayıt tamam. Eğer “Confirm Email” açıksa mailini onayla.');
-  });
+  init();
 
-  document.getElementById('btnLogout').addEventListener('click', async ()=>{
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signOut();
-    user=null;
-    setAuthUI(false);
-    statusText.textContent='Offline';
-  });
-
-  // =======================
-  // 12) UI controls
-  // =======================
-  document.getElementById('prev').addEventListener('click', ()=>{
-    anchor = (mode==='week') ? addDays(anchor,-7) : new Date(anchor.getFullYear(), anchor.getMonth()-1, 1);
-    render(); renderMobileDaily();
-  });
-  document.getElementById('next').addEventListener('click', ()=>{
-    anchor = (mode==='week') ? addDays(anchor,7) : new Date(anchor.getFullYear(), anchor.getMonth()+1, 1);
-    render(); renderMobileDaily();
-  });
-  document.getElementById('today').addEventListener('click', ()=>{
-    anchor=new Date(); selected=new Date();
-    render(); renderMobileDaily();
-  });
-
-  btnWeek.addEventListener('click', ()=>{
-    mode='week';
-    btnWeek.classList.add('active'); btnMonth.classList.remove('active');
-    anchor=new Date(selected);
-    typeInput.value='gorev';
-    render(); renderMobileDaily();
-  });
-  btnMonth.addEventListener('click', ()=>{
-    mode='month';
-    btnMonth.classList.add('active'); btnWeek.classList.remove('active');
-    anchor=new Date(selected.getFullYear(), selected.getMonth(), 1);
-    typeInput.value='termin';
-    render(); renderMobileDaily();
-  });
-
-  tagFilter.addEventListener('change', ()=>{ render(); renderMobileDaily(); });
-  typeFilter.addEventListener('change', ()=>{ render(); renderMobileDaily(); });
-  search.addEventListener('input', ()=>{ render(); renderMobileDaily(); });
-
-  taskInput.addEventListener('keydown', (e)=>{
-    if (e.key==='Enter'){ e.preventDefault(); addSubmit.click(); }
-  });
-
-  addForm.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const text=(taskInput.value||'').trim();
-    if (!text) return;
-    const item={ text, time:timeInput.value||'', type:typeInput.value, tag:(tagInput.value==='__none__'?'':tagInput.value), done:false, created:Date.now() };
-    if (whereInput.value==='inbox') addItemTo('inbox', null, item);
-    else addItemTo('day', dayKey(selected), item);
-
-    taskInput.value=''; timeInput.value=''; tagInput.value='__none__';
-    render(); renderMobileDaily();
-    taskInput.focus();
-  });
-
-  document.getElementById('clearDone').addEventListener('click', ()=>{
-    const k=dayKey(selected);
-    const items=db.days[k]||[];
-    const kept=items.filter(t=>!t.done);
-    if (kept.length) db.days[k]=kept; else delete db.days[k];
-    saveDB(db); render(); renderMobileDaily();
-  });
-
-  clearInboxDone.addEventListener('click', ()=>{
-    db.inbox=(db.inbox||[]).filter(t=>!t.done);
-    saveDB(db); render(); renderMobileDaily();
-  });
-
-  inboxAdd.addEventListener('click', ()=>openModalAdd({dest:'inbox', dayKey:null}));
-
-  // drag inbox drop (day -> inbox)
-  inbox.addEventListener('dragover',(e)=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; });
-  inbox.addEventListener('drop',(e)=>{
-    e.preventDefault();
-    let payload=dragPayload;
-    try{
-      const txt=e.dataTransfer.getData('text/plain');
-      if (txt) payload=JSON.parse(txt);
-    }catch{}
-    if (!payload?.itemId) return;
-
-    if (payload.from==='day'){
-      const fromKey=payload.dayKey;
-      const fromArr=db.days[fromKey]||[];
-      const idx=fromArr.findIndex(x=>x.id===payload.itemId);
-      if (idx<0) return;
-      const [moved]=fromArr.splice(idx,1);
-      if (!fromArr.length) delete db.days[fromKey];
-      db.inbox=db.inbox||[];
-      db.inbox.push(moved);
-      saveDB(db); render(); renderMobileDaily();
-    }
-  });
-
-  habitAddBtn.addEventListener('click', ()=>{
-    const name=prompt('Yeni alışkanlık:');
-    if (!name) return;
-    db.habits=db.habits||[];
-    db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name:name.trim() });
-    saveDB(db);
-    renderHabits(); renderMobileDaily();
-  });
-  habitResetBtn.addEventListener('click', ()=>{
-    db.habitState={ date:todayKey(), doneIds:[] };
-    saveDB(db);
-    renderHabits(); renderMobileDaily();
-  });
-
-  // =======================
-  // 13) Start
-  // =======================
-  typeFilter.value='__preset__';
-  typeInput.value='gorev';
-
-  initSupabase();
-  setMsg('');
-  setAuthUI(false);
-  rebuildTagDropdowns();
-  render();
-  renderMobileDaily();
-  checkUser();
-
-  window.addEventListener('resize', ()=>{
-    renderMobileDaily();
-    if (mode==='month') render();
-  });
-
-  // PWA SW (optional)
-  if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
-    function setMobileTitle(){
-  const el = document.getElementById('mTitle');
-  if (!el) return;
-  // fmtDay fonksiyonun varsa onu kullan
-  try {
-    el.textContent = (typeof fmtDay === 'function') ? fmtDay(selected) : selected.toDateString();
-  } catch {
-    el.textContent = selected.toDateString();
-  }
-}
-
-const mDayBtn = document.getElementById('mDayBtn');
-const mMonthBtn = document.getElementById('mMonthBtn');
-
-function setActiveMobileTab(which){
-  if (!mDayBtn || !mMonthBtn) return;
-  mDayBtn.classList.toggle('active', which === 'day');
-  mMonthBtn.classList.toggle('active', which === 'month');
-}
-
-mDayBtn?.addEventListener('click', ()=>{
-  mode = 'day';                 // sende day mode varsa
-  anchor = new Date(selected);
-  setActiveMobileTab('day');
-  render();
-  setMobileTitle();
-});
-
-mMonthBtn?.addEventListener('click', ()=>{
-  mode = 'month';
-  anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
-  setActiveMobileTab('month');
-  render();
-  setMobileTitle();
-});
-
-/* Render sonrası başlık güncellensin */
-const _oldRender = render;
-render = function(){
-  _oldRender();
-  setMobileTitle();
-  // mobilde mode’a göre aktif tab
-  if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches){
-    setActiveMobileTab(mode === 'month' ? 'month' : 'day');
-  }
-};
-  </script>
+</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
