@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#0f0f10" />
-  <title>TodoApp Pro Final v3</title>
+  <title>TodoApp Pro Final v3.1</title>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   
@@ -16,9 +16,9 @@
       --month-cell-h: 110px;
       
       /* Type Colors */
-      --c-termin: #fb7185; /* Kırmızı */
-      --c-hedef: #60a5fa;  /* Mavi */
-      --c-gorev: #34d399;  /* Yeşil */
+      --c-termin: #fb7185;
+      --c-hedef: #60a5fa;
+      --c-gorev: #34d399;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,7 +27,6 @@
     .hidden { display: none !important; }
     .w-full { width: 100%; }
     
-    /* Buttons */
     .btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 13px; display:inline-flex; align-items:center; justify-content:center; gap:6px;}
     .btn:hover { border-color: #525252; background: var(--card-hover); }
     .btn.danger { color: #f87171; border-color: rgba(248,113,113,.2); }
@@ -35,18 +34,16 @@
     .icon-btn { padding:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; }
     .icon-btn:hover { color:var(--text); background:rgba(255,255,255,0.1); border-radius:4px; }
 
-    /* Inputs */
     input, select { background: #121212; color: var(--text); border: 1px solid #333; border-radius: 6px; padding: 8px; outline: none; font-size: 13px; }
     input:focus, select:focus { border-color: var(--accent); }
     input[type="color"] { padding:0; width:34px; height:34px; border:none; border-radius:4px; overflow:hidden; cursor:pointer; }
 
-    /* --- LAYOUTS --- */
+    /* LAYOUTS */
     .app-wrap { max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; width:100%; display: flex; flex-direction: column; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
     .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-shrink: 0; }
     .main-grid { display: grid; grid-template-columns: 1fr 260px; gap: 16px; flex: 1; min-height: 0; }
     
-    /* Calendar */
     .left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
     .calendar-container { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; min-height: 0; border: 1px solid var(--line); border-radius: 12px; }
     .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 0; border-bottom: 1px solid var(--line); background: var(--card); }
@@ -65,19 +62,14 @@
     .cell.today .day-num { color: var(--accent); }
     .cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
 
-    /* TASK CARD STYLE (UPDATED) */
     .task-card {
-      background: var(--card); /* Fallback */
-      border-radius: 6px; padding: 6px 8px;
+      background: var(--card); border-radius: 6px; padding: 6px 8px;
       font-size: 12px; cursor: grab; user-select: none;
-      border-left: 4px solid transparent; /* Type Color here */
-      transition: transform .1s; position:relative;
-      margin-bottom: 0;
+      border-left: 4px solid transparent; transition: transform .1s; position:relative; margin-bottom: 0;
     }
     .task-card:active { cursor: grabbing; transform: scale(0.98); }
     .task-card.done { opacity: 0.5; text-decoration: line-through; filter:grayscale(1); }
     
-    /* Bottom Entry Panel */
     .bottom-panel-container { 
       background: var(--card); border: 1px solid var(--line); border-radius: 12px; 
       padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
@@ -87,14 +79,11 @@
     .bp-head { display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px; color:var(--text); padding-bottom:6px; border-bottom:1px solid var(--line); }
     .bp-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px; }
 
-    /* Sidebar */
     .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
     .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; }
-    
-    /* Row Item (List style) */
     .row-item { display:flex; gap:8px; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; align-items:center; font-size:13px; transition:background .2s; border-left:3px solid transparent; }
     
-    /* --- MOBILE --- */
+    /* MOBILE */
     .mobile-view { display: none; height: 100vh; background: var(--bg); flex-direction:column; }
     .m-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:80px; }
     
@@ -111,7 +100,6 @@
     .m-nav-item.active { color:var(--accent); }
     .m-nav-icon { font-size:18px; }
 
-    /* Mobile Calendar */
     .m-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top:10px; }
     .m-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 13px; background: var(--card); border:1px solid var(--line); position:relative; }
     .m-cell.today { border-color:var(--accent); color:var(--accent); font-weight:700; }
@@ -123,7 +111,6 @@
       .mobile-view { display: flex; }
     }
     
-    /* Modes */
     body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
     body.mode-month .cell { height: var(--month-cell-h); }
     body.mode-month .bottom-panel-container { display: none; }
@@ -132,7 +119,6 @@
     body.mode-week #sidebar-month-slot { display: none; }
     body.mode-week .habit-section { display: flex; }
 
-    /* MODAL */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 9999; display: none; align-items: center; justify-content: center; }
     .modal { width: min(400px, 90%); background: #171717; padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); max-height:90vh; overflow-y:auto; }
     .tag-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#121212; padding:4px; border-radius:6px; }
@@ -186,7 +172,7 @@
         <h3 style="margin:0;">Etiket Ayarları</h3>
         <button onclick="$('tagsModal').style.display='none'" class="icon-btn">✕</button>
       </div>
-      <div style="margin-bottom:10px; font-size:12px; color:var(--muted);">Listeyi sürükleyemezsin ama oklarla sıralamayı değiştirebilirsin. En üstteki en yüksek önceliklidir.</div>
+      <div style="margin-bottom:10px; font-size:12px; color:var(--muted);">Listeyi oklarla sıralayabilirsin. En üstteki en yüksek önceliklidir.</div>
       <div id="tagsListConfig" style="margin-bottom:15px; max-height:300px; overflow-y:auto;"></div>
       <div style="display:flex; gap:8px; border-top:1px solid var(--line); padding-top:15px; flex-wrap:wrap;">
         <input id="newTagName" placeholder="Yeni Etiket" style="flex:1;">
@@ -228,7 +214,6 @@
           <div class="dow-row" id="dowRow"></div>
           <div class="cal-grid" id="calGrid"></div>
         </div>
-
         <div class="bottom-panel-container" id="bottomEntryPanel">
           <div class="bp-col">
             <div class="bp-head">
@@ -242,7 +227,6 @@
             </form>
             <div id="bottomTaskList" class="bp-list"></div>
           </div>
-
           <div class="bp-col habit-section" style="border-left:1px solid var(--line); padding-left:20px;">
             <div class="bp-head">
               <span>Brain Dump</span>
@@ -252,10 +236,8 @@
           </div>
         </div>
       </div>
-
       <aside class="sidebar">
         <div id="sidebar-month-slot" class="panel hidden" style="border-color:var(--accent); max-height:none; height:100%;"></div>
-
         <div id="sidebar-habits" class="panel habit-section">
           <div class="bp-head"><span>Alışkanlıklar</span> <button onclick="addHabit()" class="icon-btn">+</button></div>
           <div id="habitList" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -266,8 +248,11 @@
 
   <div class="mobile-view" id="mobileApp">
     <div class="m-content">
-      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <h1 style="font-size:24px; margin:0; font-weight:800; letter-spacing:-0.5px;">todo<span style="color:var(--accent)">app</span></h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h1 style="font-size:24px; margin:0; font-weight:800; letter-spacing:-0.5px;">todo<span style="color:var(--accent)">app</span></h1>
+          <button onclick="mobileGoToday()" class="btn" style="padding:4px 8px; font-size:11px; height:24px;">Bugün</button>
+        </div>
         <button onclick="signOut()" class="btn danger" style="padding:4px 10px; font-size:11px;">Çıkış</button>
       </div>
 
@@ -344,100 +329,45 @@
   </div>
 
 <script>
-  // --- CONFIG ---
   const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // --- STATE ---
   let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
-  const defaultTags = [
-    {id:'t1', name:'İş', color:'#3b82f6'}, 
-    {id:'t2', name:'Kişisel', color:'#ec4899'}, 
-    {id:'t3', name:'Acil', color:'#ef4444'}
-  ];
+  const defaultTags = [{id:'t1', name:'İş', color:'#3b82f6'}, {id:'t2', name:'Kişisel', color:'#ec4899'}, {id:'t3', name:'Acil', color:'#ef4444'}];
   
-  let state = {
-    mode: 'week', 
-    anchor: new Date(),
-    selected: new Date(),
-    user: null,
-    drag: null
-  };
+  let state = { mode: 'week', anchor: new Date(), selected: new Date(), user: null, drag: null };
 
-  // --- HELPERS ---
   const $ = (id) => document.getElementById(id);
-  
-  // Date Fix
-  const toKey = (d) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
+  const toKey = (d) => { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; };
   const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
   const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
   const getStartOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-  const hexToRgba = (hex, alpha) => {
-    let c;
-    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-        c= hex.substring(1).split('');
-        if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
-        c= '0x'+c.join('');
-        return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
-    }
-    return 'rgba(0,0,0,'+alpha+')';
-  };
+  const hexToRgba = (hex, alpha) => { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return 'rgba(0,0,0,'+alpha+')'; };
   
   function save() {
     if(!db.tags || db.tags.length===0) db.tags = defaultTags;
     localStorage.setItem('todo_final_v3', JSON.stringify(db));
-    if(state.user) {
-      clearTimeout(window._sync);
-      window._sync = setTimeout(() => {
-        sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then();
-      }, 1500);
-    }
+    if(state.user) { clearTimeout(window._sync); window._sync = setTimeout(() => { sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then(); }, 1500); }
   }
 
-  // --- SORTING LOGIC ---
   function getTaskScore(t) {
-    // 1. Type Priority (Termin=1, Hedef=2, Gorev=3)
     let typeScore = t.type === 'termin' ? 1 : t.type === 'hedef' ? 2 : 3;
-    
-    // 2. Time (Early > Late > Null). We convert "09:00" to 900. Null is 9999.
     let timeVal = t.time ? parseInt(t.time.replace(':','')) : 9999;
-    
-    // 3. Tag Order (Index in db.tags)
     let tagIdx = db.tags.findIndex(x => x.id === t.tag);
     let tagScore = tagIdx === -1 ? 999 : tagIdx;
-    
     return { typeScore, timeVal, tagScore };
   }
-
   function sortTasks(a, b) {
-    const sa = getTaskScore(a);
-    const sb = getTaskScore(b);
-    
-    // 1. Compare Type
+    const sa = getTaskScore(a), sb = getTaskScore(b);
     if(sa.typeScore !== sb.typeScore) return sa.typeScore - sb.typeScore;
-    
-    // 2. Compare Time
     if(sa.timeVal !== sb.timeVal) return sa.timeVal - sb.timeVal;
-    
-    // 3. Compare Tag Order
     return sa.tagScore - sb.tagScore;
   }
 
-  // --- RENDER MAIN ---
   function render() {
     if(!db.tags || !db.tags.length) db.tags = defaultTags;
-    renderCalendar();
-    renderPanels();
-    renderMobileDay();
-    renderMobileCal();
-    renderMobileDump();
+    renderCalendar(); renderPanels(); renderMobileDay(); renderMobileCal(); renderMobileDump();
   }
 
   function renderCalendar() {
@@ -450,81 +380,35 @@
     ['PZT','SAL','ÇAR','PER','CUM','CTS','PAZ'].forEach(d => dow.innerHTML += `<div class="dow">${d}</div>`);
 
     let start, count;
-    if(state.mode === 'week') {
-      start = getStartOfWeek(state.anchor);
-      count = 7;
-      $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`;
-    } else {
-      start = getStartOfWeek(getStartOfMonth(state.anchor));
-      count = 42; 
-      $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'});
-    }
+    if(state.mode === 'week') { start = getStartOfWeek(state.anchor); count = 7; $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`; }
+    else { start = getStartOfWeek(getStartOfMonth(state.anchor)); count = 42; $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'}); }
 
-    const todayK = toKey(new Date());
-    const selK = toKey(state.selected);
-
+    const todayK = toKey(new Date()); const selK = toKey(state.selected);
     for(let i=0; i<count; i++) {
-      const d = addDays(start, i);
-      const k = toKey(d);
+      const d = addDays(start, i); const k = toKey(d);
       const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
-      
       const cell = document.createElement('div');
       cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
-      cell.ondragover = handleDragOver;
-      cell.ondragleave = handleDragLeave;
-      cell.ondrop = (e) => handleDrop(e, k);
+      cell.ondragover = handleDragOver; cell.ondragleave = handleDragLeave; cell.ondrop = (e) => handleDrop(e, k);
       cell.onclick = () => { state.selected = d; render(); };
-
-      cell.innerHTML = `
-        <div class="cell-head">
-          <span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> 
-          <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button>
-        </div>
-        <div class="cell-cards"></div>
-      `;
-      
+      cell.innerHTML = `<div class="cell-head"><span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button></div><div class="cell-cards"></div>`;
       const cardCont = cell.querySelector('.cell-cards');
       let tasks = (db.days[k]||[]).filter(t => filterPass(t));
-      tasks.sort(sortTasks); // Apply Sort
-      
+      tasks.sort(sortTasks);
       tasks.forEach(t => cardCont.appendChild(createCardEl(t, 'day', k)));
       grid.appendChild(cell);
     }
   }
 
-  function filterPass(t) {
-    const f = $('filterTag').value;
-    if(f === 'all') return true;
-    return t.tag === f;
-  }
-
-  function getTagColor(id) {
-    const t = db.tags.find(x => x.id === id);
-    return t ? t.color : '#555';
-  }
+  function filterPass(t) { const f = $('filterTag').value; if(f === 'all') return true; return t.tag === f; }
+  function getTagColor(id) { const t = db.tags.find(x => x.id === id); return t ? t.color : '#555'; }
 
   function createCardEl(t, source, dateKey) {
-    // 1. Border Color = Type
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-    
-    // 2. Background Color = Tag
-    const tagCol = getTagColor(t.tag);
-    const bg = hexToRgba(tagCol, 0.15);
-    
-    const el = document.createElement('div');
-    el.className = `task-card ${t.done?'done':''}`;
-    el.draggable = true;
-    
-    el.style.borderLeftColor = borderCol;
-    el.style.background = bg;
-
-    el.innerHTML = `
-      <div style="font-weight:500; margin-bottom:2px; pointer-events:none;">${t.text}</div>
-      <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;">
-        <span>${t.time||''}</span> 
-      </div>
-    `;
-    
+    const bg = hexToRgba(getTagColor(t.tag), 0.15);
+    const el = document.createElement('div'); el.className = `task-card ${t.done?'done':''}`;
+    el.draggable = true; el.style.borderLeftColor = borderCol; el.style.background = bg;
+    el.innerHTML = `<div style="font-weight:500; margin-bottom:2px; pointer-events:none;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;"><span>${t.time||''}</span></div>`;
     el.ondragstart = (e) => { state.drag = { id: t.id, source, dateKey }; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; };
     el.ondragend = (e) => { e.target.style.opacity = '1'; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); };
     el.onclick = (e) => { e.stopPropagation(); openModal(t, source, dateKey); };
@@ -534,89 +418,49 @@
   function renderPanels() {
     const k = toKey(state.selected);
     $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
-
     const bpList = $('bottomTaskList'); bpList.innerHTML = '';
     let dayTasks = (db.days[k]||[]).slice().sort(sortTasks);
     dayTasks.forEach(t => bpList.appendChild(createRowItem(t, 'day', k)));
-
     const inboxList = $('inboxListBottom'); inboxList.innerHTML = '';
     let dumpTasks = db.inbox.slice().sort(sortTasks);
     dumpTasks.forEach(t => inboxList.appendChild(createRowItem(t, 'inbox', null)));
-
     const mSlot = $('sidebar-month-slot'); 
     if(state.mode === 'month') {
-      mSlot.innerHTML = `
-        <div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div>
-        <form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;">
-           <input class="w-full" placeholder="Hızlı Ekle...">
-           <button class="btn active">+</button>
-        </form>
-        <div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>
-      `;
-      const cont = mSlot.querySelector('div:last-child');
-      dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
+      mSlot.innerHTML = `<div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div><form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;"><input class="w-full" placeholder="Hızlı Ekle..."><button class="btn active">+</button></form><div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>`;
+      const cont = mSlot.querySelector('div:last-child'); dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
     }
-
     const hList = $('habitList'); hList.innerHTML = '';
     const today = toKey(new Date());
     db.habits.forEach(h => {
       const isDone = (db.habitLog[today]||[]).includes(h.id);
-      const div = document.createElement('div');
-      div.className = 'row-item';
+      const div = document.createElement('div'); div.className = 'row-item';
       div.innerHTML = `<span style="flex:1;">${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
-      div.querySelector('input').onchange = (e) => {
-        if(!db.habitLog[today]) db.habitLog[today] = [];
-        if(e.target.checked) db.habitLog[today].push(h.id);
-        else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
-        save(); render();
-      };
+      div.querySelector('input').onchange = (e) => { if(!db.habitLog[today]) db.habitLog[today] = []; if(e.target.checked) db.habitLog[today].push(h.id); else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id); save(); render(); };
       hList.appendChild(div);
     });
   }
 
   function createRowItem(t, source, dateKey) {
-    const div = document.createElement('div');
-    div.className = 'row-item';
-    
-    // Border = Type
+    const div = document.createElement('div'); div.className = 'row-item';
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
     div.style.borderLeft = `3px solid ${borderCol}`;
-    
-    // Background = Tag (light)
-    const tagCol = getTagColor(t.tag);
-    div.style.background = hexToRgba(tagCol, 0.1);
-    
-    div.innerHTML = `
-      <input type="checkbox" ${t.done?'checked':''} style="cursor:pointer;"> 
-      <span style="flex:1; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span>
-      <span style="font-size:10px; color:var(--muted);">${t.time||''}</span>
-    `;
+    div.style.background = hexToRgba(getTagColor(t.tag), 0.1);
+    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="cursor:pointer;"> <span style="flex:1; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span><span style="font-size:10px; color:var(--muted);">${t.time||''}</span>`;
     div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
     div.ondblclick = () => openModal(t, source, dateKey);
     return div;
   }
 
-  // --- MOBILE RENDER ---
   function switchMobileTab(tab, btn) {
-    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    $('mViewDay').classList.add('hidden');
-    $('mViewCal').classList.add('hidden');
-    $('mViewDump').classList.add('hidden');
-    
-    if(tab==='day') {
-      $('mViewDay').classList.remove('hidden');
-      if($('mViewDay').querySelector('.habit-section').classList.contains('hidden') && state.mode !== 'month') {
-        $('mViewDay').querySelector('.habit-section').classList.remove('hidden');
-      }
-    }
+    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+    $('mViewDay').classList.add('hidden'); $('mViewCal').classList.add('hidden'); $('mViewDump').classList.add('hidden');
+    if(tab==='day') { $('mViewDay').classList.remove('hidden'); if($('mViewDay').querySelector('.habit-section').classList.contains('hidden') && state.mode !== 'month') { $('mViewDay').querySelector('.habit-section').classList.remove('hidden'); } }
     if(tab==='cal') { $('mViewCal').classList.remove('hidden'); state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1); renderMobileCal(); }
     if(tab==='dump') $('mViewDump').classList.remove('hidden');
   }
 
   function renderMobileDay() {
     $('mDateTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
-    
     const mh = $('mHabitList'); mh.innerHTML = '';
     const today = toKey(new Date());
     db.habits.forEach(h => {
@@ -626,30 +470,17 @@
       d.querySelector('input').onchange = (e) => { if(e.target.checked) { if(!db.habitLog[today]) db.habitLog[today]=[]; db.habitLog[today].push(h.id); } else { db.habitLog[today]=db.habitLog[today].filter(x=>x!==h.id); } save(); render(); };
       mh.appendChild(d);
     });
-    
     const mt = $('mTaskList'); mt.innerHTML = '';
     const k = toKey(state.selected);
     let tasks = (db.days[k] || []).slice().sort(sortTasks);
-    
     if(tasks.length === 0) mt.innerHTML = '<div style="color:var(--muted); text-align:center; padding:20px;">Bugün boş</div>';
-
     tasks.forEach(t => {
        const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
        const bg = hexToRgba(getTagColor(t.tag), 0.15);
-       
-       const div = document.createElement('div');
-       div.className = 'task-card';
-       div.style.background = bg; 
-       div.style.borderLeft = `4px solid ${borderCol}`;
+       const div = document.createElement('div'); div.className = 'task-card';
+       div.style.background = bg; div.style.borderLeft = `4px solid ${borderCol}`;
        div.style.padding = '12px'; div.style.display='flex'; div.style.gap='10px'; div.style.alignItems='center';
-       
-       div.innerHTML = `
-         <input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;">
-         <div style="flex:1;" onclick="openModalById('${t.id}','day','${k}')">
-           <div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div>
-           <div style="font-size:11px; color:var(--muted);">${t.time||''}</div>
-         </div>
-       `;
+       div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;"><div style="flex:1;" onclick="openModalById('${t.id}','day','${k}')"><div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div><div style="font-size:11px; color:var(--muted);">${t.time||''}</div></div>`;
        div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
        mt.appendChild(div);
     });
@@ -659,15 +490,10 @@
     $('mCalTitle').innerText = state.anchor.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
     const grid = $('mCalGrid'); grid.innerHTML = '';
     const start = getStartOfWeek(getStartOfMonth(state.anchor));
-    const selK = toKey(state.selected);
-    const todayK = toKey(new Date());
-
+    const selK = toKey(state.selected); const todayK = toKey(new Date());
     for(let i=0; i<42; i++) {
-      const d = addDays(start, i);
-      const k = toKey(d);
-      const isOut = d.getMonth() !== state.anchor.getMonth();
-      const hasTask = db.days[k] && db.days[k].length > 0;
-      
+      const d = addDays(start, i); const k = toKey(d);
+      const isOut = d.getMonth() !== state.anchor.getMonth(); const hasTask = db.days[k] && db.days[k].length > 0;
       const c = document.createElement('div');
       c.className = `m-cell ${k===selK?'selected':''} ${k===todayK?'today':''} ${isOut?'out':''} ${hasTask?'has-task':''}`;
       c.innerText = d.getDate();
@@ -682,7 +508,6 @@
     tasks.forEach(t => {
       const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
       const bg = hexToRgba(getTagColor(t.tag), 0.15);
-      
       const d = document.createElement('div'); d.className='task-card'; d.style.padding='12px'; 
       d.style.background=bg; d.style.borderLeft=`4px solid ${borderCol}`;
       d.innerHTML = `<div onclick="openModalById('${t.id}','inbox',null)">${t.text}</div>`;
@@ -690,7 +515,6 @@
     });
   }
 
-  // --- ACTIONS ---
   $('addForm').onsubmit = (e) => { e.preventDefault(); const txt=$('inpText').value; if(!txt)return; addTask(txt, '', 'gorev', $('inpTag').value, 'day'); $('inpText').value=''; };
   function addTask(txt, time, type, tag, dest) {
     const t = { id: Date.now().toString(), text: txt, time, type, tag, done:false };
@@ -706,92 +530,39 @@
   function navDay(d) { state.selected = addDays(state.selected, d); render(); }
   function navMonth(d) { state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1); renderMobileCal(); }
   
-  function toggleMobileAdd() {
-    const p = $('mAddPanel');
-    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
-    if(p.style.display === 'flex') $('mAddText').focus();
-  }
-  function submitMobileAdd() {
-    const txt = $('mAddText').value;
-    const time = $('mAddTime').value;
-    const tag = $('mAddTag').value;
-    const type = $('mAddType').value;
-    if(txt) { addTask(txt, time, type, tag, 'day'); $('mAddText').value=''; toggleMobileAdd(); }
-  }
-  function addQuickMobile(dest) {
-     if(dest === 'inbox') {
-         const t = prompt('Brain Dump:'); if(t) addTask(t,'','gorev',db.tags[0].id,'inbox');
-     }
+  function mobileGoToday() {
+    state.selected = new Date(); state.anchor = new Date();
+    const dayBtn = document.querySelectorAll('.m-nav-item')[0]; switchMobileTab('day', dayBtn); render();
   }
 
-  // --- TAGS MANAGEMENT & ORDERING ---
+  function toggleMobileAdd() { const p = $('mAddPanel'); p.style.display = p.style.display === 'none' ? 'flex' : 'none'; if(p.style.display === 'flex') $('mAddText').focus(); }
+  function submitMobileAdd() { const txt = $('mAddText').value; const time = $('mAddTime').value; const tag = $('mAddTag').value; const type = $('mAddType').value; if(txt) { addTask(txt, time, type, tag, 'day'); $('mAddText').value=''; toggleMobileAdd(); } }
+  function addQuickMobile(dest) { if(dest === 'inbox') { const t = prompt('Brain Dump:'); if(t) addTask(t,'','gorev',db.tags[0].id,'inbox'); } }
+
   function openTagsModal() { $('tagsModal').style.display = 'flex'; renderTagsList(); }
   function renderTagsList() {
     const cont = $('tagsListConfig'); cont.innerHTML = '';
     db.tags.forEach((t, idx) => {
       const row = document.createElement('div'); row.className = 'tag-row';
-      row.innerHTML = `
-        <div style="display:flex; flex-direction:column;">
-           <button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, -1)">▲</button>
-           <button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, 1)">▼</button>
-        </div>
-        <input type="color" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)">
-        <input type="text" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)" style="width:60px;">
-        <input value="${t.name}" onchange="updateTag('${t.id}', 'name', this.value)" style="flex:1;">
-        <button class="icon-btn" onclick="delTag('${t.id}')">🗑</button>
-      `;
+      row.innerHTML = `<div style="display:flex; flex-direction:column;"><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, -1)">▲</button><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, 1)">▼</button></div><input type="color" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)"><input type="text" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)" style="width:60px;"><input value="${t.name}" onchange="updateTag('${t.id}', 'name', this.value)" style="flex:1;"><button class="icon-btn" onclick="delTag('${t.id}')">🗑</button>`;
       cont.appendChild(row);
     });
   }
-  function moveTag(idx, dir) {
-    if(dir === -1 && idx > 0) { [db.tags[idx], db.tags[idx-1]] = [db.tags[idx-1], db.tags[idx]]; }
-    if(dir === 1 && idx < db.tags.length -1) { [db.tags[idx], db.tags[idx+1]] = [db.tags[idx+1], db.tags[idx]]; }
-    save(); renderTagsList(); render(); // Re-render to sort tasks
-  }
-  function addNewTag() {
-    const name = $('newTagName').value; const color = $('newTagColor').value;
-    if(name) { db.tags.push({id:Date.now().toString(), name, color}); $('newTagName').value=''; save(); renderTagsList(); render(); }
-  }
-  function updateTag(id, field, val) {
-    const t = db.tags.find(x=>x.id===id); if(t) { t[field]=val; save(); render(); }
-  }
-  function delTag(id) {
-    if(confirm('Etiket silinsin mi?')) { db.tags = db.tags.filter(x=>x.id!==id); save(); renderTagsList(); render(); }
-  }
+  function moveTag(idx, dir) { if(dir === -1 && idx > 0) { [db.tags[idx], db.tags[idx-1]] = [db.tags[idx-1], db.tags[idx]]; } if(dir === 1 && idx < db.tags.length -1) { [db.tags[idx], db.tags[idx+1]] = [db.tags[idx+1], db.tags[idx]]; } save(); renderTagsList(); render(); }
+  function addNewTag() { const name = $('newTagName').value; const color = $('newTagColor').value; if(name) { db.tags.push({id:Date.now().toString(), name, color}); $('newTagName').value=''; save(); renderTagsList(); render(); } }
+  function updateTag(id, field, val) { const t = db.tags.find(x=>x.id===id); if(t) { t[field]=val; save(); render(); } }
+  function delTag(id) { if(confirm('Etiket silinsin mi?')) { db.tags = db.tags.filter(x=>x.id!==id); save(); renderTagsList(); render(); } }
 
-  // --- MODAL ---
-  let editCtx = null;
   function openModal(task, source, dateKey) { editCtx = { task, source, dateKey }; $('modalOverlay').style.display = 'flex'; $('mText').value = task.text; $('mTime').value = task.time||''; $('mType').value = task.type||'gorev'; $('mTag').value = task.tag||''; $('mDate').value = source==='day'?dateKey:''; }
   function openModalById(id, source, dateKey) { const list = source==='inbox'?db.inbox:db.days[dateKey]; const t=list.find(x=>x.id===id); if(t) openModal(t, source, dateKey); }
   function closeModal() { $('modalOverlay').style.display = 'none'; editCtx = null; }
-  $('modalSave').onclick = () => {
-    if(!editCtx) return; const { task, source, dateKey } = editCtx;
-    task.text = $('mText').value; task.time = $('mTime').value; task.type = $('mType').value; task.tag = $('mTag').value;
-    const nDate = $('mDate').value; const oDate = source==='day'?dateKey:'';
-    if(nDate && nDate!==oDate) {
-      if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else { db.days[oDate]=db.days[oDate].filter(x=>x.id!==task.id); if(db.days[oDate].length===0) delete db.days[oDate]; }
-      if(!db.days[nDate]) db.days[nDate]=[]; db.days[nDate].push(task); state.selected=new Date(nDate);
-    }
-    save(); render(); closeModal();
-  };
+  $('modalSave').onclick = () => { if(!editCtx) return; const { task, source, dateKey } = editCtx; task.text = $('mText').value; task.time = $('mTime').value; task.type = $('mType').value; task.tag = $('mTag').value; const nDate = $('mDate').value; const oDate = source==='day'?dateKey:''; if(nDate && nDate!==oDate) { if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else { db.days[oDate]=db.days[oDate].filter(x=>x.id!==task.id); if(db.days[oDate].length===0) delete db.days[oDate]; } if(!db.days[nDate]) db.days[nDate]=[]; db.days[nDate].push(task); state.selected=new Date(nDate); } save(); render(); closeModal(); };
   $('modalDel').onclick = () => { if(!editCtx)return; if(confirm('Sil?')) { const { task, source, dateKey } = editCtx; if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else db.days[dateKey]=db.days[dateKey].filter(x=>x.id!==task.id); save(); render(); closeModal(); } };
 
-  // --- DRAG DROP ---
   function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over'); }
   function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-  function handleDrop(e, targetK) {
-    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
-    if(!state.drag) return;
-    const { id, source, dateKey } = state.drag;
-    if(source === 'day' && dateKey === targetK) return;
-    let task;
-    if(source === 'inbox') { const i = db.inbox.findIndex(x=>x.id===id); if(i>-1) task=db.inbox.splice(i,1)[0]; }
-    else { const l = db.days[dateKey]; const i = l.findIndex(x=>x.id===id); if(i>-1) task=l.splice(i,1)[0]; if(l.length===0) delete db.days[dateKey]; }
-    if(task) { if(!db.days[targetK]) db.days[targetK]=[]; db.days[targetK].push(task); save(); render(); }
-    state.drag = null;
-  }
+  function handleDrop(e, targetK) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(!state.drag) return; const { id, source, dateKey } = state.drag; if(source === 'day' && dateKey === targetK) return; let task; if(source === 'inbox') { const i = db.inbox.findIndex(x=>x.id===id); if(i>-1) task=db.inbox.splice(i,1)[0]; } else { const l = db.days[dateKey]; const i = l.findIndex(x=>x.id===id); if(i>-1) task=l.splice(i,1)[0]; if(l.length===0) delete db.days[dateKey]; } if(task) { if(!db.days[targetK]) db.days[targetK]=[]; db.days[targetK].push(task); save(); render(); } state.drag = null; }
 
-  // --- INIT ---
   $('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week'; render(); };
   $('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month'; render(); };
   $('navPrev').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); render(); };
