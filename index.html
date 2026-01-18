@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15 (Sync)</title>
+  <title>Minimal To-Do v15.1 (Custom Confirm)</title>
   <link rel="manifest" href="manifest.webmanifest">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -274,7 +274,7 @@
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>Minimal To-Do v15 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>Minimal To-Do v15.1 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
@@ -430,6 +430,17 @@
     </div>
   </div>
 
+  <div id="confirmOverlay" class="overlay" style="z-index:60;">
+    <div class="modal" style="width:300px; max-width:90%;">
+      <h3 style="margin-top:0; text-align:center;">Emin misin?</h3>
+      <div id="confirmMsg" style="text-align:center; color:var(--muted); margin-bottom:16px;">Bu işlem geri alınamaz.</div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="confirmNo" class="btn" type="button">İptal</button>
+        <button id="confirmYes" class="btn danger" type="button">Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ----------------------------------------------------------------------
     // SUPABASE AYARLARI (BURAYA KENDİ BİLGİLERİNİ YAPIŞTIR)
@@ -449,6 +460,30 @@
     } else {
       console.warn("Supabase bilgileri girilmemiş!");
     }
+
+    // Custom Confirm Logic
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const confirmMsg = document.getElementById('confirmMsg');
+    const confirmYes = document.getElementById('confirmYes');
+    const confirmNo = document.getElementById('confirmNo');
+    let onConfirmYes = null;
+
+    function showConfirm(text, callback) {
+      confirmMsg.textContent = text;
+      onConfirmYes = callback;
+      confirmOverlay.style.display = 'flex';
+    }
+
+    confirmYes.addEventListener('click', () => {
+      if(onConfirmYes) onConfirmYes();
+      confirmOverlay.style.display = 'none';
+      onConfirmYes = null;
+    });
+
+    confirmNo.addEventListener('click', () => {
+      confirmOverlay.style.display = 'none';
+      onConfirmYes = null;
+    });
 
     // Auth Elementleri
     const authOverlay = document.getElementById('authOverlay');
@@ -528,7 +563,7 @@
     });
 
     // ----------------------------------------------------------------------
-    // VERİTABANI YÖNETİMİ (SYNC) - SQL YAPINA GÖRE GÜNCELLENDİ
+    // VERİTABANI YÖNETİMİ
     // ----------------------------------------------------------------------
 
     function getEmptyDB() {
@@ -557,7 +592,7 @@
         if(raw) localData = JSON.parse(raw);
       } catch {}
 
-      // Sunucudan çek (SQL'e göre 'id' kolonu kullanılıyor)
+      // Sunucudan çek
       const { data, error } = await _supabase
         .from('user_data')
         .select('content')
@@ -576,11 +611,9 @@
       } else {
         // Sunucuda veri yok (yeni kullanıcı)
         if(localData) {
-          // Eğer yerelde veri varsa (önceden kullanıyorsa), onu sunucuya at
           db = localData;
           saveDB(db); 
         } else {
-          // Hiçbir yerde veri yok, sıfırla
           db = getEmptyDB();
           saveDB(db);
         }
@@ -593,20 +626,17 @@
       if(!newDB) return;
       db = newDB;
       
-      // 1. Yerele yaz (Hız için)
       localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
 
-      // 2. Sunucuya yaz (SQL'e göre 'id' kolonu kullanılıyor)
       if(saveTimeout) clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
         if(!currentUser) return;
-        
         await _supabase
           .from('user_data')
           .upsert({ 
             id: currentUser.id, 
             content: db,
-            updated_at: new Date() // updated_at'i de güncelliyoruz
+            updated_at: new Date()
           });
       }, 1000); 
     }
@@ -981,11 +1011,14 @@
       }
     });
 
+    // CUSTOM CONFIRM UYGULANDI
     modalDelete.addEventListener('click', ()=>{
       if (modalContext.mode !== 'edit') return;
-      if (!confirm('Silinsin mi?')) return;
-      deleteItem(modalContext.origin, modalContext.itemId);
-      closeModal();
+      
+      showConfirm('Bu kart silinsin mi?', () => {
+        deleteItem(modalContext.origin, modalContext.itemId);
+        closeModal();
+      });
     });
 
     function renderDOW(){
@@ -1107,13 +1140,16 @@
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+        
+        // CUSTOM CONFIRM UYGULANDI
         del.addEventListener('click', ()=>{
-          if (!confirm(`"${h.name}" silinsin mi?`)) return;
-          db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
-          ensureHabitReset();
-          db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
-          saveDB(db);
-          renderHabits();
+          showConfirm(`"${h.name}" silinsin mi?`, () => {
+            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+            ensureHabitReset();
+            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
+            saveDB(db);
+            renderHabits();
+          });
         });
 
         row.appendChild(lab); row.appendChild(del);
@@ -1256,17 +1292,20 @@
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+        
+        // CUSTOM CONFIRM UYGULANDI
         del.addEventListener('click', ()=>{
-          if (!confirm(`"${t.name}" silinsin mi?`)) return;
-          db.tags = db.tags.filter(x=>x.name!==t.name);
-          for (const k of Object.keys(db.days)){
-            db.days[k].forEach(it=>{ if (it.tag===t.name) it.tag=''; });
-          }
-          (db.inbox||[]).forEach(it=>{ if (it.tag===t.name) it.tag=''; });
-          saveDB(db);
-          rebuildTagDropdowns();
-          render();
-          renderTagManager();
+          showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, () => {
+            db.tags = db.tags.filter(x=>x.name!==t.name);
+            for (const k of Object.keys(db.days)){
+              db.days[k].forEach(it=>{ if (it.tag===t.name) it.tag=''; });
+            }
+            (db.inbox||[]).forEach(it=>{ if (it.tag===t.name) it.tag=''; });
+            saveDB(db);
+            rebuildTagDropdowns();
+            render();
+            renderTagManager();
+          });
         });
 
         row.appendChild(nameBox); row.appendChild(color); row.appendChild(del);
