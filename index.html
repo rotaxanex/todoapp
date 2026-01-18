@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TodoApp Pro v4.1 Fixed</title>
+<title>TodoApp Pro v4.2 Mobile Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
@@ -84,7 +84,23 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
 /* MOBILE */
 .mobile-view { display: none; height: 100vh; background: var(--bg); flex-direction:column; }
-.m-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:80px; }
+.m-content { flex:1; overflow-y:auto; padding:0; padding-bottom:80px; } /* Padding kaldırıldı, içeriğe verildi */
+.m-inner-content { padding: 16px; }
+
+/* Sticky Date Header for Mobile */
+.m-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg); /* Arka plan rengi */
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Hafif gölge */
+}
+
 .m-add-panel { background: #1c1c1f; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .m-day-container { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
 .m-nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: var(--card); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); z-index: 100; padding-bottom:env(safe-area-inset-bottom); }
@@ -251,7 +267,7 @@ body.mode-week .habit-section { display: flex; }
 </div>
 
 <div class="mobile-view">
-    <div style="padding:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+    <div style="padding:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background:var(--bg);">
         <span style="font-weight:800; font-size:18px; color:var(--accent);">todoapp</span>
         <div style="display:flex; gap:10px;">
              <button onclick="mobileGoToday()" class="btn" style="padding:4px 8px; font-size:11px;">Bugün</button>
@@ -261,47 +277,49 @@ body.mode-week .habit-section { display: flex; }
     
     <div class="m-content">
         <div id="mViewDay">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div class="m-sticky-header">
                 <button onclick="navDay(-1)" class="btn">◀</button>
-                <div id="mDateTitle" style="font-weight:600;">...</div>
+                <div id="mDateTitle" style="font-weight:700; font-size:15px; color:var(--text); text-align:center;">...</div>
                 <button onclick="navDay(1)" class="btn">▶</button>
             </div>
 
-            <div class="habit-section panel" style="margin-bottom:15px;">
-                <div class="bp-head">
-                    <span>Alışkanlıklar</span>
-                    <button onclick="addHabit()" class="icon-btn">+</button>
+            <div class="m-inner-content">
+                <div class="habit-section panel" style="margin-bottom:15px;">
+                    <div class="bp-head">
+                        <span>Alışkanlıklar</span>
+                        <button onclick="addHabit()" class="icon-btn">+</button>
+                    </div>
+                    <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px; padding-top:8px;"></div>
                 </div>
-                <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px; padding-top:8px;"></div>
-            </div>
 
-            <div class="m-add-panel" id="mAddPanel" style="display:none;">
-                <input id="mAddText" class="w-full" placeholder="Görev Adı..." />
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                    <select id="mAddType">
-                        <option value="gorev">Görev</option>
-                        <option value="termin">Termin</option>
-                        <option value="hedef">Hedef</option>
-                    </select>
-                    <select id="mAddTag"></select>
+                <div class="m-add-panel" id="mAddPanel" style="display:none;">
+                    <input id="mAddText" class="w-full" placeholder="Görev Adı..." />
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <select id="mAddType">
+                            <option value="gorev">Görev</option>
+                            <option value="termin">Termin</option>
+                            <option value="hedef">Hedef</option>
+                        </select>
+                        <select id="mAddTag"></select>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input id="mAddTime" type="time" style="flex:1;">
+                        <button onclick="submitMobileAdd()" class="btn active" style="flex:1;">Kaydet</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <input id="mAddTime" type="time" style="flex:1;">
-                    <button onclick="submitMobileAdd()" class="btn active" style="flex:1;">Kaydet</button>
-                </div>
-            </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-weight:600; color:var(--muted);">Görevler</span>
-                <button onclick="toggleMobileAdd()" class="btn active">+ Ekle</button>
-            </div>
-            
-            <div class="m-day-container">
-                <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:600; color:var(--muted);">Görevler</span>
+                    <button onclick="toggleMobileAdd()" class="btn active">+ Ekle</button>
+                </div>
+                
+                <div class="m-day-container">
+                    <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
+                </div>
             </div>
         </div>
 
-        <div id="mViewCal" class="hidden">
+        <div id="mViewCal" class="hidden m-inner-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <button onclick="navMonth(-1)" class="btn">◀</button>
                 <div id="mCalTitle" style="font-weight:700; font-size:16px;">...</div>
@@ -314,7 +332,7 @@ body.mode-week .habit-section { display: flex; }
             <div style="margin-top:20px; font-size:12px; color:var(--muted); text-align:center;">Günü seçmek için dokun</div>
         </div>
 
-        <div id="mViewDump" class="hidden">
+        <div id="mViewDump" class="hidden m-inner-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h2 style="margin:0; font-size:18px;">Brain Dump</h2>
                 <button onclick="addQuickMobile('inbox')" class="btn active">+</button>
@@ -381,7 +399,6 @@ function save() {
     }
 }
 
-// SORTING
 function getTaskScore(t) {
     let typeScore = t.type === 'termin' ? 1 : t.type === 'hedef' ? 2 : 3;
     let timeVal = t.time ? parseInt(t.time.replace(':','')) : 9999;
@@ -409,9 +426,7 @@ function renderCalendar() {
     const tagOpts = db.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
     $('inpTag').innerHTML = tagOpts;
     $('mTag').innerHTML = tagOpts;
-    // Fix: Mobil Tag listesi her renderda güncellenmeli
     $('mAddTag').innerHTML = tagOpts;
-
     $('filterTag').innerHTML = `<option value="all">Filtre: Hepsi</option>` + tagOpts;
     
     const grid = $('calGrid');
@@ -438,31 +453,24 @@ function renderCalendar() {
         const d = addDays(start, i);
         const k = toKey(d);
         const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
-        
         const cell = document.createElement('div');
         cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
         cell.ondragover = handleDragOver;
         cell.ondragleave = handleDragLeave;
         cell.ondrop = (e) => handleDrop(e, k);
         cell.onclick = () => { state.selected = d; render(); };
-        
         cell.innerHTML = `<div class="cell-head"><span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button></div><div class="cell-cards"></div>`;
-        
         const cardCont = cell.querySelector('.cell-cards');
         let tasks = (db.days[k]||[]).filter(t => filterPass(t));
         tasks.sort(sortTasks);
         tasks.forEach(t => cardCont.appendChild(createCardEl(t, 'day', k)));
-        
         grid.appendChild(cell);
     }
 }
 
 function filterPass(t) {
     const f = $('filterTag').value;
-    if (state.mode === 'month' && f === 'all') {
-        // Varsayılan olarak ay görünümünde hepsi açık kalsın (kullanıcı isteği üzerine basitleştirildi)
-        return true; 
-    }
+    if (state.mode === 'month' && f === 'all') return true; 
     if(f === 'all') return true;
     return t.tag === f;
 }
@@ -473,18 +481,14 @@ function getTagColor(id) {
 }
 
 function createCardEl(t, source, dateKey) {
-    // Sol Border = Type, Arkaplan = Tag Rengi (User isteği)
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-    // Fix: Daha belirgin arka plan
     const bg = hexToRgba(getTagColor(t.tag), 0.25);
-    
     const el = document.createElement('div');
     el.className = `task-card ${t.done?'done':''}`;
     el.draggable = true;
     el.style.borderLeftColor = borderCol;
     el.style.background = bg; 
     el.innerHTML = `<div style="font-weight:600; margin-bottom:2px; pointer-events:none; font-size:11px;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;"><span>${t.time||''}</span></div>`;
-    
     el.ondragstart = (e) => {
         state.drag = { id: t.id, source, dateKey };
         e.dataTransfer.effectAllowed = 'move';
@@ -504,24 +508,20 @@ function createCardEl(t, source, dateKey) {
 function renderPanels() {
     const k = toKey(state.selected);
     $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
-    
     const bpList = $('bottomTaskList');
     bpList.innerHTML = '';
     let dayTasks = (db.days[k]||[]).slice().sort(sortTasks);
     dayTasks.forEach(t => bpList.appendChild(createRowItem(t, 'day', k)));
-    
     const inboxList = $('inboxListBottom');
     inboxList.innerHTML = '';
     let dumpTasks = db.inbox.slice().sort(sortTasks);
     dumpTasks.forEach(t => inboxList.appendChild(createRowItem(t, 'inbox', null)));
-    
     const mSlot = $('sidebar-month-slot');
     if(state.mode === 'month') {
         mSlot.innerHTML = `<div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div><form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;"><input class="w-full" placeholder="Hızlı Ekle..."><button class="btn active">+</button></form><div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>`;
         const cont = mSlot.querySelector('div:last-child');
         dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
     }
-    
     const hList = $('habitList');
     hList.innerHTML = '';
     const today = toKey(new Date());
@@ -530,7 +530,6 @@ function renderPanels() {
         const div = document.createElement('div');
         div.className = 'row-item';
         div.innerHTML = `<span style="flex:1;">${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
-        // Fix: Stop propagation to prevent issues
         div.querySelector('input').onclick = (e) => e.stopPropagation();
         div.querySelector('input').onchange = (e) => {
             if(!db.habitLog[today]) db.habitLog[today] = [];
@@ -549,18 +548,14 @@ function createRowItem(t, source, dateKey) {
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
     div.style.borderLeft = `3px solid ${borderCol}`;
     div.style.background = hexToRgba(getTagColor(t.tag), 0.1);
-    
-    // Fix: Checkbox event bubbling issue
     div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="cursor:pointer; width:16px; height:16px;"> <span style="flex:1; margin-left:8px; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span><span style="font-size:10px; color:var(--muted);">${t.time||''}</span>`;
-    
     const chk = div.querySelector('input');
-    chk.onclick = (e) => e.stopPropagation(); // ÖNEMLİ: Detayın açılmasını engeller
+    chk.onclick = (e) => e.stopPropagation();
     chk.onchange = () => {
         t.done = !t.done;
         save();
         render();
     };
-    
     div.onclick = () => openModal(t, source, dateKey);
     return div;
 }
@@ -571,10 +566,7 @@ function switchMobileTab(tab, btn) {
     $('mViewDay').classList.add('hidden');
     $('mViewCal').classList.add('hidden');
     $('mViewDump').classList.add('hidden');
-    
-    if(tab==='day') {
-        $('mViewDay').classList.remove('hidden');
-    }
+    if(tab==='day') $('mViewDay').classList.remove('hidden');
     if(tab==='cal') {
         $('mViewCal').classList.remove('hidden');
         state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1);
@@ -592,17 +584,16 @@ function mobileGoToday() {
 }
 
 function renderMobileDay() {
-    $('mDateTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
+    // Tarih formatını belirginleştirdim
+    $('mDateTitle').innerText = state.selected.toLocaleDateString('tr-TR', {day:'numeric', month:'long', weekday:'long'});
     
     const mh = $('mHabitList');
     mh.innerHTML = '';
     const today = toKey(new Date());
-    
     db.habits.forEach(h => {
         const isDone = (db.habitLog[today]||[]).includes(h.id);
         const d = document.createElement('div');
         d.className='row-item';
-        // Fix: Checkbox click bubbling prevent
         d.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="margin-left:8px;">${h.name}</span> <button onclick="delHabit('${h.id}')" class="icon-btn" style="margin-left:auto;">🗑</button>`;
         const chk = d.querySelector('input');
         chk.onclick = (e) => e.stopPropagation();
@@ -618,19 +609,14 @@ function renderMobileDay() {
         };
         mh.appendChild(d);
     });
-    
     const mt = $('mTaskList');
     mt.innerHTML = '';
     const k = toKey(state.selected);
     let tasks = (db.days[k] || []).slice().sort(sortTasks);
-    
     if(tasks.length === 0) mt.innerHTML = '<div style="color:var(--muted); text-align:center; padding:20px;">Bugün boş</div>';
-    
     tasks.forEach(t => {
         const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-        // Fix: Mobil kartlarda da tag rengi
         const bg = hexToRgba(getTagColor(t.tag), 0.2);
-        
         const div = document.createElement('div');
         div.className = 'task-card';
         div.style.background = bg;
@@ -639,14 +625,7 @@ function renderMobileDay() {
         div.style.display='flex';
         div.style.gap='10px';
         div.style.alignItems='center';
-        
-        // Fix: Checkbox bubbling
-        div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;">
-        <div style="flex:1;">
-            <div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div>
-            <div style="font-size:11px; color:var(--muted);">${t.time||''}</div>
-        </div>`;
-        
+        div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;"><div style="flex:1;"><div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div><div style="font-size:11px; color:var(--muted);">${t.time||''}</div></div>`;
         const chk = div.querySelector('input');
         chk.onclick = (e) => e.stopPropagation();
         chk.onchange = () => {
@@ -654,9 +633,7 @@ function renderMobileDay() {
             save();
             render();
         };
-        // Div'e tıklayınca modal aç
         div.onclick = () => openModalById(t.id, 'day', k);
-        
         mt.appendChild(div);
     });
 }
@@ -668,13 +645,11 @@ function renderMobileCal() {
     const start = getStartOfWeek(getStartOfMonth(state.anchor));
     const selK = toKey(state.selected);
     const todayK = toKey(new Date());
-    
     for(let i=0; i<42; i++) {
         const d = addDays(start, i);
         const k = toKey(d);
         const isOut = d.getMonth() !== state.anchor.getMonth();
         const hasTask = db.days[k] && db.days[k].length > 0;
-        
         const c = document.createElement('div');
         c.className = `m-cell ${k===selK?'selected':''} ${k===todayK?'today':''} ${isOut?'out':''} ${hasTask?'has-task':''}`;
         c.innerText = d.getDate();
@@ -720,7 +695,6 @@ function addTask(txt, time, type, tag, dest) {
     const t = { id: Date.now().toString(), text: txt, time, type, tag, done:false };
     if(dest==='inbox') db.inbox.push(t);
     else {
-        // Fix: State selected kontrolü
         const k=toKey(state.selected || new Date());
         if(!db.days[k]) db.days[k]=[];
         db.days[k].push(t);
@@ -733,93 +707,50 @@ function addInbox() {
     const t = prompt('Brain Dump:');
     if(t) addTask(t, '', 'gorev', db.tags[0].id, 'inbox');
 }
-
 function addHabit() {
     const t = prompt('Yeni Alışkanlık:');
-    if(t) {
-        db.habits.push({id:Date.now().toString(), name:t});
-        save();
-        render();
-    }
+    if(t) { db.habits.push({id:Date.now().toString(), name:t}); save(); render(); }
 }
-
 function delHabit(id) {
-    if(confirm('Sil?')) {
-        db.habits=db.habits.filter(x=>x.id!==id);
-        save();
-        render();
-    }
+    if(confirm('Sil?')) { db.habits=db.habits.filter(x=>x.id!==id); save(); render(); }
 }
-
 function addQuickToDay(k, txt) {
     if(txt) {
         if(!db.days[k]) db.days[k]=[];
-        // Fix: Tag hatası almamak için kontrol
         const tagId = db.tags.length > 0 ? db.tags[0].id : 't1';
         db.days[k].push({id:Date.now().toString(), text:txt, type:'gorev', tag:tagId, done:false});
         save();
         render();
     }
 }
-
 function quickAddModal(k, e) {
     e.stopPropagation();
     state.selected = new Date(k);
     render();
     setTimeout(()=> $('inpText').focus(), 50);
 }
-
 function clearDone() {
     const k=toKey(state.selected);
-    if(db.days[k]) {
-        db.days[k]=db.days[k].filter(t=>!t.done);
-        save();
-        render();
-    }
+    if(db.days[k]) { db.days[k]=db.days[k].filter(t=>!t.done); save(); render(); }
 }
-
-function navDay(d) {
-    state.selected = addDays(state.selected, d);
-    render();
-}
-function navMonth(d) {
-    state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1);
-    renderMobileCal();
-}
-
+function navDay(d) { state.selected = addDays(state.selected, d); render(); }
+function navMonth(d) { state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1); renderMobileCal(); }
 function toggleMobileAdd() {
     const p = $('mAddPanel');
     p.style.display = p.style.display === 'none' ? 'flex' : 'none';
     if(p.style.display === 'flex') $('mAddText').focus();
 }
-
 function submitMobileAdd() {
     const txt = $('mAddText').value;
     const time = $('mAddTime').value;
     const tag = $('mAddTag').value;
     const type = $('mAddType').value;
-    
-    if(txt) {
-        addTask(txt, time, type, tag, 'day');
-        $('mAddText').value='';
-        toggleMobileAdd();
-    } else {
-        alert("Görev adı giriniz.");
-    }
+    if(txt) { addTask(txt, time, type, tag, 'day'); $('mAddText').value=''; toggleMobileAdd(); } else { alert("Görev adı giriniz."); }
 }
-
 function addQuickMobile(dest) {
-    if(dest === 'inbox') {
-        const t = prompt('Brain Dump:');
-        if(t) addTask(t,'','gorev',db.tags[0].id,'inbox');
-    }
+    if(dest === 'inbox') { const t = prompt('Brain Dump:'); if(t) addTask(t,'','gorev',db.tags[0].id,'inbox'); }
 }
-
-function openTagsModal() {
-    $('tagsModal').style.display = 'flex';
-    renderTagsList();
-}
-
+function openTagsModal() { $('tagsModal').style.display = 'flex'; renderTagsList(); }
 function renderTagsList() {
     const cont = $('tagsListConfig');
     cont.innerHTML = '';
@@ -830,41 +761,18 @@ function renderTagsList() {
         cont.appendChild(row);
     });
 }
-
 function moveTag(idx, dir) {
     if(dir === -1 && idx > 0) { [db.tags[idx], db.tags[idx-1]] = [db.tags[idx-1], db.tags[idx]]; }
     if(dir === 1 && idx < db.tags.length -1) { [db.tags[idx], db.tags[idx+1]] = [db.tags[idx+1], db.tags[idx]]; }
-    save();
-    renderTagsList();
-    render();
+    save(); renderTagsList(); render();
 }
-
 function addNewTag() {
     const name = $('newTagName').value;
     const color = $('newTagColor').value;
-    if(name) {
-        db.tags.push({id:Date.now().toString(), name, color});
-        $('newTagName').value='';
-        save();
-        renderTagsList();
-        render();
-    }
+    if(name) { db.tags.push({id:Date.now().toString(), name, color}); $('newTagName').value=''; save(); renderTagsList(); render(); }
 }
-
-function updateTag(id, field, val) {
-    const t = db.tags.find(x=>x.id===id);
-    if(t) { t[field]=val; save(); render(); }
-}
-
-function delTag(id) {
-    if(confirm('Etiket silinsin mi?')) {
-        db.tags = db.tags.filter(x=>x.id!==id);
-        save();
-        renderTagsList();
-        render();
-    }
-}
-
+function updateTag(id, field, val) { const t = db.tags.find(x=>x.id===id); if(t) { t[field]=val; save(); render(); } }
+function delTag(id) { if(confirm('Etiket silinsin mi?')) { db.tags = db.tags.filter(x=>x.id!==id); save(); renderTagsList(); render(); } }
 let editCtx = null;
 function openModal(task, source, dateKey) {
     editCtx = { task, source, dateKey };
@@ -875,18 +783,12 @@ function openModal(task, source, dateKey) {
     $('mTag').value = task.tag||'';
     $('mDate').value = source==='day'?dateKey:'';
 }
-
 function openModalById(id, source, dateKey) {
     const list = source==='inbox'?db.inbox:db.days[dateKey];
     const t=list.find(x=>x.id===id);
     if(t) openModal(t, source, dateKey);
 }
-
-function closeModal() {
-    $('modalOverlay').style.display = 'none';
-    editCtx = null;
-}
-
+function closeModal() { $('modalOverlay').style.display = 'none'; editCtx = null; }
 $('modalSave').onclick = () => {
     if(!editCtx) return;
     const { task, source, dateKey } = editCtx;
@@ -896,7 +798,6 @@ $('modalSave').onclick = () => {
     task.tag = $('mTag').value;
     const nDate = $('mDate').value;
     const oDate = source==='day'?dateKey:'';
-    
     if(nDate && nDate!==oDate) {
         if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id);
         else {
@@ -907,36 +808,24 @@ $('modalSave').onclick = () => {
         db.days[nDate].push(task);
         state.selected=new Date(nDate);
     }
-    save();
-    render();
-    closeModal();
+    save(); render(); closeModal();
 };
-
 $('modalDel').onclick = () => {
     if(!editCtx)return;
     if(confirm('Sil?')) {
         const { task, source, dateKey } = editCtx;
         if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id);
         else db.days[dateKey]=db.days[dateKey].filter(x=>x.id!==task.id);
-        save();
-        render();
-        closeModal();
+        save(); render(); closeModal();
     }
 };
-
-function handleDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over');
-}
+function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over'); }
 function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
 function handleDrop(e, targetK) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
+    e.preventDefault(); e.currentTarget.classList.remove('drag-over');
     if(!state.drag) return;
     const { id, source, dateKey } = state.drag;
     if(source === 'day' && dateKey === targetK) return;
-    
     let task;
     if(source === 'inbox') {
         const i = db.inbox.findIndex(x=>x.id===id);
@@ -947,41 +836,15 @@ function handleDrop(e, targetK) {
         if(i>-1) task=l.splice(i,1)[0];
         if(l.length===0) delete db.days[dateKey];
     }
-    
-    if(task) {
-        if(!db.days[targetK]) db.days[targetK]=[];
-        db.days[targetK].push(task);
-        save();
-        render();
-    }
+    if(task) { if(!db.days[targetK]) db.days[targetK]=[]; db.days[targetK].push(task); save(); render(); }
     state.drag = null;
 }
-
-$('viewWeek').onclick = () => {
-    state.mode='week';
-    $('viewWeek').classList.add('active');
-    $('viewMonth').classList.remove('active');
-    document.body.className='mode-week';
-    render();
-};
-$('viewMonth').onclick = () => {
-    state.mode='month';
-    $('viewMonth').classList.add('active');
-    $('viewWeek').classList.remove('active');
-    document.body.className='mode-month';
-    render();
-};
-$('navPrev').onclick = () => {
-    state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1);
-    render();
-};
-$('navNext').onclick = () => {
-    state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1);
-    render();
-};
+$('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week'; render(); };
+$('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month'; render(); };
+$('navPrev').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); render(); };
+$('navNext').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1); render(); };
 $('navToday').onclick = () => { state.anchor=new Date(); state.selected=new Date(); render(); };
 $('filterTag').onchange = render;
-
 async function init() {
     const local = localStorage.getItem('todo_final_v4');
     if(local) db = JSON.parse(local);
@@ -995,17 +858,9 @@ async function init() {
     }
     render();
 }
-
-$('btnLogin').onclick = async () => {
-    const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value });
-    if(error) $('authMsg').innerText = error.message; else location.reload();
-};
-$('btnReg').onclick = async () => {
-    const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value });
-    if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı!";
-};
+$('btnLogin').onclick = async () => { const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else location.reload(); };
+$('btnReg').onclick = async () => { const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı!"; };
 window.signOut = async () => { await sb.auth.signOut(); location.reload(); };
-
 init();
 </script>
 </body>
