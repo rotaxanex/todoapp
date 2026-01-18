@@ -1,643 +1,1012 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <meta name="theme-color" content="#0f0f10" />
-  <title>TodoApp Pro v4</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TodoApp Pro v4.1 Fixed</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg: #0f0f10;
+    --card: #17171a;
+    --card-hover: #1f1f24;
+    --muted: #737373;
+    --text: #e5e5e5;
+    --line: #262626;
+    --accent: #3b82f6;
+    --shadow: 0 4px 20px rgba(0,0,0,.5);
+    --month-cell-h: 110px;
+    /* Type Colors */
+    --c-termin: #fb7185;
+    --c-hedef: #60a5fa;
+    --c-gorev: #34d399;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; height: 100vh; overflow: hidden; display:flex; flex-direction:column;}
+.hidden { display: none !important; }
+.w-full { width: 100%; }
+.btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 13px; display:inline-flex; align-items:center; justify-content:center; gap:6px;}
+.btn:hover { border-color: #525252; background: var(--card-hover); }
+.btn.danger { color: #f87171; border-color: rgba(248,113,113,.2); }
+.btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+.icon-btn { padding:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+.icon-btn:hover { color:var(--text); background:rgba(255,255,255,0.1); }
+input, select { background: #121212; color: var(--text); border: 1px solid #333; border-radius: 6px; padding: 8px; outline: none; font-size: 13px; }
+input:focus, select:focus { border-color: var(--accent); }
+input[type="color"] { padding:0; width:34px; height:34px; border:none; border-radius:4px; overflow:hidden; cursor:pointer; }
+input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  
-  <style>
-    :root {
-      --bg: #0f0f10; --card: #17171a; --card-hover: #1f1f24;
-      --muted: #737373; --text: #e5e5e5; --line: #262626; --accent: #3b82f6;
-      --shadow: 0 4px 20px rgba(0,0,0,.5);
-      --month-cell-h: 110px;
-      
-      /* Type Colors */
-      --c-termin: #fb7185; /* Kırmızı */
-      --c-hedef: #60a5fa;  /* Mavi */
-      --c-gorev: #34d399;  /* Yeşil */
-    }
+/* LAYOUTS */
+.app-wrap { max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; width:100%; display: flex; flex-direction: column; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-shrink: 0; }
+.main-grid { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
+.left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
+.calendar-container { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; min-height: 0; border: 1px solid var(--line); border-radius: 12px; }
+.dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 0; border-bottom: 1px solid var(--line); background: var(--card); }
+.dow { color: var(--muted); font-size: 11px; text-align: center; text-transform: uppercase; font-weight: 700; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); overflow-y: auto; flex: 1; background: var(--line); gap: 1px; }
+.cell { background: var(--bg); display: flex; flex-direction: column; min-height: 80px; position: relative; transition: background .2s; }
+.cell:hover { background: #151515; }
+.cell.today { background: rgba(59, 130, 246, 0.05); }
+.cell.selected { background: #1c1c1f; }
+.cell.out { opacity: 0.3; background: #050505; }
+.cell.drag-over { background: rgba(59, 130, 246, 0.1) !important; outline: 2px dashed var(--accent); }
+.cell-head { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
+.day-num { font-size: 13px; font-weight: 600; color: var(--muted); display:flex; gap:4px; align-items:baseline; }
+.cell.today .day-num { color: var(--accent); }
+.cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; height: 100vh; overflow: hidden; display:flex; flex-direction:column;}
-    
-    .hidden { display: none !important; }
-    .w-full { width: 100%; }
-    
-    .btn { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all .2s; font-size: 13px; display:inline-flex; align-items:center; justify-content:center; gap:6px;}
-    .btn:hover { border-color: #525252; background: var(--card-hover); }
-    .btn.danger { color: #f87171; border-color: rgba(248,113,113,.2); }
-    .btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
-    
-    .icon-btn { padding:4px; border:0; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:4px; }
-    .icon-btn:hover { color:var(--text); background:rgba(255,255,255,0.1); }
+/* TASK CARD */
+.task-card { 
+    background: var(--card); border-radius: 6px; padding: 6px 8px; font-size: 12px; 
+    cursor: pointer; user-select: none; border-left: 4px solid transparent; 
+    transition: transform .1s; position:relative; margin-bottom: 0; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.task-card:active { transform: scale(0.98); }
+.task-card.done { opacity: 0.5; filter:grayscale(1); }
+.task-card.done div { text-decoration: line-through; }
 
-    input, select { background: #121212; color: var(--text); border: 1px solid #333; border-radius: 6px; padding: 8px; outline: none; font-size: 13px; }
-    input:focus, select:focus { border-color: var(--accent); }
-    input[type="color"] { padding:0; width:34px; height:34px; border:none; border-radius:4px; overflow:hidden; cursor:pointer; }
+.bottom-panel-container { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 260px; min-height: 260px; }
+.bp-col { display: flex; flex-direction: column; gap: 10px; overflow: hidden; height: 100%; }
+.bp-head { display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px; color:var(--text); padding-bottom:6px; border-bottom:1px solid var(--line); }
+.bp-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px; }
+.sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; }
 
-    /* LAYOUTS */
-    .app-wrap { max-width: 1600px; margin: 0 auto; padding: 16px; height: 100%; width:100%; display: flex; flex-direction: column; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
-    .bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; flex-shrink: 0; }
-    .main-grid { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
-    
-    .left-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; height: 100%; }
-    .calendar-container { flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; min-height: 0; border: 1px solid var(--line); border-radius: 12px; }
-    .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 0; border-bottom: 1px solid var(--line); background: var(--card); }
-    .dow { color: var(--muted); font-size: 11px; text-align: center; text-transform: uppercase; font-weight: 700; }
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); overflow-y: auto; flex: 1; background: var(--line); gap: 1px; }
-    
-    .cell { background: var(--bg); display: flex; flex-direction: column; min-height: 80px; position: relative; transition: background .2s; }
-    .cell:hover { background: #151515; }
-    .cell.today { background: rgba(59, 130, 246, 0.05); }
-    .cell.selected { background: #1c1c1f; }
-    .cell.out { opacity: 0.3; background: #050505; }
-    .cell.drag-over { background: rgba(59, 130, 246, 0.1) !important; outline: 2px dashed var(--accent); }
-    
-    .cell-head { padding: 6px 8px; display: flex; justify-content: space-between; align-items: center; }
-    .day-num { font-size: 13px; font-weight: 600; color: var(--muted); display:flex; gap:4px; align-items:baseline; }
-    .cell.today .day-num { color: var(--accent); }
-    .cell-cards { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.row-item { 
+    display:flex; gap:8px; padding:8px; background:rgba(255,255,255,0.03); 
+    border-radius:6px; align-items:center; font-size:13px; transition:background .2s; 
+    border-left:3px solid transparent; cursor: pointer;
+}
+.row-item:hover { background: rgba(255,255,255,0.05); }
 
-    /* TASK CARD */
-    .task-card {
-      background: var(--card); border-radius: 6px; padding: 6px 8px;
-      font-size: 12px; cursor: grab; user-select: none;
-      border-left: 4px solid transparent; /* Type Color */
-      transition: transform .1s; position:relative; margin-bottom: 0;
-    }
-    .task-card:active { cursor: grabbing; transform: scale(0.98); }
-    .task-card.done { opacity: 0.5; text-decoration: line-through; filter:grayscale(1); }
-    
-    .bottom-panel-container { 
-      background: var(--card); border: 1px solid var(--line); border-radius: 12px; 
-      padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-      height: 260px; min-height: 260px;
-    }
-    .bp-col { display: flex; flex-direction: column; gap: 10px; overflow: hidden; height: 100%; }
-    .bp-head { display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px; color:var(--text); padding-bottom:6px; border-bottom:1px solid var(--line); }
-    .bp-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px; }
+/* MOBILE */
+.mobile-view { display: none; height: 100vh; background: var(--bg); flex-direction:column; }
+.m-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:80px; }
+.m-add-panel { background: #1c1c1f; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.m-day-container { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
+.m-nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: var(--card); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); z-index: 100; padding-bottom:env(safe-area-inset-bottom); }
+.m-nav-item { border:0; background:transparent; color:var(--muted); font-size:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; }
+.m-nav-item.active { color:var(--accent); }
+.m-nav-icon { font-size:18px; }
+.m-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top:10px; }
+.m-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 13px; background: var(--card); border:1px solid var(--line); position:relative; }
+.m-cell.today { border-color:var(--accent); color:var(--accent); font-weight:700; }
+.m-cell.selected { background: var(--text); color: var(--bg); font-weight: 700; }
+.m-cell.has-task::after { content:''; position:absolute; bottom:4px; width:4px; height:4px; background:var(--accent); border-radius:50%; }
 
-    .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px; }
-    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; }
-    .row-item { display:flex; gap:8px; padding:8px; background:rgba(255,255,255,0.03); border-radius:6px; align-items:center; font-size:13px; transition:background .2s; border-left:3px solid transparent; }
-    
-    /* MOBILE */
-    .mobile-view { display: none; height: 100vh; background: var(--bg); flex-direction:column; }
-    .m-content { flex:1; overflow-y:auto; padding:16px; padding-bottom:80px; }
-    .m-add-panel { background: #1c1c1f; border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .m-day-container { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 200px; display: flex; flex-direction: column; }
+@media (max-width: 900px) {
+    .app-wrap { display: none; }
+    .mobile-view { display: flex; }
+}
 
-    .m-nav-bar {
-      position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
-      background: var(--card); border-top: 1px solid var(--line);
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      z-index: 100; padding-bottom:env(safe-area-inset-bottom);
-    }
-    .m-nav-item { border:0; background:transparent; color:var(--muted); font-size:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; }
-    .m-nav-item.active { color:var(--accent); }
-    .m-nav-icon { font-size:18px; }
+/* Mode Specifics */
+body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
+body.mode-month .cell { height: var(--month-cell-h); }
+body.mode-month .bottom-panel-container { display: none; }
+body.mode-month .habit-section { display: none !important; }
+body.mode-month #sidebar-month-slot { display: flex; }
+body.mode-week #sidebar-month-slot { display: none; }
+body.mode-week .habit-section { display: flex; }
 
-    .m-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top:10px; }
-    .m-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 13px; background: var(--card); border:1px solid var(--line); position:relative; }
-    .m-cell.today { border-color:var(--accent); color:var(--accent); font-weight:700; }
-    .m-cell.selected { background: var(--text); color: var(--bg); font-weight: 700; }
-    .m-cell.has-task::after { content:''; position:absolute; bottom:4px; width:4px; height:4px; background:var(--accent); border-radius:50%; }
-
-    @media (max-width: 900px) {
-      .app-wrap { display: none; }
-      .mobile-view { display: flex; }
-    }
-    
-    /* Mode Specifics */
-    body.mode-month .main-grid { grid-template-columns: 1fr 300px; }
-    body.mode-month .cell { height: var(--month-cell-h); }
-    body.mode-month .bottom-panel-container { display: none; }
-    body.mode-month .habit-section { display: none !important; }
-    body.mode-month #sidebar-month-slot { display: flex; }
-    body.mode-week #sidebar-month-slot { display: none; }
-    body.mode-week .habit-section { display: flex; }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 9999; display: none; align-items: center; justify-content: center; }
-    .modal { width: min(400px, 90%); background: #171717; padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); max-height:90vh; overflow-y:auto; }
-    .tag-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#121212; padding:4px; border-radius:6px; }
-  </style>
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+.modal { width: min(400px, 90%); background: #171717; padding: 20px; border-radius: 16px; border: 1px solid var(--line); box-shadow: var(--shadow); max-height:90vh; overflow-y:auto; }
+.tag-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; background:#121212; padding:4px; border-radius:6px; }
+</style>
 </head>
+<body>
 
-<body class="mode-week">
-
-  <div id="authOverlay" style="position:fixed; inset:0; background:#000; z-index:10000; display:flex; align-items:center; justify-content:center;">
-    <div style="width:300px; text-align:center;">
-      <h2 style="margin-bottom:20px;">TodoApp</h2>
-      <div id="authMsg" style="color:#f87171; font-size:12px; margin-bottom:10px;"></div>
-      <input id="emailIn" placeholder="E-posta" style="width:100%; margin-bottom:10px;">
-      <input id="passIn" type="password" placeholder="Şifre" style="width:100%; margin-bottom:10px;">
-      <button id="btnLogin" class="btn active w-full" style="margin-bottom:10px;">Giriş</button>
-      <button id="btnReg" class="btn w-full">Kayıt</button>
-    </div>
-  </div>
-
-  <div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-head" style="display:flex; justify-content:space-between; margin-bottom:16px;">
-        <h3 style="margin:0;">Düzenle</h3>
-        <button onclick="closeModal()" class="icon-btn">✕</button>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <input id="mText" class="w-full" placeholder="Ne yapılacak?" />
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <select id="mType" class="w-full">
-            <option value="gorev">Görev</option>
-            <option value="termin">Termin</option>
-            <option value="hedef">Hedef</option>
-          </select>
-          <select id="mTag" class="w-full"></select>
+<div id="authOverlay" class="modal-overlay" style="display:flex;">
+    <div class="modal" style="text-align:center;">
+        <h2>TodoApp</h2>
+        <div id="authMsg" style="color:#f87171; margin-bottom:10px;"></div>
+        <input id="emailIn" placeholder="Email" class="w-full" style="margin-bottom:10px;">
+        <input id="passIn" type="password" placeholder="Şifre" class="w-full" style="margin-bottom:10px;">
+        <div style="display:flex; gap:10px;">
+            <button id="btnLogin" class="btn w-full active">Giriş</button>
+            <button id="btnReg" class="btn w-full">Kayıt</button>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <input id="mTime" type="time" class="w-full" />
-          <input id="mDate" type="date" class="w-full" style="color-scheme:dark;" />
-        </div>
-      </div>
-      <div style="display:flex; justify-content:space-between; margin-top:20px;">
-        <button id="modalDel" class="btn danger">Sil</button>
-        <button id="modalSave" class="btn active">Kaydet</button>
-      </div>
+        <button class="btn w-full" style="margin-top:10px;" onclick="$('authOverlay').classList.add('hidden')">Çevrimdışı Devam Et</button>
     </div>
-  </div>
+</div>
 
-  <div id="tagsModal" class="modal-overlay">
+<div id="modalOverlay" class="modal-overlay">
     <div class="modal">
-      <div class="modal-head" style="display:flex; justify-content:space-between; margin-bottom:16px;">
-        <h3 style="margin:0;">Etiket Ayarları</h3>
-        <button onclick="$('tagsModal').style.display='none'" class="icon-btn">✕</button>
-      </div>
-      <div style="margin-bottom:10px; font-size:12px; color:var(--muted);">Sıralama (En üstteki = En yüksek öncelik)</div>
-      <div id="tagsListConfig" style="margin-bottom:15px; max-height:300px; overflow-y:auto;"></div>
-      <div style="display:flex; gap:8px; border-top:1px solid var(--line); padding-top:15px; flex-wrap:wrap;">
-        <input id="newTagName" placeholder="Yeni Etiket" style="flex:1;">
-        <input id="newTagColor" type="color" value="#3b82f6">
-        <button onclick="addNewTag()" class="btn active">Ekle</button>
-      </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <h3 style="margin:0;">Düzenle</h3>
+            <button onclick="closeModal()" class="icon-btn">✕</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <input id="mText" placeholder="Görev Adı..." class="w-full">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input id="mTime" type="time">
+                <input id="mDate" type="date">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <select id="mType">
+                    <option value="gorev">Görev</option>
+                    <option value="termin">Termin</option>
+                    <option value="hedef">Hedef</option>
+                </select>
+                <select id="mTag"></select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button id="modalDel" class="btn danger" style="flex:1;">Sil</button>
+                <button id="modalSave" class="btn active" style="flex:1;">Kaydet</button>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
 
-  <div class="app-wrap" id="desktopApp">
+<div id="tagsModal" class="modal-overlay">
+    <div class="modal">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <h3 style="margin:0;">Etiket Ayarları</h3>
+            <button onclick="$('tagsModal').style.display='none'" class="icon-btn">✕</button>
+        </div>
+        <div id="tagsListConfig" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
+        <div style="padding-top:10px; border-top:1px solid var(--line);">
+            <div style="margin-bottom:6px; font-size:12px; color:var(--muted);">Yeni Etiket</div>
+            <div style="display:flex; gap:6px;">
+                <input id="newTagName" placeholder="Ad..." style="flex:1;">
+                <input id="newTagColor" type="color">
+                <button onclick="addNewTag()" class="btn active">Ekle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-wrap">
     <header>
-      <div style="font-weight:800; font-size:20px; letter-spacing:-0.5px;">todo<span style="color:var(--accent)">app</span></div>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button onclick="openTagsModal()" class="btn">🏷 Etiketler</button>
-        <span id="userEmail" style="font-size:12px; color:var(--muted);">...</span>
-        <button onclick="signOut()" class="btn danger">Çıkış</button>
-      </div>
+        <div style="font-weight:800; font-size:20px; display:flex; align-items:center; gap:10px;">
+            <span style="color:var(--accent);">todoapp</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span id="userEmail" style="font-size:12px; color:var(--muted);"></span>
+            <button class="btn" onclick="openTagsModal()">🏷 Etiketler</button>
+            <button onclick="signOut()" class="btn danger">Çıkış</button>
+        </div>
     </header>
 
     <div class="bar">
-      <div style="display:flex; gap:5px;">
-        <button id="navPrev" class="btn">◀</button>
-        <button id="navToday" class="btn">Bugün</button>
-        <button id="navNext" class="btn">▶</button>
-      </div>
-      <div id="rangeTitle" style="font-weight:600; color:var(--text); min-width:150px; text-align:center;">...</div>
-      <div style="display:flex; gap:10px; flex:1; justify-content:flex-end;">
-        <div style="display:flex; background:var(--card); border-radius:8px; overflow:hidden; border:1px solid var(--line);">
-          <button id="viewWeek" class="btn" style="border:0; border-radius:0;">Hafta</button>
-          <button id="viewMonth" class="btn" style="border:0; border-radius:0;">Ay</button>
+        <div style="display:flex; gap:5px;">
+            <button id="navPrev" class="btn">◀</button>
+            <button id="navToday" class="btn">Bugün</button>
+            <button id="navNext" class="btn">▶</button>
         </div>
-        <select id="filterTag" style="width:120px;"></select>
-      </div>
+        <div id="rangeTitle" style="font-weight:600; color:var(--text); min-width:150px; text-align:center;">...</div>
+        <div style="display:flex; gap:10px; flex:1; justify-content:flex-end;">
+            <div style="display:flex; background:var(--card); border-radius:8px; overflow:hidden; border:1px solid var(--line);">
+                <button id="viewWeek" class="btn" style="border:0; border-radius:0;">Hafta</button>
+                <button id="viewMonth" class="btn" style="border:0; border-radius:0;">Ay</button>
+            </div>
+            <select id="filterTag" style="width:120px;"></select>
+        </div>
     </div>
 
     <div class="main-grid">
-      <div class="left-col">
-        <div class="calendar-container">
-          <div class="dow-row" id="dowRow"></div>
-          <div class="cal-grid" id="calGrid"></div>
-        </div>
-        
-        <div class="bottom-panel-container" id="bottomEntryPanel">
-          <div class="bp-col">
-            <div class="bp-head">
-              <span id="selDayTitle">Seçili Gün</span>
-              <button onclick="clearDone()" class="icon-btn" title="Temizle">🗑</button>
+        <div class="left-col">
+            <div class="calendar-container">
+                <div class="dow-row" id="dowRow"></div>
+                <div class="cal-grid" id="calGrid"></div>
             </div>
-            <form id="addForm" style="display:flex; gap:6px;">
-              <input id="inpText" placeholder="Yeni görev..." style="flex:1;">
-              <input id="inpTime" type="time">
-              <select id="inpType">
-                <option value="gorev">Görev</option>
-                <option value="termin">Termin</option>
-                <option value="hedef">Hedef</option>
-              </select>
-              <select id="inpTag" style="width:100px;"></select>
-              <button type="submit" class="btn active">+</button>
-            </form>
-            <div id="bottomTaskList" class="bp-list"></div>
-          </div>
-          
-          <div class="bp-col habit-section" style="border-left:1px solid var(--line); padding-left:20px;">
-            <div class="bp-head">
-              <span>Brain Dump</span>
-              <button onclick="addInbox()" class="icon-btn">+</button>
+            <div class="bottom-panel-container" id="bottomEntryPanel">
+                <div class="bp-col">
+                    <div class="bp-head">
+                        <span id="selDayTitle">Seçili Gün</span>
+                        <button onclick="clearDone()" class="icon-btn" title="Temizle">🗑</button>
+                    </div>
+                    <form id="addForm" style="display:flex; gap:6px;">
+                        <input id="inpText" placeholder="Yeni görev..." style="flex:1;">
+                        <input id="inpTime" type="time">
+                        <select id="inpType">
+                            <option value="gorev">Görev</option>
+                            <option value="termin">Termin</option>
+                            <option value="hedef">Hedef</option>
+                        </select>
+                        <select id="inpTag" style="width:100px;"></select>
+                        <button type="submit" class="btn active">+</button>
+                    </form>
+                    <div id="bottomTaskList" class="bp-list"></div>
+                </div>
+                <div class="bp-col habit-section" style="border-left:1px solid var(--line); padding-left:20px;">
+                    <div class="bp-head">
+                        <span>Brain Dump</span>
+                        <button onclick="addInbox()" class="icon-btn">+</button>
+                    </div>
+                    <div id="inboxListBottom" class="bp-list"></div>
+                </div>
             </div>
-            <div id="inboxListBottom" class="bp-list"></div>
-          </div>
         </div>
-      </div>
-      
-      <aside class="sidebar">
-        <div id="sidebar-month-slot" class="panel hidden" style="border-color:var(--accent); max-height:none; height:100%;"></div>
-        <div id="sidebar-habits" class="panel habit-section">
-          <div class="bp-head"><span>Alışkanlıklar</span> <button onclick="addHabit()" class="icon-btn">+</button></div>
-          <div id="habitList" style="display:flex; flex-direction:column; gap:6px;"></div>
-        </div>
-      </aside>
+        <aside class="sidebar">
+            <div id="sidebar-month-slot" class="panel hidden" style="border-color:var(--accent); max-height:none; height:100%;"></div>
+            <div id="sidebar-habits" class="panel habit-section">
+                <div class="bp-head"><span>Alışkanlıklar</span> <button onclick="addHabit()" class="icon-btn">+</button></div>
+                <div id="habitList" style="display:flex; flex-direction:column; gap:6px;"></div>
+            </div>
+        </aside>
     </div>
-  </div>
+</div>
 
-  <div class="mobile-view" id="mobileApp">
+<div class="mobile-view">
+    <div style="padding:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:800; font-size:18px; color:var(--accent);">todoapp</span>
+        <div style="display:flex; gap:10px;">
+             <button onclick="mobileGoToday()" class="btn" style="padding:4px 8px; font-size:11px;">Bugün</button>
+             <button onclick="signOut()" class="icon-btn" style="color:var(--muted);">Çıkış</button>
+        </div>
+    </div>
+    
     <div class="m-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <h1 style="font-size:24px; margin:0; font-weight:800; letter-spacing:-0.5px;">todo<span style="color:var(--accent)">app</span></h1>
-          <button onclick="mobileGoToday()" class="btn" style="padding:4px 8px; font-size:11px; height:24px;">Bugün</button>
-        </div>
-        <button onclick="signOut()" class="btn danger" style="padding:4px 10px; font-size:11px;">Çıkış</button>
-      </div>
+        <div id="mViewDay">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <button onclick="navDay(-1)" class="btn">◀</button>
+                <div id="mDateTitle" style="font-weight:600;">...</div>
+                <button onclick="navDay(1)" class="btn">▶</button>
+            </div>
 
-      <div id="mViewDay">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <button onclick="navDay(-1)" class="btn">◀</button>
-          <div id="mDateTitle" style="font-weight:600;">...</div>
-          <button onclick="navDay(1)" class="btn">▶</button>
+            <div class="habit-section panel" style="margin-bottom:15px;">
+                <div class="bp-head">
+                    <span>Alışkanlıklar</span>
+                    <button onclick="addHabit()" class="icon-btn">+</button>
+                </div>
+                <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px; padding-top:8px;"></div>
+            </div>
+
+            <div class="m-add-panel" id="mAddPanel" style="display:none;">
+                <input id="mAddText" class="w-full" placeholder="Görev Adı..." />
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <select id="mAddType">
+                        <option value="gorev">Görev</option>
+                        <option value="termin">Termin</option>
+                        <option value="hedef">Hedef</option>
+                    </select>
+                    <select id="mAddTag"></select>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <input id="mAddTime" type="time" style="flex:1;">
+                    <button onclick="submitMobileAdd()" class="btn active" style="flex:1;">Kaydet</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-weight:600; color:var(--muted);">Görevler</span>
+                <button onclick="toggleMobileAdd()" class="btn active">+ Ekle</button>
+            </div>
+            
+            <div class="m-day-container">
+                <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </div>
         </div>
 
-        <div class="habit-section panel" style="margin-bottom:15px;">
-          <div class="bp-head"><span>Alışkanlıklar</span></div>
-          <div id="mHabitList" style="display:flex; flex-direction:column; gap:8px; padding-top:8px;"></div>
+        <div id="mViewCal" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <button onclick="navMonth(-1)" class="btn">◀</button>
+                <div id="mCalTitle" style="font-weight:700; font-size:16px;">...</div>
+                <button onclick="navMonth(1)" class="btn">▶</button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--muted); font-weight:700; margin-bottom:5px;">
+                <div>PT</div><div>SA</div><div>ÇA</div><div>PE</div><div>CU</div><div>CT</div><div>PA</div>
+            </div>
+            <div id="mCalGrid" class="m-cal-grid"></div>
+            <div style="margin-top:20px; font-size:12px; color:var(--muted); text-align:center;">Günü seçmek için dokun</div>
         </div>
 
-        <div class="m-add-panel" id="mAddPanel" style="display:none;">
-          <input id="mAddText" class="w-full" placeholder="Görev Adı..." />
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-            <select id="mAddType"><option value="gorev">Görev</option><option value="termin">Termin</option><option value="hedef">Hedef</option></select>
-            <select id="mAddTag"></select>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <input id="mAddTime" type="time" style="flex:1;">
-            <button onclick="submitMobileAdd()" class="btn active" style="flex:1;">Kaydet</button>
-          </div>
+        <div id="mViewDump" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="margin:0; font-size:18px;">Brain Dump</h2>
+                <button onclick="addQuickMobile('inbox')" class="btn active">+</button>
+            </div>
+            <div id="mDumpList" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <span style="font-weight:600; color:var(--muted);">Görevler</span>
-          <button onclick="toggleMobileAdd()" class="btn active">+ Ekle</button>
-        </div>
-        
-        <div class="m-day-container">
-           <div id="mTaskList" style="display:flex; flex-direction:column; gap:10px;"></div>
-        </div>
-      </div>
-
-      <div id="mViewCal" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <button onclick="navMonth(-1)" class="btn">◀</button>
-          <div id="mCalTitle" style="font-weight:700; font-size:16px;">...</div>
-          <button onclick="navMonth(1)" class="btn">▶</button>
-        </div>
-        <div style="display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--muted); font-weight:700; margin-bottom:5px;">
-          <div>PT</div><div>SA</div><div>ÇA</div><div>PE</div><div>CU</div><div>CT</div><div>PA</div>
-        </div>
-        <div id="mCalGrid" class="m-cal-grid"></div>
-        <div style="margin-top:20px; font-size:12px; color:var(--muted); text-align:center;">Günü seçmek için dokun</div>
-      </div>
-
-      <div id="mViewDump" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <h2 style="margin:0; font-size:18px;">Brain Dump</h2>
-          <button onclick="addQuickMobile('inbox')" class="btn active">+</button>
-        </div>
-        <div id="mDumpList" style="display:flex; flex-direction:column; gap:10px;"></div>
-      </div>
     </div>
 
     <div class="m-nav-bar">
-      <button class="m-nav-item active" onclick="switchMobileTab('day', this)">
-        <span class="m-nav-icon">📅</span><span>Gün</span>
-      </button>
-      <button class="m-nav-item" onclick="switchMobileTab('cal', this)">
-        <span class="m-nav-icon">▦</span><span>Takvim</span>
-      </button>
-      <button class="m-nav-item" onclick="switchMobileTab('dump', this)">
-        <span class="m-nav-icon">💡</span><span>Dump</span>
-      </button>
-      <button class="m-nav-item" onclick="openTagsModal()">
-        <span class="m-nav-icon">🏷</span><span>Taglar</span>
-      </button>
+        <button class="m-nav-item active" onclick="switchMobileTab('day', this)">
+            <span class="m-nav-icon">📅</span><span>Gün</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('cal', this)">
+            <span class="m-nav-icon">▦</span><span>Takvim</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('dump', this)">
+            <span class="m-nav-icon">💡</span><span>Dump</span>
+        </button>
+        <button class="m-nav-item" onclick="openTagsModal()">
+            <span class="m-nav-icon">🏷</span><span>Taglar</span>
+        </button>
     </div>
-  </div>
+</div>
 
 <script>
-  const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL = 'https://czuprhvrnlqpipcytvwx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
-  const defaultTags = [{id:'t1', name:'İş', color:'#3b82f6'}, {id:'t2', name:'Kişisel', color:'#ec4899'}, {id:'t3', name:'Acil', color:'#ef4444'}];
-  
-  let state = { mode: 'week', anchor: new Date(), selected: new Date(), user: null, drag: null };
+let db = { days: {}, inbox: [], habits: [], habitLog: {}, tags: [] };
+const defaultTags = [{id:'t1', name:'İş', color:'#3b82f6'}, {id:'t2', name:'Kişisel', color:'#ec4899'}, {id:'t3', name:'Acil', color:'#ef4444'}];
+let state = { mode: 'week', anchor: new Date(), selected: new Date(), user: null, drag: null };
 
-  const $ = (id) => document.getElementById(id);
-  const toKey = (d) => { const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; };
-  const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
-  const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
-  const getStartOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-  const hexToRgba = (hex, alpha) => { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return 'rgba(0,0,0,'+alpha+')'; };
-  
-  function save() {
+const $ = (id) => document.getElementById(id);
+const toKey = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+const addDays = (d, n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const getStartOfWeek = (d) => { const x=new Date(d); const day=x.getDay()||7; x.setHours(0,0,0,0); x.setDate(x.getDate()-day+1); return x; };
+const getStartOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+
+const hexToRgba = (hex, alpha) => {
+    let c;
+    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+        c= hex.substring(1).split('');
+        if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+        c= '0x'+c.join('');
+        return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+    }
+    return 'rgba(0,0,0,'+alpha+')';
+};
+
+function save() {
     if(!db.tags || db.tags.length===0) db.tags = defaultTags;
     localStorage.setItem('todo_final_v4', JSON.stringify(db));
-    if(state.user) { clearTimeout(window._sync); window._sync = setTimeout(() => { sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then(); }, 1500); }
-  }
+    if(state.user) {
+        clearTimeout(window._sync);
+        window._sync = setTimeout(() => {
+            sb.from('user_data').upsert({ id:state.user.id, content:db, updated_at:new Date() }).then();
+        }, 1500);
+    }
+}
 
-  // SORTING: 1.Type, 2.Time, 3.Tag Order
-  function getTaskScore(t) {
+// SORTING
+function getTaskScore(t) {
     let typeScore = t.type === 'termin' ? 1 : t.type === 'hedef' ? 2 : 3;
     let timeVal = t.time ? parseInt(t.time.replace(':','')) : 9999;
     let tagIdx = db.tags.findIndex(x => x.id === t.tag);
     let tagScore = tagIdx === -1 ? 999 : tagIdx;
     return { typeScore, timeVal, tagScore };
-  }
-  function sortTasks(a, b) {
+}
+function sortTasks(a, b) {
     const sa = getTaskScore(a), sb = getTaskScore(b);
     if(sa.typeScore !== sb.typeScore) return sa.typeScore - sb.typeScore;
     if(sa.timeVal !== sb.timeVal) return sa.timeVal - sb.timeVal;
     return sa.tagScore - sb.tagScore;
-  }
+}
 
-  function render() {
+function render() {
     if(!db.tags || !db.tags.length) db.tags = defaultTags;
-    renderCalendar(); renderPanels(); renderMobileDay(); renderMobileCal(); renderMobileDump();
-  }
+    renderCalendar();
+    renderPanels();
+    renderMobileDay();
+    renderMobileCal();
+    renderMobileDump();
+}
 
-  function renderCalendar() {
-    // Fill Tag Selects
+function renderCalendar() {
     const tagOpts = db.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-    $('inpTag').innerHTML = tagOpts; $('mTag').innerHTML = tagOpts; $('mAddTag').innerHTML = tagOpts;
-    
-    // Filter logic: In Month Mode, if "all" is selected but no user override, maybe we can force defaults?
-    // Actually user requested "Default Termin & Gorev visible". We will handle this in filterPass.
-    // Let's populate filter select:
-    // If Month mode, we add a specific "Varsayılan" option or just treat 'all' smartly.
-    // Simplified: Just show 'Tümü' and individual tags. The visibility logic is inside filterPass.
-    $('filterTag').innerHTML = `<option value="all">Filtre: Hepsi (Varsayılan)</option>` + tagOpts;
+    $('inpTag').innerHTML = tagOpts;
+    $('mTag').innerHTML = tagOpts;
+    // Fix: Mobil Tag listesi her renderda güncellenmeli
+    $('mAddTag').innerHTML = tagOpts;
 
-    const grid = $('calGrid'); grid.innerHTML = '';
-    const dow = $('dowRow'); dow.innerHTML = '';
+    $('filterTag').innerHTML = `<option value="all">Filtre: Hepsi</option>` + tagOpts;
+    
+    const grid = $('calGrid');
+    grid.innerHTML = '';
+    const dow = $('dowRow');
+    dow.innerHTML = '';
     ['PZT','SAL','ÇAR','PER','CUM','CTS','PAZ'].forEach(d => dow.innerHTML += `<div class="dow">${d}</div>`);
-
+    
     let start, count;
-    if(state.mode === 'week') { start = getStartOfWeek(state.anchor); count = 7; $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`; }
-    else { start = getStartOfWeek(getStartOfMonth(state.anchor)); count = 42; $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'}); }
-
-    const todayK = toKey(new Date()); const selK = toKey(state.selected);
+    if(state.mode === 'week') {
+        start = getStartOfWeek(state.anchor);
+        count = 7;
+        $('rangeTitle').innerText = `${start.getDate()} - ${addDays(start,6).toLocaleDateString('tr-TR',{month:'long'})}`;
+    } else {
+        start = getStartOfWeek(getStartOfMonth(state.anchor));
+        count = 42;
+        $('rangeTitle').innerText = state.anchor.toLocaleDateString('tr-TR',{month:'long', year:'numeric'});
+    }
+    
+    const todayK = toKey(new Date());
+    const selK = toKey(state.selected);
+    
     for(let i=0; i<count; i++) {
-      const d = addDays(start, i); const k = toKey(d);
-      const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
-      const cell = document.createElement('div');
-      cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
-      cell.ondragover = handleDragOver; cell.ondragleave = handleDragLeave; cell.ondrop = (e) => handleDrop(e, k);
-      cell.onclick = () => { state.selected = d; render(); };
-      cell.innerHTML = `<div class="cell-head"><span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button></div><div class="cell-cards"></div>`;
-      const cardCont = cell.querySelector('.cell-cards');
-      
-      let tasks = (db.days[k]||[]).filter(t => filterPass(t));
-      tasks.sort(sortTasks);
-      tasks.forEach(t => cardCont.appendChild(createCardEl(t, 'day', k)));
-      grid.appendChild(cell);
+        const d = addDays(start, i);
+        const k = toKey(d);
+        const isOut = state.mode==='month' && d.getMonth() !== state.anchor.getMonth();
+        
+        const cell = document.createElement('div');
+        cell.className = `cell ${k===todayK?'today':''} ${k===selK?'selected':''} ${isOut?'out':''}`;
+        cell.ondragover = handleDragOver;
+        cell.ondragleave = handleDragLeave;
+        cell.ondrop = (e) => handleDrop(e, k);
+        cell.onclick = () => { state.selected = d; render(); };
+        
+        cell.innerHTML = `<div class="cell-head"><span class="day-num">${d.getDate()} <span class="day-name">${d.toLocaleDateString('tr-TR',{weekday:'short'})}</span></span> <button class="icon-btn" onclick="quickAddModal('${k}', event)">+</button></div><div class="cell-cards"></div>`;
+        
+        const cardCont = cell.querySelector('.cell-cards');
+        let tasks = (db.days[k]||[]).filter(t => filterPass(t));
+        tasks.sort(sortTasks);
+        tasks.forEach(t => cardCont.appendChild(createCardEl(t, 'day', k)));
+        
+        grid.appendChild(cell);
     }
-  }
+}
 
-  function filterPass(t) {
+function filterPass(t) {
     const f = $('filterTag').value;
-    
-    // Month Mode Logic: Show "Termin" & "Gorev" by default if filter is 'all'. 
-    // Wait, user said "Termin and Görev". What about Hedef? 
-    // Let's assume if filter is 'all' in Month mode, we show everything, 
-    // BUT visually prioritize. Or, as requested, HIDE Hedef?
-    // User: "Aylık gorünümde varsayılan termin ve görevlerin gözükmesi olsun"
     if (state.mode === 'month' && f === 'all') {
-      // If you strictly want ONLY Termin & Gorev:
-      return ['termin', 'gorev'].includes(t.type);
-      // If you want Hedef too, remove this if block.
+        // Varsayılan olarak ay görünümünde hepsi açık kalsın (kullanıcı isteği üzerine basitleştirildi)
+        return true; 
     }
-    
     if(f === 'all') return true;
     return t.tag === f;
-  }
+}
 
-  function getTagColor(id) { const t = db.tags.find(x => x.id === id); return t ? t.color : '#555'; }
+function getTagColor(id) {
+    const t = db.tags.find(x => x.id === id);
+    return t ? t.color : '#555';
+}
 
-  function createCardEl(t, source, dateKey) {
-    // Left Border = Type Color
+function createCardEl(t, source, dateKey) {
+    // Sol Border = Type, Arkaplan = Tag Rengi (User isteği)
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-    // Background = Tag Color (Light)
-    const bg = hexToRgba(getTagColor(t.tag), 0.15);
+    // Fix: Daha belirgin arka plan
+    const bg = hexToRgba(getTagColor(t.tag), 0.25);
     
-    const el = document.createElement('div'); el.className = `task-card ${t.done?'done':''}`;
-    el.draggable = true; 
-    el.style.borderLeftColor = borderCol; 
-    el.style.background = bg;
-
-    el.innerHTML = `<div style="font-weight:500; margin-bottom:2px; pointer-events:none;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;"><span>${t.time||''}</span></div>`;
-    el.ondragstart = (e) => { state.drag = { id: t.id, source, dateKey }; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; };
-    el.ondragend = (e) => { e.target.style.opacity = '1'; document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); };
-    el.onclick = (e) => { e.stopPropagation(); openModal(t, source, dateKey); };
+    const el = document.createElement('div');
+    el.className = `task-card ${t.done?'done':''}`;
+    el.draggable = true;
+    el.style.borderLeftColor = borderCol;
+    el.style.background = bg; 
+    el.innerHTML = `<div style="font-weight:600; margin-bottom:2px; pointer-events:none; font-size:11px;">${t.text}</div><div style="display:flex; justify-content:space-between; color:var(--muted); font-size:10px; pointer-events:none;"><span>${t.time||''}</span></div>`;
+    
+    el.ondragstart = (e) => {
+        state.drag = { id: t.id, source, dateKey };
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.style.opacity = '0.5';
+    };
+    el.ondragend = (e) => {
+        e.target.style.opacity = '1';
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    };
+    el.onclick = (e) => {
+        e.stopPropagation();
+        openModal(t, source, dateKey);
+    };
     return el;
-  }
+}
 
-  function renderPanels() {
+function renderPanels() {
     const k = toKey(state.selected);
     $('selDayTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric'});
-    const bpList = $('bottomTaskList'); bpList.innerHTML = '';
+    
+    const bpList = $('bottomTaskList');
+    bpList.innerHTML = '';
     let dayTasks = (db.days[k]||[]).slice().sort(sortTasks);
     dayTasks.forEach(t => bpList.appendChild(createRowItem(t, 'day', k)));
     
-    const inboxList = $('inboxListBottom'); inboxList.innerHTML = '';
+    const inboxList = $('inboxListBottom');
+    inboxList.innerHTML = '';
     let dumpTasks = db.inbox.slice().sort(sortTasks);
     dumpTasks.forEach(t => inboxList.appendChild(createRowItem(t, 'inbox', null)));
     
-    const mSlot = $('sidebar-month-slot'); 
+    const mSlot = $('sidebar-month-slot');
     if(state.mode === 'month') {
-      mSlot.innerHTML = `<div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div><form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;"><input class="w-full" placeholder="Hızlı Ekle..."><button class="btn active">+</button></form><div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>`;
-      const cont = mSlot.querySelector('div:last-child'); dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
+        mSlot.innerHTML = `<div class="bp-head"><span>${state.selected.toLocaleDateString('tr-TR')}</span></div><form onsubmit="event.preventDefault(); addQuickToDay('${k}', this.querySelector('input').value); this.querySelector('input').value='';" style="margin:10px 0; display:flex; gap:5px;"><input class="w-full" placeholder="Hızlı Ekle..."><button class="btn active">+</button></form><div style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px;"></div>`;
+        const cont = mSlot.querySelector('div:last-child');
+        dayTasks.forEach(t => cont.appendChild(createRowItem(t, 'day', k)));
     }
     
-    const hList = $('habitList'); hList.innerHTML = '';
+    const hList = $('habitList');
+    hList.innerHTML = '';
     const today = toKey(new Date());
     db.habits.forEach(h => {
-      const isDone = (db.habitLog[today]||[]).includes(h.id);
-      const div = document.createElement('div'); div.className = 'row-item';
-      div.innerHTML = `<span style="flex:1;">${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
-      div.querySelector('input').onchange = (e) => { if(!db.habitLog[today]) db.habitLog[today] = []; if(e.target.checked) db.habitLog[today].push(h.id); else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id); save(); render(); };
-      hList.appendChild(div);
+        const isDone = (db.habitLog[today]||[]).includes(h.id);
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `<span style="flex:1;">${h.name}</span> <input type="checkbox" ${isDone?'checked':''}>`;
+        // Fix: Stop propagation to prevent issues
+        div.querySelector('input').onclick = (e) => e.stopPropagation();
+        div.querySelector('input').onchange = (e) => {
+            if(!db.habitLog[today]) db.habitLog[today] = [];
+            if(e.target.checked) db.habitLog[today].push(h.id);
+            else db.habitLog[today] = db.habitLog[today].filter(x=>x!==h.id);
+            save();
+            render();
+        };
+        hList.appendChild(div);
     });
-  }
+}
 
-  function createRowItem(t, source, dateKey) {
-    const div = document.createElement('div'); div.className = 'row-item';
+function createRowItem(t, source, dateKey) {
+    const div = document.createElement('div');
+    div.className = 'row-item';
     const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
     div.style.borderLeft = `3px solid ${borderCol}`;
     div.style.background = hexToRgba(getTagColor(t.tag), 0.1);
     
-    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="cursor:pointer;"> <span style="flex:1; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span><span style="font-size:10px; color:var(--muted);">${t.time||''}</span>`;
-    div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
-    div.ondblclick = () => openModal(t, source, dateKey);
+    // Fix: Checkbox event bubbling issue
+    div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="cursor:pointer; width:16px; height:16px;"> <span style="flex:1; margin-left:8px; text-decoration:${t.done?'line-through':''}; color:${t.done?'var(--muted)':'var(--text)'}">${t.text}</span><span style="font-size:10px; color:var(--muted);">${t.time||''}</span>`;
+    
+    const chk = div.querySelector('input');
+    chk.onclick = (e) => e.stopPropagation(); // ÖNEMLİ: Detayın açılmasını engeller
+    chk.onchange = () => {
+        t.done = !t.done;
+        save();
+        render();
+    };
+    
+    div.onclick = () => openModal(t, source, dateKey);
     return div;
-  }
+}
 
-  function switchMobileTab(tab, btn) {
-    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-    $('mViewDay').classList.add('hidden'); $('mViewCal').classList.add('hidden'); $('mViewDump').classList.add('hidden');
-    if(tab==='day') { $('mViewDay').classList.remove('hidden'); if($('mViewDay').querySelector('.habit-section').classList.contains('hidden') && state.mode !== 'month') { $('mViewDay').querySelector('.habit-section').classList.remove('hidden'); } }
-    if(tab==='cal') { $('mViewCal').classList.remove('hidden'); state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1); renderMobileCal(); }
+function switchMobileTab(tab, btn) {
+    document.querySelectorAll('.m-nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $('mViewDay').classList.add('hidden');
+    $('mViewCal').classList.add('hidden');
+    $('mViewDump').classList.add('hidden');
+    
+    if(tab==='day') {
+        $('mViewDay').classList.remove('hidden');
+    }
+    if(tab==='cal') {
+        $('mViewCal').classList.remove('hidden');
+        state.anchor = new Date(state.selected.getFullYear(), state.selected.getMonth(), 1);
+        renderMobileCal();
+    }
     if(tab==='dump') $('mViewDump').classList.remove('hidden');
-  }
+}
 
-  function mobileGoToday() {
-    state.selected = new Date(); state.anchor = new Date();
-    const dayBtn = document.querySelectorAll('.m-nav-item')[0]; switchMobileTab('day', dayBtn); render();
-  }
+function mobileGoToday() {
+    state.selected = new Date();
+    state.anchor = new Date();
+    const dayBtn = document.querySelectorAll('.m-nav-item')[0];
+    switchMobileTab('day', dayBtn);
+    render();
+}
 
-  function renderMobileDay() {
+function renderMobileDay() {
     $('mDateTitle').innerText = state.selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
-    const mh = $('mHabitList'); mh.innerHTML = '';
+    
+    const mh = $('mHabitList');
+    mh.innerHTML = '';
     const today = toKey(new Date());
+    
     db.habits.forEach(h => {
-      const isDone = (db.habitLog[today]||[]).includes(h.id);
-      const d = document.createElement('div'); d.className='row-item';
-      d.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span>${h.name}</span> <button onclick="delHabit('${h.id}')" class="icon-btn" style="margin-left:auto;">🗑</button>`;
-      d.querySelector('input').onchange = (e) => { if(e.target.checked) { if(!db.habitLog[today]) db.habitLog[today]=[]; db.habitLog[today].push(h.id); } else { db.habitLog[today]=db.habitLog[today].filter(x=>x!==h.id); } save(); render(); };
-      mh.appendChild(d);
+        const isDone = (db.habitLog[today]||[]).includes(h.id);
+        const d = document.createElement('div');
+        d.className='row-item';
+        // Fix: Checkbox click bubbling prevent
+        d.innerHTML = `<input type="checkbox" ${isDone?'checked':''}> <span style="margin-left:8px;">${h.name}</span> <button onclick="delHabit('${h.id}')" class="icon-btn" style="margin-left:auto;">🗑</button>`;
+        const chk = d.querySelector('input');
+        chk.onclick = (e) => e.stopPropagation();
+        chk.onchange = (e) => {
+            if(e.target.checked) {
+                if(!db.habitLog[today]) db.habitLog[today]=[];
+                db.habitLog[today].push(h.id);
+            } else {
+                db.habitLog[today]=db.habitLog[today].filter(x=>x!==h.id);
+            }
+            save();
+            render();
+        };
+        mh.appendChild(d);
     });
-    const mt = $('mTaskList'); mt.innerHTML = '';
+    
+    const mt = $('mTaskList');
+    mt.innerHTML = '';
     const k = toKey(state.selected);
     let tasks = (db.days[k] || []).slice().sort(sortTasks);
+    
     if(tasks.length === 0) mt.innerHTML = '<div style="color:var(--muted); text-align:center; padding:20px;">Bugün boş</div>';
+    
     tasks.forEach(t => {
-       const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-       const bg = hexToRgba(getTagColor(t.tag), 0.15);
-       const div = document.createElement('div'); div.className = 'task-card';
-       div.style.background = bg; div.style.borderLeft = `4px solid ${borderCol}`;
-       div.style.padding = '12px'; div.style.display='flex'; div.style.gap='10px'; div.style.alignItems='center';
-       div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;"><div style="flex:1;" onclick="openModalById('${t.id}','day','${k}')"><div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div><div style="font-size:11px; color:var(--muted);">${t.time||''}</div></div>`;
-       div.querySelector('input').onchange = () => { t.done = !t.done; save(); render(); };
-       mt.appendChild(div);
+        const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
+        // Fix: Mobil kartlarda da tag rengi
+        const bg = hexToRgba(getTagColor(t.tag), 0.2);
+        
+        const div = document.createElement('div');
+        div.className = 'task-card';
+        div.style.background = bg;
+        div.style.borderLeft = `4px solid ${borderCol}`;
+        div.style.padding = '12px';
+        div.style.display='flex';
+        div.style.gap='10px';
+        div.style.alignItems='center';
+        
+        // Fix: Checkbox bubbling
+        div.innerHTML = `<input type="checkbox" ${t.done?'checked':''} style="width:20px; height:20px;">
+        <div style="flex:1;">
+            <div style="font-size:14px; text-decoration:${t.done?'line-through':''}; color:${t.done?'#555':'#eee'}">${t.text}</div>
+            <div style="font-size:11px; color:var(--muted);">${t.time||''}</div>
+        </div>`;
+        
+        const chk = div.querySelector('input');
+        chk.onclick = (e) => e.stopPropagation();
+        chk.onchange = () => {
+            t.done = !t.done;
+            save();
+            render();
+        };
+        // Div'e tıklayınca modal aç
+        div.onclick = () => openModalById(t.id, 'day', k);
+        
+        mt.appendChild(div);
     });
-  }
+}
 
-  function renderMobileCal() {
+function renderMobileCal() {
     $('mCalTitle').innerText = state.anchor.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
-    const grid = $('mCalGrid'); grid.innerHTML = '';
+    const grid = $('mCalGrid');
+    grid.innerHTML = '';
     const start = getStartOfWeek(getStartOfMonth(state.anchor));
-    const selK = toKey(state.selected); const todayK = toKey(new Date());
+    const selK = toKey(state.selected);
+    const todayK = toKey(new Date());
+    
     for(let i=0; i<42; i++) {
-      const d = addDays(start, i); const k = toKey(d);
-      const isOut = d.getMonth() !== state.anchor.getMonth(); const hasTask = db.days[k] && db.days[k].length > 0;
-      const c = document.createElement('div');
-      c.className = `m-cell ${k===selK?'selected':''} ${k===todayK?'today':''} ${isOut?'out':''} ${hasTask?'has-task':''}`;
-      c.innerText = d.getDate();
-      c.onclick = () => { state.selected = d; switchMobileTab('day', document.querySelector('.m-nav-item.active')); render(); };
-      grid.appendChild(c);
+        const d = addDays(start, i);
+        const k = toKey(d);
+        const isOut = d.getMonth() !== state.anchor.getMonth();
+        const hasTask = db.days[k] && db.days[k].length > 0;
+        
+        const c = document.createElement('div');
+        c.className = `m-cell ${k===selK?'selected':''} ${k===todayK?'today':''} ${isOut?'out':''} ${hasTask?'has-task':''}`;
+        c.innerText = d.getDate();
+        c.onclick = () => {
+            state.selected = d;
+            switchMobileTab('day', document.querySelector('.m-nav-item.active'));
+            render();
+        };
+        grid.appendChild(c);
     }
-  }
+}
 
-  function renderMobileDump() {
-    const list = $('mDumpList'); list.innerHTML = '';
+function renderMobileDump() {
+    const list = $('mDumpList');
+    list.innerHTML = '';
     let tasks = db.inbox.slice().sort(sortTasks);
     tasks.forEach(t => {
-      const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
-      const bg = hexToRgba(getTagColor(t.tag), 0.15);
-      const d = document.createElement('div'); d.className='task-card'; d.style.padding='12px'; 
-      d.style.background=bg; d.style.borderLeft=`4px solid ${borderCol}`;
-      d.innerHTML = `<div onclick="openModalById('${t.id}','inbox',null)">${t.text}</div>`;
-      list.appendChild(d);
+        const borderCol = t.type === 'termin' ? 'var(--c-termin)' : t.type === 'hedef' ? 'var(--c-hedef)' : 'var(--c-gorev)';
+        const bg = hexToRgba(getTagColor(t.tag), 0.15);
+        const d = document.createElement('div');
+        d.className='task-card';
+        d.style.padding='12px';
+        d.style.background=bg;
+        d.style.borderLeft=`4px solid ${borderCol}`;
+        d.innerHTML = `<div>${t.text}</div>`;
+        d.onclick = () => openModalById(t.id, 'inbox', null);
+        list.appendChild(d);
     });
-  }
+}
 
-  $('addForm').onsubmit = (e) => { 
-    e.preventDefault(); 
-    const txt=$('inpText').value; 
+$('addForm').onsubmit = (e) => {
+    e.preventDefault();
+    const txt=$('inpText').value;
     const time=$('inpTime').value;
     const type=$('inpType').value;
     const tag=$('inpTag').value;
-    if(!txt)return; 
-    addTask(txt, time, type, tag, 'day'); 
-    $('inpText').value=''; 
-  };
+    if(!txt)return;
+    addTask(txt, time, type, tag, 'day');
+    $('inpText').value='';
+};
 
-  function addTask(txt, time, type, tag, dest) {
+function addTask(txt, time, type, tag, dest) {
     const t = { id: Date.now().toString(), text: txt, time, type, tag, done:false };
-    if(dest==='inbox') db.inbox.push(t); else { const k=toKey(state.selected); if(!db.days[k]) db.days[k]=[]; db.days[k].push(t); }
-    save(); render();
-  }
-  function addInbox() { const t = prompt('Brain Dump:'); if(t) addTask(t, '', 'gorev', db.tags[0].id, 'inbox'); }
-  function addHabit() { const t = prompt('Yeni Alışkanlık:'); if(t) { db.habits.push({id:Date.now().toString(), name:t}); save(); render(); } }
-  function delHabit(id) { if(confirm('Sil?')) { db.habits=db.habits.filter(x=>x.id!==id); save(); render(); } }
-  function addQuickToDay(k, txt) { if(txt) { if(!db.days[k]) db.days[k]=[]; db.days[k].push({id:Date.now().toString(), text:txt, type:'gorev', tag:db.tags[0].id, done:false}); save(); render(); } }
-  function quickAddModal(k, e) { e.stopPropagation(); state.selected = new Date(k); render(); setTimeout(()=> $('inpText').focus(), 50); }
-  function clearDone() { const k=toKey(state.selected); if(db.days[k]) { db.days[k]=db.days[k].filter(t=>!t.done); save(); render(); } }
-  function navDay(d) { state.selected = addDays(state.selected, d); render(); }
-  function navMonth(d) { state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1); renderMobileCal(); }
-  
-  function toggleMobileAdd() { const p = $('mAddPanel'); p.style.display = p.style.display === 'none' ? 'flex' : 'none'; if(p.style.display === 'flex') $('mAddText').focus(); }
-  function submitMobileAdd() { const txt = $('mAddText').value; const time = $('mAddTime').value; const tag = $('mAddTag').value; const type = $('mAddType').value; if(txt) { addTask(txt, time, type, tag, 'day'); $('mAddText').value=''; toggleMobileAdd(); } }
-  function addQuickMobile(dest) { if(dest === 'inbox') { const t = prompt('Brain Dump:'); if(t) addTask(t,'','gorev',db.tags[0].id,'inbox'); } }
-
-  function openTagsModal() { $('tagsModal').style.display = 'flex'; renderTagsList(); }
-  function renderTagsList() {
-    const cont = $('tagsListConfig'); cont.innerHTML = '';
-    db.tags.forEach((t, idx) => {
-      const row = document.createElement('div'); row.className = 'tag-row';
-      row.innerHTML = `<div style="display:flex; flex-direction:column;"><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, -1)">▲</button><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, 1)">▼</button></div><input type="color" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)"><input type="text" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)" style="width:60px;"><input value="${t.name}" onchange="updateTag('${t.id}', 'name', this.value)" style="flex:1;"><button class="icon-btn" onclick="delTag('${t.id}')">🗑</button>`;
-      cont.appendChild(row);
-    });
-  }
-  function moveTag(idx, dir) { if(dir === -1 && idx > 0) { [db.tags[idx], db.tags[idx-1]] = [db.tags[idx-1], db.tags[idx]]; } if(dir === 1 && idx < db.tags.length -1) { [db.tags[idx], db.tags[idx+1]] = [db.tags[idx+1], db.tags[idx]]; } save(); renderTagsList(); render(); }
-  function addNewTag() { const name = $('newTagName').value; const color = $('newTagColor').value; if(name) { db.tags.push({id:Date.now().toString(), name, color}); $('newTagName').value=''; save(); renderTagsList(); render(); } }
-  function updateTag(id, field, val) { const t = db.tags.find(x=>x.id===id); if(t) { t[field]=val; save(); render(); } }
-  function delTag(id) { if(confirm('Etiket silinsin mi?')) { db.tags = db.tags.filter(x=>x.id!==id); save(); renderTagsList(); render(); } }
-
-  function openModal(task, source, dateKey) { editCtx = { task, source, dateKey }; $('modalOverlay').style.display = 'flex'; $('mText').value = task.text; $('mTime').value = task.time||''; $('mType').value = task.type||'gorev'; $('mTag').value = task.tag||''; $('mDate').value = source==='day'?dateKey:''; }
-  function openModalById(id, source, dateKey) { const list = source==='inbox'?db.inbox:db.days[dateKey]; const t=list.find(x=>x.id===id); if(t) openModal(t, source, dateKey); }
-  function closeModal() { $('modalOverlay').style.display = 'none'; editCtx = null; }
-  $('modalSave').onclick = () => { if(!editCtx) return; const { task, source, dateKey } = editCtx; task.text = $('mText').value; task.time = $('mTime').value; task.type = $('mType').value; task.tag = $('mTag').value; const nDate = $('mDate').value; const oDate = source==='day'?dateKey:''; if(nDate && nDate!==oDate) { if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else { db.days[oDate]=db.days[oDate].filter(x=>x.id!==task.id); if(db.days[oDate].length===0) delete db.days[oDate]; } if(!db.days[nDate]) db.days[nDate]=[]; db.days[nDate].push(task); state.selected=new Date(nDate); } save(); render(); closeModal(); };
-  $('modalDel').onclick = () => { if(!editCtx)return; if(confirm('Sil?')) { const { task, source, dateKey } = editCtx; if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id); else db.days[dateKey]=db.days[dateKey].filter(x=>x.id!==task.id); save(); render(); closeModal(); } };
-
-  function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over'); }
-  function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-  function handleDrop(e, targetK) { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(!state.drag) return; const { id, source, dateKey } = state.drag; if(source === 'day' && dateKey === targetK) return; let task; if(source === 'inbox') { const i = db.inbox.findIndex(x=>x.id===id); if(i>-1) task=db.inbox.splice(i,1)[0]; } else { const l = db.days[dateKey]; const i = l.findIndex(x=>x.id===id); if(i>-1) task=l.splice(i,1)[0]; if(l.length===0) delete db.days[dateKey]; } if(task) { if(!db.days[targetK]) db.days[targetK]=[]; db.days[targetK].push(task); save(); render(); } state.drag = null; }
-
-  $('viewWeek').onclick = () => { state.mode='week'; $('viewWeek').classList.add('active'); $('viewMonth').classList.remove('active'); document.body.className='mode-week'; render(); };
-  $('viewMonth').onclick = () => { state.mode='month'; $('viewMonth').classList.add('active'); $('viewWeek').classList.remove('active'); document.body.className='mode-month'; render(); };
-  $('navPrev').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1); render(); };
-  $('navNext').onclick = () => { state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1); render(); };
-  $('navToday').onclick = () => { state.anchor=new Date(); state.selected=new Date(); render(); };
-  $('filterTag').onchange = render;
-
-  async function init() {
-    const local = localStorage.getItem('todo_final_v4'); if(local) db = JSON.parse(local);
-    const { data } = await sb.auth.getSession();
-    if(data.session) { state.user = data.session.user; $('authOverlay').classList.add('hidden'); $('userEmail').innerText = state.user.email; const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single(); if(remote && remote.content) { db = remote.content; save(); } }
+    if(dest==='inbox') db.inbox.push(t);
+    else {
+        // Fix: State selected kontrolü
+        const k=toKey(state.selected || new Date());
+        if(!db.days[k]) db.days[k]=[];
+        db.days[k].push(t);
+    }
+    save();
     render();
-  }
-  $('btnLogin').onclick = async () => { const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else location.reload(); };
-  $('btnReg').onclick = async () => { const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value }); if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı!"; };
-  window.signOut = async () => { await sb.auth.signOut(); location.reload(); };
-  init();
+}
+
+function addInbox() {
+    const t = prompt('Brain Dump:');
+    if(t) addTask(t, '', 'gorev', db.tags[0].id, 'inbox');
+}
+
+function addHabit() {
+    const t = prompt('Yeni Alışkanlık:');
+    if(t) {
+        db.habits.push({id:Date.now().toString(), name:t});
+        save();
+        render();
+    }
+}
+
+function delHabit(id) {
+    if(confirm('Sil?')) {
+        db.habits=db.habits.filter(x=>x.id!==id);
+        save();
+        render();
+    }
+}
+
+function addQuickToDay(k, txt) {
+    if(txt) {
+        if(!db.days[k]) db.days[k]=[];
+        // Fix: Tag hatası almamak için kontrol
+        const tagId = db.tags.length > 0 ? db.tags[0].id : 't1';
+        db.days[k].push({id:Date.now().toString(), text:txt, type:'gorev', tag:tagId, done:false});
+        save();
+        render();
+    }
+}
+
+function quickAddModal(k, e) {
+    e.stopPropagation();
+    state.selected = new Date(k);
+    render();
+    setTimeout(()=> $('inpText').focus(), 50);
+}
+
+function clearDone() {
+    const k=toKey(state.selected);
+    if(db.days[k]) {
+        db.days[k]=db.days[k].filter(t=>!t.done);
+        save();
+        render();
+    }
+}
+
+function navDay(d) {
+    state.selected = addDays(state.selected, d);
+    render();
+}
+function navMonth(d) {
+    state.anchor = new Date(state.anchor.getFullYear(), state.anchor.getMonth()+d, 1);
+    renderMobileCal();
+}
+
+function toggleMobileAdd() {
+    const p = $('mAddPanel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+    if(p.style.display === 'flex') $('mAddText').focus();
+}
+
+function submitMobileAdd() {
+    const txt = $('mAddText').value;
+    const time = $('mAddTime').value;
+    const tag = $('mAddTag').value;
+    const type = $('mAddType').value;
+    
+    if(txt) {
+        addTask(txt, time, type, tag, 'day');
+        $('mAddText').value='';
+        toggleMobileAdd();
+    } else {
+        alert("Görev adı giriniz.");
+    }
+}
+
+function addQuickMobile(dest) {
+    if(dest === 'inbox') {
+        const t = prompt('Brain Dump:');
+        if(t) addTask(t,'','gorev',db.tags[0].id,'inbox');
+    }
+}
+
+function openTagsModal() {
+    $('tagsModal').style.display = 'flex';
+    renderTagsList();
+}
+
+function renderTagsList() {
+    const cont = $('tagsListConfig');
+    cont.innerHTML = '';
+    db.tags.forEach((t, idx) => {
+        const row = document.createElement('div');
+        row.className = 'tag-row';
+        row.innerHTML = `<div style="display:flex; flex-direction:column;"><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, -1)">▲</button><button class="icon-btn" style="font-size:10px;" onclick="moveTag(${idx}, 1)">▼</button></div><input type="color" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)"><input type="text" value="${t.color}" onchange="updateTag('${t.id}', 'color', this.value)" style="width:60px;"><input value="${t.name}" onchange="updateTag('${t.id}', 'name', this.value)" style="flex:1;"><button class="icon-btn" onclick="delTag('${t.id}')">🗑</button>`;
+        cont.appendChild(row);
+    });
+}
+
+function moveTag(idx, dir) {
+    if(dir === -1 && idx > 0) { [db.tags[idx], db.tags[idx-1]] = [db.tags[idx-1], db.tags[idx]]; }
+    if(dir === 1 && idx < db.tags.length -1) { [db.tags[idx], db.tags[idx+1]] = [db.tags[idx+1], db.tags[idx]]; }
+    save();
+    renderTagsList();
+    render();
+}
+
+function addNewTag() {
+    const name = $('newTagName').value;
+    const color = $('newTagColor').value;
+    if(name) {
+        db.tags.push({id:Date.now().toString(), name, color});
+        $('newTagName').value='';
+        save();
+        renderTagsList();
+        render();
+    }
+}
+
+function updateTag(id, field, val) {
+    const t = db.tags.find(x=>x.id===id);
+    if(t) { t[field]=val; save(); render(); }
+}
+
+function delTag(id) {
+    if(confirm('Etiket silinsin mi?')) {
+        db.tags = db.tags.filter(x=>x.id!==id);
+        save();
+        renderTagsList();
+        render();
+    }
+}
+
+let editCtx = null;
+function openModal(task, source, dateKey) {
+    editCtx = { task, source, dateKey };
+    $('modalOverlay').style.display = 'flex';
+    $('mText').value = task.text;
+    $('mTime').value = task.time||'';
+    $('mType').value = task.type||'gorev';
+    $('mTag').value = task.tag||'';
+    $('mDate').value = source==='day'?dateKey:'';
+}
+
+function openModalById(id, source, dateKey) {
+    const list = source==='inbox'?db.inbox:db.days[dateKey];
+    const t=list.find(x=>x.id===id);
+    if(t) openModal(t, source, dateKey);
+}
+
+function closeModal() {
+    $('modalOverlay').style.display = 'none';
+    editCtx = null;
+}
+
+$('modalSave').onclick = () => {
+    if(!editCtx) return;
+    const { task, source, dateKey } = editCtx;
+    task.text = $('mText').value;
+    task.time = $('mTime').value;
+    task.type = $('mType').value;
+    task.tag = $('mTag').value;
+    const nDate = $('mDate').value;
+    const oDate = source==='day'?dateKey:'';
+    
+    if(nDate && nDate!==oDate) {
+        if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id);
+        else {
+            db.days[oDate]=db.days[oDate].filter(x=>x.id!==task.id);
+            if(db.days[oDate].length===0) delete db.days[oDate];
+        }
+        if(!db.days[nDate]) db.days[nDate]=[];
+        db.days[nDate].push(task);
+        state.selected=new Date(nDate);
+    }
+    save();
+    render();
+    closeModal();
+};
+
+$('modalDel').onclick = () => {
+    if(!editCtx)return;
+    if(confirm('Sil?')) {
+        const { task, source, dateKey } = editCtx;
+        if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==task.id);
+        else db.days[dateKey]=db.days[dateKey].filter(x=>x.id!==task.id);
+        save();
+        render();
+        closeModal();
+    }
+};
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if(!e.currentTarget.classList.contains('drag-over')) e.currentTarget.classList.add('drag-over');
+}
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e, targetK) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if(!state.drag) return;
+    const { id, source, dateKey } = state.drag;
+    if(source === 'day' && dateKey === targetK) return;
+    
+    let task;
+    if(source === 'inbox') {
+        const i = db.inbox.findIndex(x=>x.id===id);
+        if(i>-1) task=db.inbox.splice(i,1)[0];
+    } else {
+        const l = db.days[dateKey];
+        const i = l.findIndex(x=>x.id===id);
+        if(i>-1) task=l.splice(i,1)[0];
+        if(l.length===0) delete db.days[dateKey];
+    }
+    
+    if(task) {
+        if(!db.days[targetK]) db.days[targetK]=[];
+        db.days[targetK].push(task);
+        save();
+        render();
+    }
+    state.drag = null;
+}
+
+$('viewWeek').onclick = () => {
+    state.mode='week';
+    $('viewWeek').classList.add('active');
+    $('viewMonth').classList.remove('active');
+    document.body.className='mode-week';
+    render();
+};
+$('viewMonth').onclick = () => {
+    state.mode='month';
+    $('viewMonth').classList.add('active');
+    $('viewWeek').classList.remove('active');
+    document.body.className='mode-month';
+    render();
+};
+$('navPrev').onclick = () => {
+    state.anchor = state.mode==='week' ? addDays(state.anchor,-7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()-1, 1);
+    render();
+};
+$('navNext').onclick = () => {
+    state.anchor = state.mode==='week' ? addDays(state.anchor,7) : new Date(state.anchor.getFullYear(), state.anchor.getMonth()+1, 1);
+    render();
+};
+$('navToday').onclick = () => { state.anchor=new Date(); state.selected=new Date(); render(); };
+$('filterTag').onchange = render;
+
+async function init() {
+    const local = localStorage.getItem('todo_final_v4');
+    if(local) db = JSON.parse(local);
+    const { data } = await sb.auth.getSession();
+    if(data.session) {
+        state.user = data.session.user;
+        $('authOverlay').classList.add('hidden');
+        $('userEmail').innerText = state.user.email;
+        const { data: remote } = await sb.from('user_data').select('content').eq('id', state.user.id).single();
+        if(remote && remote.content) { db = remote.content; save(); }
+    }
+    render();
+}
+
+$('btnLogin').onclick = async () => {
+    const { error } = await sb.auth.signInWithPassword({ email: $('emailIn').value, password: $('passIn').value });
+    if(error) $('authMsg').innerText = error.message; else location.reload();
+};
+$('btnReg').onclick = async () => {
+    const { error } = await sb.auth.signUp({ email: $('emailIn').value, password: $('passIn').value });
+    if(error) $('authMsg').innerText = error.message; else $('authMsg').innerText = "Kayıt Başarılı!";
+};
+window.signOut = async () => { await sb.auth.signOut(); location.reload(); };
+
+init();
 </script>
 </body>
 </html>
