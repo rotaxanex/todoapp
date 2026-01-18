@@ -528,7 +528,7 @@
     });
 
     // ----------------------------------------------------------------------
-    // VERİTABANI YÖNETİMİ (SYNC)
+    // VERİTABANI YÖNETİMİ (SYNC) - SQL YAPINA GÖRE GÜNCELLENDİ
     // ----------------------------------------------------------------------
 
     function getEmptyDB() {
@@ -557,11 +557,11 @@
         if(raw) localData = JSON.parse(raw);
       } catch {}
 
-      // Sunucudan çek
+      // Sunucudan çek (SQL'e göre 'id' kolonu kullanılıyor)
       const { data, error } = await _supabase
         .from('user_data')
         .select('content')
-        .eq('user_id', currentUser.id)
+        .eq('id', currentUser.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -587,7 +587,7 @@
       }
     }
 
-    // Veriyi kaydet (Debounce eklenebilir ama şimdilik direkt save)
+    // Veriyi kaydet (Debounce ile)
     let saveTimeout = null;
     function saveDB(newDB) {
       if(!newDB) return;
@@ -596,18 +596,23 @@
       // 1. Yerele yaz (Hız için)
       localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
 
-      // 2. Sunucuya yaz (Debounce ile)
+      // 2. Sunucuya yaz (SQL'e göre 'id' kolonu kullanılıyor)
       if(saveTimeout) clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
         if(!currentUser) return;
+        
         await _supabase
           .from('user_data')
-          .upsert({ user_id: currentUser.id, content: db });
-      }, 1000); // 1 saniye bekleme, çok hızlı tıklamaları birleştirir
+          .upsert({ 
+            id: currentUser.id, 
+            content: db,
+            updated_at: new Date() // updated_at'i de güncelliyoruz
+          });
+      }, 1000); 
     }
 
     // ----------------------------------------------------------------------
-    // STANDART UYGULAMA MANTIĞI (Önceki kodun aynısı, saveDB/loadDB hariç)
+    // STANDART UYGULAMA MANTIĞI
     // ----------------------------------------------------------------------
     
     // PWA install
