@@ -262,39 +262,61 @@
     </div>
   </div>
 
-  <script>
-    // --- SUPABASE AYARLARI ---
-    const SUPABASE_URL = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM'; // BURAYI DOLDUR
-    const SUPABASE_KEY = 'sb_secret_lnLPz5P2Q7u0UwDQChnU7Q_VWUzxWDi'; // BURAYI DOLDUR
-    const supabase = showSupabaseWarning() ? null : window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+    // --- 1. AYARLAR ---
+    // Buraya kendi bilgilerinizi tırnakları silmeden yapıştırın
+    const SUPABASE_URL = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM';
+    const SUPABASE_KEY = 'sb_secret_lnLPz5P2Q7u0UwDQChnU7Q_VWUzxWDi';
 
+    let supabase = null;
     let session = null;
-    let selectedDate = new Date(); // Günlük görünüm için
-    let selectedMonth = new Date(); // Aylık görünüm için
+    let selectedDate = new Date();
+    let selectedMonth = new Date();
     let currentView = 'day';
     let globalTags = [];
 
-    // --- INIT ---
-    function showSupabaseWarning() {
-       if(SUPABASE_URL.includes('YOUR')) {
-         alert('Lütfen HTML dosyasındaki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurunuz.');
-         return true;
-       }
-       return false;
-    }
-
+    // --- 2. BAŞLATMA VE KONTROL ---
     window.onload = async () => {
-      if(!supabase) return;
+      console.log("Sayfa yüklendi, Supabase kontrol ediliyor...");
 
-      const { data } = await supabase.auth.getSession();
-      session = data.session;
-      toggleAuthUI();
+      // Kütüphane yüklendi mi kontrolü
+      if (typeof window.supabase === 'undefined') {
+        alert("HATA: Supabase kütüphanesi yüklenemedi! İnternet bağlantınızı veya reklam engelleyiciyi kontrol edin. CDN adresi engelleniyor.");
+        return;
+      }
 
-      supabase.auth.onAuthStateChange((_event, _session) => {
-        session = _session;
+      // URL girilmiş mi kontrolü
+      if (SUPABASE_URL.includes('sizin-proje') || SUPABASE_KEY.length < 20) {
+        alert("UYARI: Kodun içindeki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurmamışsınız.");
+        return;
+      }
+
+      try {
+        // İstemciyi oluştur
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Supabase istemcisi oluşturuldu.");
+      } catch (err) {
+        alert("Supabase başlatma hatası: " + err.message);
+        return;
+      }
+
+      // Oturum kontrolü
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        session = data.session;
         toggleAuthUI();
-        if (session) loadAllData();
-      });
+
+        supabase.auth.onAuthStateChange((_event, _session) => {
+          session = _session;
+          toggleAuthUI();
+          if (session) loadAllData();
+        });
+      } catch (err) {
+        console.error(err);
+        // İlk açılışta session hatası önemsiz olabilir ama loglayalım
+      }
     };
 
     function toggleAuthUI() {
@@ -308,18 +330,86 @@
       }
     }
 
-    // --- DATA LOADING ---
-    async function loadAllData() {
-      await fetchTags();
-      if(currentView === 'day') renderDayView();
-      if(currentView === 'month') renderMonthView();
-      if(currentView === 'inbox') renderInboxView();
-      if(currentView === 'habits') renderHabitsView();
-      if(currentView === 'tags') renderTagsView();
+    // --- 3. GİRİŞ VE KAYIT (DEBUG EKLENDİ) ---
+    async function signIn() {
+      // Buton çalışıyor mu testi
+      console.log("Giriş butonuna basıldı.");
+
+      if (!supabase) {
+        alert("Supabase henüz başlatılamadı. Sayfayı yenileyin.");
+        return;
+      }
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        alert("Lütfen e-posta ve şifreyi girin.");
+        return;
+      }
+
+      document.getElementById('auth-msg').innerText = "Giriş yapılıyor...";
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert("GİRİŞ HATASI: " + error.message);
+        document.getElementById('auth-msg').innerText = error.message;
+      } else {
+        // Başarılı ise onAuthStateChange yakalayacak
+        console.log("Giriş başarılı", data);
+      }
     }
 
+    async function signUp() {
+      if (!supabase) return;
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        alert("Lütfen e-posta ve şifreyi girin.");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        alert("KAYIT HATASI: " + error.message);
+        document.getElementById('auth-msg').innerText = error.message;
+      } else {
+        alert("Kayıt işlemi yapıldı! Lütfen e-postanızı kontrol edip onaylayın (veya panelden auto-confirm açıksa giriş yapın).");
+        document.getElementById('auth-msg').innerText = "Kayıt başarılı! Giriş yapabilirsiniz.";
+      }
+    }
+    
+    async function signOut() {
+      if(supabase) await supabase.auth.signOut();
+      window.location.reload();
+    }
+
+    // --- 4. VERİ YÖNETİMİ ---
+    async function loadAllData() {
+      try {
+        await fetchTags();
+        if(currentView === 'day') renderDayView();
+        if(currentView === 'month') renderMonthView();
+        if(currentView === 'inbox') renderInboxView();
+        if(currentView === 'habits') renderHabitsView();
+        if(currentView === 'tags') renderTagsView();
+      } catch (e) {
+        console.error("Veri yükleme hatası:", e);
+      }
+    }
+
+    // --- HELPER FUNCTIONS ---
+    function formatDateKey(d) { return d.toISOString().split('T')[0]; }
+
+    // --- TAGS ---
     async function fetchTags() {
-      const { data } = await supabase.from('tags').select('*').order('list_order');
+      const { data, error } = await supabase.from('tags').select('*').order('list_order');
+      if(error) console.error("Tag hatası:", error);
+      
       globalTags = data || [];
       const select = document.getElementById('m-tag');
       select.innerHTML = '<option value="">Tag Yok</option>';
@@ -330,105 +420,77 @@
       });
     }
 
-    // --- VIEW LOGIC ---
-    function switchView(viewName, btn) {
-      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-      document.getElementById('view-' + viewName).classList.add('active');
-      
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      if(btn) btn.classList.add('active');
-
-      currentView = viewName;
-      
-      // Başlık Güncelleme
-      const titles = { day: 'Bugün', month: 'Takvim', inbox: 'Brain Dump', habits: 'Alışkanlıklar', tags: 'Ayarlar' };
-      document.getElementById('header-title').textContent = titles[viewName];
-
-      loadAllData(); // Veriyi tazelemek için
+    async function addTag() {
+      const name = document.getElementById('new-tag-name').value;
+      const color = document.getElementById('new-tag-color').value;
+      if(!name) return;
+      await supabase.from('tags').insert({ user_id: session.user.id, name, color });
+      document.getElementById('new-tag-name').value = '';
+      loadAllData();
+    }
+    async function removeTag(id) {
+       if(!confirm('Tag silinsin mi?')) return;
+       await supabase.from('tags').delete().eq('id', id);
+       loadAllData();
+    }
+    function renderTagsView() {
+       const list = document.getElementById('tags-list');
+       list.innerHTML = '';
+       globalTags.forEach(t => {
+         const div = document.createElement('div');
+         div.style.cssText = 'padding:12px; background:var(--card); margin-bottom:4px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;';
+         div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+               <div style="width:12px; height:12px; border-radius:50%; background:${t.color}"></div>
+               ${t.name}
+            </div>
+            <button onclick="removeTag('${t.id}')" style="background:transparent; border:none; color:var(--danger);">Sil</button>
+         `;
+         list.appendChild(div);
+       });
     }
 
-    // --- 1. DAY VIEW & SWIPE LOGIC ---
-    function formatDateKey(d) { return d.toISOString().split('T')[0]; }
-
+    // --- DAY VIEW ---
     async function renderDayView() {
       const dateKey = formatDateKey(selectedDate);
-      
-      // UI Update
-      const options = { weekday: 'long', month: 'long', day: 'numeric' };
       document.getElementById('current-date-display').textContent = selectedDate.toLocaleDateString('tr-TR', {day:'numeric', month:'long'});
       document.getElementById('current-day-name').textContent = selectedDate.toLocaleDateString('tr-TR', {weekday:'long'});
 
-      // Fetch Tasks
-      const { data: tasks, error } = await supabase
+      const { data: tasks } = await supabase
         .from('tasks')
         .select('*')
         .eq('target_date', dateKey)
-        .order('is_done', { ascending: true }) // Yapılanlar alta
+        .order('is_done', { ascending: true })
         .order('created_at', { ascending: true });
 
       const container = document.getElementById('day-container');
       container.innerHTML = '';
-
       if (tasks && tasks.length > 0) {
         tasks.forEach(task => container.appendChild(createTaskCard(task)));
       } else {
         container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted)">Bugün boş.</div>';
       }
     }
-
-    function createTaskCard(task) {
-      const div = document.createElement('div');
-      div.className = `task-card ${task.type} ${task.is_done ? 'done' : ''}`;
-      
-      const tagObj = globalTags.find(t => t.name === task.tag);
-      const tagColor = tagObj ? tagObj.color : 'transparent';
-      
-      div.innerHTML = `
-        <div class="check-circle" onclick="toggleTask('${task.id}', ${!task.is_done})"></div>
-        <div class="task-content">
-          <div class="task-text">${task.text}</div>
-          <div class="task-meta">
-             ${task.time ? `<span>🕒 ${task.time}</span>` : ''}
-             ${task.tag ? `<span class="tag-badge" style="color:${tagColor}">#${task.tag}</span>` : ''}
-          </div>
-        </div>
-        <button class="nav-item" onclick="deleteTask('${task.id}')" style="width:auto">🗑</button>
-      `;
-      return div;
-    }
-
-    async function toggleTask(id, newState) {
-      await supabase.from('tasks').update({ is_done: newState }).eq('id', id);
-      loadAllData();
-    }
-
-    async function deleteTask(id) {
-      if(!confirm('Silinsin mi?')) return;
-      await supabase.from('tasks').delete().eq('id', id);
-      loadAllData();
-    }
-
+    
     function changeDay(delta) {
       selectedDate.setDate(selectedDate.getDate() + delta);
       renderDayView();
     }
-
-    // Simple Swipe Detection for Day View
+    
+    // Swipe Logic
     let touchStartX = 0;
     const dayCont = document.getElementById('view-day');
     dayCont.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
     dayCont.addEventListener('touchend', e => {
       const touchEndX = e.changedTouches[0].screenX;
-      if (touchEndX < touchStartX - 50) changeDay(1); // Swipe Left -> Next Day
-      if (touchEndX > touchStartX + 50) changeDay(-1); // Swipe Right -> Prev Day
+      if (touchEndX < touchStartX - 50) changeDay(1);
+      if (touchEndX > touchStartX + 50) changeDay(-1);
     });
 
-    // --- 2. MONTH VIEW ---
+    // --- MONTH VIEW ---
     async function renderMonthView() {
       const y = selectedMonth.getFullYear(), m = selectedMonth.getMonth();
       document.getElementById('month-display').textContent = selectedMonth.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-
-      // O ayın görevlerinin olduğu günleri çekelim (nokta koymak için)
       const startStr = new Date(y, m, 1).toISOString().split('T')[0];
       const endStr = new Date(y, m + 1, 0).toISOString().split('T')[0];
       
@@ -437,14 +499,10 @@
 
       const grid = document.getElementById('calendar-grid');
       grid.innerHTML = '';
-
-      // Headers
-      ['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].forEach(d => {
-        grid.innerHTML += `<div class="cal-head">${d}</div>`;
-      });
-
-      const firstDay = new Date(y, m, 1).getDay(); // 0 is Sunday
-      const prevSpaces = (firstDay + 6) % 7; // Convert to Mon-Sun
+      ['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].forEach(d => grid.innerHTML += `<div class="cal-head">${d}</div>`);
+      
+      const firstDay = new Date(y, m, 1).getDay();
+      const prevSpaces = (firstDay + 6) % 7;
       const daysInMonth = new Date(y, m + 1, 0).getDate();
 
       for(let i=0; i<prevSpaces; i++) grid.innerHTML += `<div></div>`;
@@ -464,55 +522,44 @@
         grid.appendChild(cell);
       }
     }
-
     function changeMonth(delta) {
       selectedMonth.setMonth(selectedMonth.getMonth() + delta);
       renderMonthView();
     }
 
-    // --- 3. INBOX VIEW ---
+    // --- INBOX ---
     async function renderInboxView() {
-      const { data: tasks } = await supabase
-        .from('tasks')
-        .select('*')
-        .is('target_date', null) // Tarihi olmayanlar
-        .order('created_at', { ascending: false });
-
+      const { data: tasks } = await supabase.from('tasks').select('*').is('target_date', null).order('created_at', { ascending: false });
       const list = document.getElementById('inbox-list');
       list.innerHTML = '';
       if(tasks && tasks.length) tasks.forEach(t => list.appendChild(createTaskCard(t)));
       else list.innerHTML = '<div style="color:var(--muted); text-align:center;">Inbox boş.</div>';
     }
 
-    // --- 4. HABITS VIEW ---
+    // --- HABITS ---
     async function renderHabitsView() {
-      // 1. Alışkanlıkları çek
       const { data: habits } = await supabase.from('habits').select('*');
-      
-      // 2. Bugünün loglarını çek
       const todayKey = formatDateKey(new Date());
       const { data: logs } = await supabase.from('habit_logs').select('habit_id').eq('date', todayKey);
       const doneSet = new Set(logs?.map(l => l.habit_id));
 
       const list = document.getElementById('habits-list');
       list.innerHTML = '';
-
       habits?.forEach(h => {
         const row = document.createElement('div');
         row.className = 'habit-row';
         const isDone = doneSet.has(h.id);
-        
         row.innerHTML = `
           <div style="font-size:16px;">${h.name}</div>
-          <button class="btn" style="width:auto; background: ${isDone ? 'var(--success)' : 'var(--card)'}; border:1px solid var(--line)"
-             onclick="toggleHabit('${h.id}', ${!isDone})">
-             ${isDone ? '✓' : 'Yap'}
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" style="width:auto; padding:8px 12px; background: ${isDone ? 'var(--success)' : 'var(--card)'}; border:1px solid var(--line)"
+               onclick="toggleHabit('${h.id}', ${!isDone})">${isDone ? '✓' : 'Yap'}</button>
+            <button class="nav-item" style="width:auto;" onclick="deleteHabit('${h.id}')">🗑</button>
+          </div>
         `;
         list.appendChild(row);
       });
-
-      // Ekleme butonu
+      
       const addBtn = document.createElement('button');
       addBtn.className = 'btn secondary';
       addBtn.textContent = '+ Yeni Alışkanlık';
@@ -526,59 +573,65 @@
       };
       list.appendChild(addBtn);
     }
-
     async function toggleHabit(habitId, doCheck) {
       const todayKey = formatDateKey(new Date());
-      if(doCheck) {
-        await supabase.from('habit_logs').insert({ habit_id: habitId, date: todayKey });
-      } else {
-        await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('date', todayKey);
-      }
+      if(doCheck) await supabase.from('habit_logs').insert({ habit_id: habitId, date: todayKey });
+      else await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('date', todayKey);
       renderHabitsView();
     }
-
-    // --- 5. TAGS VIEW ---
-    function renderTagsView() {
-       const list = document.getElementById('tags-list');
-       list.innerHTML = '';
-       globalTags.forEach(t => {
-         const div = document.createElement('div');
-         div.style.cssText = 'padding:12px; background:var(--card); margin-bottom:4px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;';
-         div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-               <div style="width:12px; height:12px; border-radius:50%; background:${t.color}"></div>
-               ${t.name}
-            </div>
-            <button onclick="removeTag('${t.id}')" style="background:transparent; border:none; color:var(--danger);">Sil</button>
-         `;
-         list.appendChild(div);
-       });
+    async function deleteHabit(id) {
+       if(!confirm('Alışkanlık silinsin mi?')) return;
+       await supabase.from('habits').delete().eq('id', id);
+       renderHabitsView();
     }
 
-    async function addTag() {
-      const name = document.getElementById('new-tag-name').value;
-      const color = document.getElementById('new-tag-color').value;
-      if(!name) return;
-      await supabase.from('tags').insert({ user_id: session.user.id, name, color });
-      document.getElementById('new-tag-name').value = '';
+    // --- TASK HELPERS ---
+    function createTaskCard(task) {
+      const div = document.createElement('div');
+      div.className = `task-card ${task.type} ${task.is_done ? 'done' : ''}`;
+      const tagObj = globalTags.find(t => t.name === task.tag);
+      const tagColor = tagObj ? tagObj.color : 'transparent';
+      div.innerHTML = `
+        <div class="check-circle" onclick="toggleTask('${task.id}', ${!task.is_done})"></div>
+        <div class="task-content">
+          <div class="task-text">${task.text}</div>
+          <div class="task-meta">
+             ${task.time ? `<span>🕒 ${task.time}</span>` : ''}
+             ${task.tag ? `<span class="tag-badge" style="color:${tagColor}">#${task.tag}</span>` : ''}
+          </div>
+        </div>
+        <button class="nav-item" onclick="deleteTask('${task.id}')" style="width:auto">🗑</button>
+      `;
+      return div;
+    }
+    async function toggleTask(id, newState) {
+      await supabase.from('tasks').update({ is_done: newState }).eq('id', id);
+      loadAllData();
+    }
+    async function deleteTask(id) {
+      if(!confirm('Silinsin mi?')) return;
+      await supabase.from('tasks').delete().eq('id', id);
       loadAllData();
     }
 
-    async function removeTag(id) {
-       if(!confirm('Tag silinsin mi?')) return;
-       await supabase.from('tags').delete().eq('id', id);
-       loadAllData();
+    // --- UI HELPERS ---
+    function switchView(viewName, btn) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + viewName).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+      currentView = viewName;
+      const titles = { day: 'Bugün', month: 'Takvim', inbox: 'Brain Dump', habits: 'Alışkanlıklar', tags: 'Ayarlar' };
+      document.getElementById('header-title').textContent = titles[viewName];
+      loadAllData();
     }
-
-    // --- ADD TASK MODAL ---
+    
     function openAddModal() {
       document.getElementById('modal').style.display = 'flex';
-      // Varsayılan tarih seçimi
       if(currentView === 'day') document.getElementById('m-date').value = formatDateKey(selectedDate);
       else if(currentView === 'inbox') document.getElementById('m-date').value = '';
       else document.getElementById('m-date').value = formatDateKey(new Date());
     }
-
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
     async function saveTask() {
@@ -586,45 +639,25 @@
       const type = document.getElementById('m-type').value;
       const time = document.getElementById('m-time').value;
       const tag = document.getElementById('m-tag').value;
-      const dateVal = document.getElementById('m-date').value; // Boş ise null gidecek (Brain Dump)
+      const dateVal = document.getElementById('m-date').value;
 
       if(!text) return;
 
       const payload = {
         user_id: session.user.id,
-        text,
-        type,
+        text, type,
         time: time || null,
         tag: tag || null,
-        target_date: dateVal || null // Supabase bunu NULL olarak alır
+        target_date: dateVal || null
       };
 
       const { error } = await supabase.from('tasks').insert(payload);
-      if(error) alert(error.message);
-      
-      closeModal();
-      document.getElementById('m-text').value = '';
-      loadAllData();
-    }
-
-    // --- AUTH ACTIONS ---
-    async function signIn() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if(error) document.getElementById('auth-msg').innerText = error.message;
-    }
-    
-    async function signUp() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signUp({ email, password });
-      if(error) document.getElementById('auth-msg').innerText = error.message;
-      else document.getElementById('auth-msg').innerText = "Kayıt başarılı! Lütfen mailini onayla veya giriş yap.";
-    }
-    
-    async function signOut() {
-      await supabase.auth.signOut();
+      if(error) alert("Ekleme hatası: " + error.message);
+      else {
+        closeModal();
+        document.getElementById('m-text').value = '';
+        loadAllData();
+      }
     }
   </script>
 </body>
