@@ -1,890 +1,631 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="theme-color" content="#0f0f10" />
-<title>Minimal Mobile Sync</title>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<style>
-  :root {
-    --bg: #0f0f10; --card: #1c1c1e; --line: #2c2c2e; --text: #f2f2f7; --muted: #8e8e93;
-    --accent: #0a84ff; --danger: #ff453a;
-    --termin: #ff375f; --hedef: #0a84ff; --gorev: #30d158;
-    --safe-area-top: env(safe-area-inset-top, 20px);
-    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-  /* --- Login Screen --- */
-  #auth-screen { position: absolute; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
-  .auth-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
-  input { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 12px; border-radius: 12px; font-size: 16px; outline: none; }
-  button.primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f10" />
+  <title>Mobile To-Do Cloud</title>
   
-  /* --- App Layout --- */
-  #app-screen { display: none; flex-direction: column; height: 100%; position: relative; }
-  
-  /* Header */
-  header {
-    padding: calc(var(--safe-area-top) + 12px) 16px 12px;
-    background: var(--bg); border-bottom: 1px solid var(--line);
-    display: flex; align-items: center; justify-content: space-between; z-index: 10;
-  }
-  .menu-btn { font-size: 24px; background: none; border: none; color: var(--text); cursor: pointer; }
-  .header-title { font-size: 17px; font-weight: 600; }
-  .header-actions { display: flex; gap: 12px; }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  /* Content Area */
-  main { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
-  
-  /* --- Views --- */
-  .view { display: none; padding: 16px; padding-bottom: 100px; animation: fadeIn 0.2s ease; }
-  .view.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  <style>
+    :root {
+      --bg: #0f0f10; --card: #1c1c1e; --text: #f5f5f5; --muted: #8e8e93;
+      --accent: #0a84ff; --danger: #ff453a; --success: #32d74b;
+      --line: #2c2c2e;
+      --nav-height: 80px; --header-height: 60px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* Daily View */
-  .day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--card); padding: 8px 12px; border-radius: 14px; }
-  .day-big { font-size: 14px; font-weight: 600; color: var(--muted); }
-  .nav-arrow { font-size: 18px; padding: 8px; color: var(--accent); background: none; border: none; }
+    /* --- LOGIN SCREEN --- */
+    #auth-screen {
+      position: fixed; inset: 0; z-index: 999; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; gap: 16px;
+    }
+    input { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 12px; border-radius: 12px; width: 100%; font-size: 16px; outline: none; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; width: 100%; font-size: 16px; }
+    .btn.secondary { background: var(--card); color: var(--accent); }
 
-  /* Card Styles */
-  .card { 
-    background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 10px; 
-    border-left: 4px solid var(--line); position: relative; display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  .card.termin { border-left-color: var(--termin); }
-  .card.hedef { border-left-color: var(--hedef); }
-  .card.gorev { border-left-color: var(--gorev); }
-  .card.done { opacity: 0.5; }
-  
-  .checkbox { 
-    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); 
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .card.done .checkbox { background: var(--muted); border-color: var(--muted); }
-  .card-content { flex: 1; min-width: 0; }
-  .card-text { font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
-  .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+    /* --- APP LAYOUT --- */
+    #app-screen { display: none; flex-direction: column; height: 100%; }
+    
+    header {
+      height: calc(var(--header-height) + var(--safe-top));
+      padding-top: var(--safe-top);
+      display: flex; align-items: center; justify-content: space-between;
+      padding-left: 16px; padding-right: 16px;
+      border-bottom: 1px solid var(--line); background: rgba(15,15,16,0.95);
+      backdrop-filter: blur(10px); position: relative; z-index: 50;
+    }
+    h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    
+    main { flex: 1; overflow: hidden; position: relative; }
+    
+    .view {
+      position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+      padding: 16px; padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 80px); /* FAB space */
+      display: none; opacity: 0; transition: opacity 0.2s;
+    }
+    .view.active { display: block; opacity: 1; }
 
-  /* Monthly View */
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-  .cal-cell { 
-    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    border-radius: 10px; background: var(--card); font-size: 13px; position: relative;
-    border: 1px solid transparent;
-  }
-  .cal-cell.today { border-color: var(--accent); color: var(--accent); font-weight: bold; }
-  .cal-cell.has-task::after { content:''; width: 4px; height: 4px; background: var(--gorev); border-radius: 50%; position: absolute; bottom: 6px; }
-  .cal-head { color: var(--muted); font-size: 11px; padding-bottom: 8px; }
+    /* --- BOTTOM NAV --- */
+    nav {
+      height: calc(var(--nav-height) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      border-top: 1px solid var(--line);
+      background: var(--card); display: grid; grid-template-columns: repeat(5, 1fr);
+      position: fixed; bottom: 0; width: 100%; z-index: 100;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; color: var(--muted); font-size: 10px; border: none; background: transparent;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 20px; }
 
-  /* Habits */
-  .habit-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--card); border-radius: 14px; margin-bottom: 8px; }
-  
-  /* FAB (Floating Action Button) */
-  .fab { 
-    position: fixed; bottom: calc(var(--safe-area-bottom) + 20px); right: 20px; 
-    width: 56px; height: 56px; background: var(--accent); color: white; border-radius: 50%; 
-    display: flex; align-items: center; justify-content: center; font-size: 28px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none; z-index: 50;
-  }
+    /* --- FLOATING ACTION BUTTON --- */
+    .fab {
+      position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+      right: 16px; width: 56px; height: 56px; border-radius: 50%;
+      background: var(--accent); color: white; border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      font-size: 28px; display: grid; place-items: center; z-index: 90;
+    }
 
-  /* --- Drawer (Sidebar) --- */
-  .drawer-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; 
-    opacity: 0; pointer-events: none; transition: opacity 0.3s; 
-  }
-  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-  .drawer {
-    position: fixed; top: 0; bottom: 0; left: 0; width: 260px; background: #151517;
-    z-index: 901; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    display: flex; flex-direction: column; border-right: 1px solid var(--line);
-    padding-top: calc(var(--safe-area-top) + 20px);
-  }
-  .drawer.open { transform: translateX(0); }
-  .nav-item { padding: 16px 20px; font-size: 16px; color: var(--muted); display: flex; align-items: center; gap: 12px; cursor: pointer; }
-  .nav-item.active { color: var(--text); background: rgba(255,255,255,0.05); border-right: 3px solid var(--accent); }
-  .drawer-bottom { margin-top: auto; padding: 20px; border-top: 1px solid var(--line); }
+    /* --- COMPONENTS --- */
+    /* 1. Day View */
+    .day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .day-nav-btn { background: transparent; border: 1px solid var(--line); color: var(--text); width: 36px; height: 36px; border-radius: 10px; }
+    .day-title { text-align: center; }
+    .day-title h2 { margin: 0; font-size: 16px; }
+    .day-title span { font-size: 12px; color: var(--muted); }
 
-  /* --- Modal --- */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: flex-end; }
-  .modal-overlay.open { display: flex; }
-  .modal-sheet { 
-    width: 100%; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; 
-    padding: 24px; padding-bottom: calc(var(--safe-area-bottom) + 24px); 
-    display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.3s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
-  .sheet-input { background: #2c2c2e; border: none; color: white; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
-  .type-select { display: flex; gap: 8px; margin: 8px 0; }
-  .type-opt { flex: 1; padding: 8px; text-align: center; background: #2c2c2e; border-radius: 8px; font-size: 13px; color: var(--muted); border: 1px solid transparent; }
-  .type-opt.selected { color: white; border-color: var(--accent); background: rgba(10, 132, 255, 0.15); }
+    /* Swipe Container */
+    #day-container { min-height: 300px; touch-action: pan-y; }
 
-</style>
+    /* Cards */
+    .task-card {
+      background: var(--card); padding: 12px; border-radius: 14px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 12px; border-left: 4px solid transparent;
+    }
+    .task-card.termin { border-left-color: #ff453a; }
+    .task-card.hedef { border-left-color: #0a84ff; }
+    .task-card.gorev { border-left-color: #32d74b; }
+    .check-circle {
+      width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); flex-shrink: 0;
+    }
+    .task-card.done .check-circle { background: var(--muted); border-color: var(--muted); }
+    .task-card.done .task-text { text-decoration: line-through; color: var(--muted); }
+    .task-content { flex: 1; }
+    .task-text { font-size: 15px; margin-bottom: 4px; }
+    .task-meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; }
+    .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
+
+    /* 2. Month View */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .cal-head { font-size: 12px; color: var(--muted); padding: 8px 0; }
+    .cal-cell {
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--card); border-radius: 8px; font-size: 14px; position: relative;
+    }
+    .cal-cell.today { border: 1px solid var(--accent); }
+    .cal-cell.has-task::after {
+      content: ''; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; position: absolute; bottom: 4px;
+    }
+
+    /* 3. Brain Dump */
+    .inbox-list { margin-top: 10px; }
+
+    /* 4. Habits */
+    .habit-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 8px;
+    }
+    .habit-days { display: flex; gap: 4px; }
+    .habit-day { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+    .habit-day.active { background: var(--success); }
+
+    /* Modal */
+    #modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200;
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal-content {
+      background: #151516; width: 100%; border-radius: 20px 20px 0 0; padding: 24px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-form { display: flex; flex-direction: column; gap: 12px; }
+    select, input[type="date"], input[type="time"] {
+      background: var(--card); color: white; border: 1px solid var(--line); padding: 12px; border-radius: 12px;
+    }
+
+  </style>
 </head>
 <body>
 
   <div id="auth-screen">
-    <div style="margin-bottom:20px; font-weight:bold; font-size:24px;">Minimal To-Do</div>
-    <div class="auth-box">
-      <input type="email" id="email" placeholder="E-posta" />
-      <input type="password" id="password" placeholder="Şifre" />
-      <button class="primary" onclick="handleLogin()">Giriş Yap</button>
-      <button style="background:transparent; color:var(--accent); border:none;" onclick="handleSignUp()">Kayıt Ol</button>
-      <div id="auth-msg" style="color:var(--danger); font-size:13px; text-align:center;"></div>
-    </div>
+    <h1 style="font-size: 24px;">Minimal Cloud</h1>
+    <input type="email" id="email" placeholder="E-posta adresi" />
+    <input type="password" id="password" placeholder="Şifre" />
+    <button class="btn" onclick="signIn()">Giriş Yap</button>
+    <button class="btn secondary" onclick="signUp()">Kayıt Ol</button>
+    <div id="auth-msg" style="color: var(--danger); font-size: 12px;"></div>
   </div>
 
   <div id="app-screen">
     <header>
-      <button class="menu-btn" onclick="toggleDrawer()">☰</button>
-      <div class="header-title" id="page-title">Bugün</div>
-      <div class="header-actions">
-        </div>
+      <h1 id="header-title">Bugün</h1>
+      <button class="nav-item" onclick="signOut()" style="width: auto;">Çıkış</button>
     </header>
 
-    <main id="main-container">
-      <div id="view-daily" class="view active">
-        <div class="day-nav">
-          <button class="nav-arrow" onclick="changeDay(-1)">◀</button>
-          <div style="text-align:center;">
-            <div id="daily-date-display" style="font-weight:bold; color:var(--text);"></div>
-            <div id="daily-dow-display" style="font-size:12px; color:var(--muted);"></div>
+    <main>
+      <div id="view-day" class="view active">
+        <div class="day-header">
+          <button class="day-nav-btn" onclick="changeDay(-1)">◀</button>
+          <div class="day-title">
+            <h2 id="current-date-display">18 Ocak</h2>
+            <span id="current-day-name">Pazar</span>
           </div>
-          <button class="nav-arrow" onclick="changeDay(1)">▶</button>
+          <button class="day-nav-btn" onclick="changeDay(1)">▶</button>
         </div>
-        <div id="daily-list"></div>
-        <div style="text-align:center; padding:20px; color:var(--muted); font-size:13px; display:none;" id="daily-empty">Boş gün</div>
+        <div id="day-container">
+          </div>
       </div>
 
       <div id="view-month" class="view">
-        <div class="day-nav">
-          <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
-          <div id="month-display" style="font-weight:bold;"></div>
-          <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+        <div class="day-header">
+          <button class="day-nav-btn" onclick="changeMonth(-1)">◀</button>
+          <h2 id="month-display">Ocak 2026</h2>
+          <button class="day-nav-btn" onclick="changeMonth(1)">▶</button>
         </div>
-        <div class="calendar-grid" id="calendar-header">
+        <div class="calendar-grid" id="calendar-grid">
           </div>
-        <div class="calendar-grid" id="calendar-body" style="margin-top:10px;"></div>
-      </div>
-
-      <div id="view-habits" class="view">
-        <div id="habits-list"></div>
       </div>
 
       <div id="view-inbox" class="view">
-        <div style="color:var(--muted); font-size:13px; margin-bottom:10px;">Tarihsiz görevler</div>
-        <div id="inbox-list"></div>
-      </div>
-
-      <div id="view-tags" class="view">
-        <div id="tags-list"></div>
-        <div style="margin-top:12px; display:flex; gap:8px;">
-          <input id="new-tag-name" placeholder="Yeni Etiket" style="flex:1;" />
-          <input type="color" id="new-tag-color" value="#7dd3fc" style="width:50px; padding:0; height:46px;" />
-          <button class="primary" onclick="addTag()">Ekle</button>
-        </div>
-      </div>
-    </main>
-
-    <button id="fab" class="fab" onclick="openAddModal()">+</button>
-  </div>
-
-  <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
-  <div class="drawer" id="drawer">
-    <div style="padding:0 20px 20px;">
-      <h2 style="margin:0; font-size:20px;">Menü</h2>
-      <div style="font-size:12px; color:var(--muted);" id="user-email"></div>
-    </div>
-    
-    <div class="nav-item active" onclick="navTo('daily')">📅 Günlük Görünüm</div>
-    <div class="nav-item" onclick="navTo('month')">🗓 Aylık Takvim</div>
-    <div class="nav-item" onclick="navTo('habits')">🔥 Alışkanlıklar</div>
-    <div class="nav-item" onclick="navTo('inbox')">🧠 Brain Dump</div>
-    <div class="nav-item" onclick="navTo('tags')">🏷 Etiketler</div>
-
-    <div class="drawer-bottom">
-      <button style="background:var(--line); color:var(--text); width:100%; padding:10px; border:none; border-radius:8px;" onclick="handleLogout()">Çıkış Yap</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="add-modal" onclick="if(event.target===this) closeAddModal()">
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3 style="margin:0;">Yeni Ekle</h3>
-        <button style="background:none; border:none; color:var(--accent);" onclick="closeAddModal()">Bitti</button>
-      </div>
-      <input type="text" id="m-text" class="sheet-input" placeholder="Ne yapılacak?" />
-      
-      <div class="type-select">
-        <div class="type-opt" data-val="termin" onclick="selectType('termin')">Termin</div>
-        <div class="type-opt" data-val="hedef" onclick="selectType('hedef')">Hedef</div>
-        <div class="type-opt selected" data-val="gorev" onclick="selectType('gorev')">Görev</div>
-      </div>
-
-      <div style="display:flex; gap:8px;">
-        <input type="time" id="m-time" class="sheet-input" style="flex:1;" />
-        <select id="m-tag" class="sheet-input" style="flex:1;"></select>
-      </div>
-
-      <button class="primary" onclick="saveTask()">Kaydet</button>
-      <div id="habit-adder" style="display:none;">
-        <hr style="border-color:var(--line); opacity:0.3; margin:10px 0;">
-        <button class="primary" style="background:#2c2c2e; width:100%;" onclick="saveHabit()">Alışkanlık Olarak Ekle</button>
-      </div>
-    </div>
-  </div>
-
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<meta name="theme-color" content="#0f0f10" />
-<title>Minimal Mobile Sync</title>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<style>
-  :root {
-    --bg: #0f0f10; --card: #1c1c1e; --line: #2c2c2e; --text: #f2f2f7; --muted: #8e8e93;
-    --accent: #0a84ff; --danger: #ff453a;
-    --termin: #ff375f; --hedef: #0a84ff; --gorev: #30d158;
-    --safe-area-top: env(safe-area-inset-top, 20px);
-    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-  body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-  /* --- Login Screen --- */
-  #auth-screen { position: absolute; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
-  .auth-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
-  input { background: var(--card); border: 1px solid var(--line); color: var(--text); padding: 12px; border-radius: 12px; font-size: 16px; outline: none; }
-  button.primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
-  
-  /* --- App Layout --- */
-  #app-screen { display: none; flex-direction: column; height: 100%; position: relative; }
-  
-  /* Header */
-  header {
-    padding: calc(var(--safe-area-top) + 12px) 16px 12px;
-    background: var(--bg); border-bottom: 1px solid var(--line);
-    display: flex; align-items: center; justify-content: space-between; z-index: 10;
-  }
-  .menu-btn { font-size: 24px; background: none; border: none; color: var(--text); cursor: pointer; }
-  .header-title { font-size: 17px; font-weight: 600; }
-  .header-actions { display: flex; gap: 12px; }
-
-  /* Content Area */
-  main { flex: 1; overflow-y: auto; position: relative; scroll-behavior: smooth; }
-  
-  /* --- Views --- */
-  .view { display: none; padding: 16px; padding-bottom: 100px; animation: fadeIn 0.2s ease; }
-  .view.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* Daily View */
-  .day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--card); padding: 8px 12px; border-radius: 14px; }
-  .day-big { font-size: 14px; font-weight: 600; color: var(--muted); }
-  .nav-arrow { font-size: 18px; padding: 8px; color: var(--accent); background: none; border: none; }
-
-  /* Card Styles */
-  .card { 
-    background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 10px; 
-    border-left: 4px solid var(--line); position: relative; display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-  .card.termin { border-left-color: var(--termin); }
-  .card.hedef { border-left-color: var(--hedef); }
-  .card.gorev { border-left-color: var(--gorev); }
-  .card.done { opacity: 0.5; }
-  
-  .checkbox { 
-    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); 
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .card.done .checkbox { background: var(--muted); border-color: var(--muted); }
-  .card-content { flex: 1; min-width: 0; }
-  .card-text { font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
-  .tag-badge { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
-
-  /* Monthly View */
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-  .cal-cell { 
-    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    border-radius: 10px; background: var(--card); font-size: 13px; position: relative;
-    border: 1px solid transparent;
-  }
-  .cal-cell.today { border-color: var(--accent); color: var(--accent); font-weight: bold; }
-  .cal-cell.has-task::after { content:''; width: 4px; height: 4px; background: var(--gorev); border-radius: 50%; position: absolute; bottom: 6px; }
-  .cal-head { color: var(--muted); font-size: 11px; padding-bottom: 8px; }
-
-  /* Habits */
-  .habit-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--card); border-radius: 14px; margin-bottom: 8px; }
-  
-  /* FAB (Floating Action Button) */
-  .fab { 
-    position: fixed; bottom: calc(var(--safe-area-bottom) + 20px); right: 20px; 
-    width: 56px; height: 56px; background: var(--accent); color: white; border-radius: 50%; 
-    display: flex; align-items: center; justify-content: center; font-size: 28px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: none; z-index: 50;
-  }
-
-  /* --- Drawer (Sidebar) --- */
-  .drawer-overlay { 
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; 
-    opacity: 0; pointer-events: none; transition: opacity 0.3s; 
-  }
-  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-  .drawer {
-    position: fixed; top: 0; bottom: 0; left: 0; width: 260px; background: #151517;
-    z-index: 901; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    display: flex; flex-direction: column; border-right: 1px solid var(--line);
-    padding-top: calc(var(--safe-area-top) + 20px);
-  }
-  .drawer.open { transform: translateX(0); }
-  .nav-item { padding: 16px 20px; font-size: 16px; color: var(--muted); display: flex; align-items: center; gap: 12px; cursor: pointer; }
-  .nav-item.active { color: var(--text); background: rgba(255,255,255,0.05); border-right: 3px solid var(--accent); }
-  .drawer-bottom { margin-top: auto; padding: 20px; border-top: 1px solid var(--line); }
-
-  /* --- Modal --- */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: flex-end; }
-  .modal-overlay.open { display: flex; }
-  .modal-sheet { 
-    width: 100%; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; 
-    padding: 24px; padding-bottom: calc(var(--safe-area-bottom) + 24px); 
-    display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.3s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
-  .sheet-input { background: #2c2c2e; border: none; color: white; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
-  .type-select { display: flex; gap: 8px; margin: 8px 0; }
-  .type-opt { flex: 1; padding: 8px; text-align: center; background: #2c2c2e; border-radius: 8px; font-size: 13px; color: var(--muted); border: 1px solid transparent; }
-  .type-opt.selected { color: white; border-color: var(--accent); background: rgba(10, 132, 255, 0.15); }
-
-</style>
-</head>
-<body>
-
-  <div id="auth-screen">
-    <div style="margin-bottom:20px; font-weight:bold; font-size:24px;">Minimal To-Do</div>
-    <div class="auth-box">
-      <input type="email" id="email" placeholder="E-posta" />
-      <input type="password" id="password" placeholder="Şifre" />
-      <button class="primary" onclick="handleLogin()">Giriş Yap</button>
-      <button style="background:transparent; color:var(--accent); border:none;" onclick="handleSignUp()">Kayıt Ol</button>
-      <div id="auth-msg" style="color:var(--danger); font-size:13px; text-align:center;"></div>
-    </div>
-  </div>
-
-  <div id="app-screen">
-    <header>
-      <button class="menu-btn" onclick="toggleDrawer()">☰</button>
-      <div class="header-title" id="page-title">Bugün</div>
-      <div class="header-actions">
-        </div>
-    </header>
-
-    <main id="main-container">
-      <div id="view-daily" class="view active">
-        <div class="day-nav">
-          <button class="nav-arrow" onclick="changeDay(-1)">◀</button>
-          <div style="text-align:center;">
-            <div id="daily-date-display" style="font-weight:bold; color:var(--text);"></div>
-            <div id="daily-dow-display" style="font-size:12px; color:var(--muted);"></div>
-          </div>
-          <button class="nav-arrow" onclick="changeDay(1)">▶</button>
-        </div>
-        <div id="daily-list"></div>
-        <div style="text-align:center; padding:20px; color:var(--muted); font-size:13px; display:none;" id="daily-empty">Boş gün</div>
-      </div>
-
-      <div id="view-month" class="view">
-        <div class="day-nav">
-          <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
-          <div id="month-display" style="font-weight:bold;"></div>
-          <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
-        </div>
-        <div class="calendar-grid" id="calendar-header">
-          </div>
-        <div class="calendar-grid" id="calendar-body" style="margin-top:10px;"></div>
+        <h2 style="font-size: 16px; color: var(--muted); margin-top:0;">Brain Dump</h2>
+        <div id="inbox-list" class="inbox-list"></div>
       </div>
 
       <div id="view-habits" class="view">
-        <div id="habits-list"></div>
-      </div>
-
-      <div id="view-inbox" class="view">
-        <div style="color:var(--muted); font-size:13px; margin-bottom:10px;">Tarihsiz görevler</div>
-        <div id="inbox-list"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="font-size: 16px; margin:0;">Alışkanlıklar</h2>
+        </div>
+        <div id="habits-list" style="margin-top:16px;"></div>
       </div>
 
       <div id="view-tags" class="view">
-        <div id="tags-list"></div>
-        <div style="margin-top:12px; display:flex; gap:8px;">
-          <input id="new-tag-name" placeholder="Yeni Etiket" style="flex:1;" />
-          <input type="color" id="new-tag-color" value="#7dd3fc" style="width:50px; padding:0; height:46px;" />
-          <button class="primary" onclick="addTag()">Ekle</button>
+        <h2>Tag Yönetimi</h2>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <input id="new-tag-name" placeholder="Yeni Tag..." />
+          <input type="color" id="new-tag-color" value="#7dd3fc" style="width:50px; padding:0;" />
+          <button class="btn" style="width:auto;" onclick="addTag()">+</button>
         </div>
+        <div id="tags-list"></div>
       </div>
     </main>
 
-    <button id="fab" class="fab" onclick="openAddModal()">+</button>
+    <button class="fab" onclick="openAddModal()">+</button>
+
+    <nav>
+      <button class="nav-item active" onclick="switchView('day', this)">
+        <span class="nav-icon">📅</span><span>Gün</span>
+      </button>
+      <button class="nav-item" onclick="switchView('month', this)">
+        <span class="nav-icon">🗓</span><span>Ay</span>
+      </button>
+      <button class="nav-item" onclick="switchView('inbox', this)">
+        <span class="nav-icon">🧠</span><span>Inbox</span>
+      </button>
+      <button class="nav-item" onclick="switchView('habits', this)">
+        <span class="nav-icon">🔥</span><span>Alışk.</span>
+      </button>
+      <button class="nav-item" onclick="switchView('tags', this)">
+        <span class="nav-icon">🏷</span><span>Tag</span>
+      </button>
+    </nav>
   </div>
 
-  <div class="drawer-overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
-  <div class="drawer" id="drawer">
-    <div style="padding:0 20px 20px;">
-      <h2 style="margin:0; font-size:20px;">Menü</h2>
-      <div style="font-size:12px; color:var(--muted);" id="user-email"></div>
-    </div>
-    
-    <div class="nav-item active" onclick="navTo('daily')">📅 Günlük Görünüm</div>
-    <div class="nav-item" onclick="navTo('month')">🗓 Aylık Takvim</div>
-    <div class="nav-item" onclick="navTo('habits')">🔥 Alışkanlıklar</div>
-    <div class="nav-item" onclick="navTo('inbox')">🧠 Brain Dump</div>
-    <div class="nav-item" onclick="navTo('tags')">🏷 Etiketler</div>
-
-    <div class="drawer-bottom">
-      <button style="background:var(--line); color:var(--text); width:100%; padding:10px; border:none; border-radius:8px;" onclick="handleLogout()">Çıkış Yap</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="add-modal" onclick="if(event.target===this) closeAddModal()">
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3 style="margin:0;">Yeni Ekle</h3>
-        <button style="background:none; border:none; color:var(--accent);" onclick="closeAddModal()">Bitti</button>
-      </div>
-      <input type="text" id="m-text" class="sheet-input" placeholder="Ne yapılacak?" />
-      
-      <div class="type-select">
-        <div class="type-opt" data-val="termin" onclick="selectType('termin')">Termin</div>
-        <div class="type-opt" data-val="hedef" onclick="selectType('hedef')">Hedef</div>
-        <div class="type-opt selected" data-val="gorev" onclick="selectType('gorev')">Görev</div>
-      </div>
-
-      <div style="display:flex; gap:8px;">
-        <input type="time" id="m-time" class="sheet-input" style="flex:1;" />
-        <select id="m-tag" class="sheet-input" style="flex:1;"></select>
-      </div>
-
-      <button class="primary" onclick="saveTask()">Kaydet</button>
-      <div id="habit-adder" style="display:none;">
-        <hr style="border-color:var(--line); opacity:0.3; margin:10px 0;">
-        <button class="primary" style="background:#2c2c2e; width:100%;" onclick="saveHabit()">Alışkanlık Olarak Ekle</button>
-      </div>
-    </div>
-  </div>
-
-<script>
-  // --- KONFIGURASYON ---
-  // BURAYA SUPABASE BILGILERINI GIRIN
-  const SUPABASE_URL = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM'; 
-  const SUPABASE_KEY = 'sb_secret_lnLPz5P2Q7u0UwDQChnU7Q_VWUzxWDi';
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // --- GLOBAL STATE ---
-  let session = null;
-  let currentView = 'daily';
-  let currentDate = new Date();
-  let selectedType = 'gorev';
-  let cachedTags = [];
-  let touchStartX = 0;
-
-  // --- INIT ---
-  async function init() {
-    const { data } = await supabase.auth.getSession();
-    session = data.session;
-    updateAuthUI();
-    if(session) {
-      loadData();
-      document.getElementById('user-email').textContent = session.user.email;
-    }
-  }
-  
-  window.addEventListener('load', init);
-
-  // --- AUTH ---
-  function updateAuthUI() {
-    if(session) {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app-screen').style.display = 'flex';
-    } else {
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('app-screen').style.display = 'none';
-    }
-  }
-
-  async function handleLogin() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error) alert(error.message);
-    else window.location.reload();
-  }
-
-  async function handleSignUp() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if(error) alert(error.message);
-    else alert('Kayıt başarılı! Lütfen mailinizi onaylayın (eğer kapalıysa direkt giriş yapabilirsiniz).');
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    window.location.reload();
-  }
-
-  // --- NAVIGATION ---
-  function toggleDrawer() {
-    document.getElementById('drawer').classList.toggle('open');
-    document.getElementById('drawer-overlay').classList.toggle('open');
-  }
-
-  function navTo(viewId) {
-    currentView = viewId;
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
-    document.getElementById('view-' + viewId).classList.add('active');
-    // Highlight nav item logic simplified here
-    toggleDrawer();
-
-    const titles = { daily:'Günlük', month:'Takvim', habits:'Alışkanlıklar', inbox:'Brain Dump', tags:'Etiketler' };
-    document.getElementById('page-title').textContent = titles[viewId];
-    
-    // FAB Logic
-    const fab = document.getElementById('fab');
-    if(viewId === 'tags') fab.style.display = 'none';
-    else fab.style.display = 'flex';
-
-    loadData();
-  }
-
-  // --- DATE HELPERS ---
-  function getDayKey(d) {
-    return d.toISOString().split('T')[0];
-  }
-  function formatDay(d) {
-    return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
-  }
-
-  // --- LOAD DATA & RENDER ---
-  async function loadData() {
-    // 1. Fetch Tags Global
-    const { data: tags } = await supabase.from('tags').select('*').order('name');
-    cachedTags = tags || [];
-    renderTagOptions();
-
-    if(currentView === 'daily') renderDaily();
-    else if(currentView === 'month') renderMonth();
-    else if(currentView === 'habits') renderHabits();
-    else if(currentView === 'inbox') renderInbox();
-    else if(currentView === 'tags') renderTagsView();
-  }
-
-  // --- DAILY VIEW ---
-  async function renderDaily() {
-    const dateKey = getDayKey(currentDate);
-    document.getElementById('daily-date-display').textContent = formatDay(currentDate);
-    document.getElementById('daily-dow-display').textContent = currentDate.toLocaleDateString('tr-TR', { weekday:'long' });
-
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('date_key', dateKey)
-      .order('status', {ascending:true}) // bitmemişler önce
-      .order('type'); // termin > hedef > gorev (alfabetik ama olsun)
-
-    const list = document.getElementById('daily-list');
-    list.innerHTML = '';
-    
-    if(!tasks || tasks.length === 0) {
-      document.getElementById('daily-empty').style.display = 'block';
-      return;
-    }
-    document.getElementById('daily-empty').style.display = 'none';
-
-    tasks.forEach(t => {
-      const tag = cachedTags.find(x => x.id === t.tag_id);
-      list.appendChild(createTaskCard(t, tag));
-    });
-  }
-
-  function changeDay(delta) {
-    currentDate.setDate(currentDate.getDate() + delta);
-    renderDaily();
-  }
-  
-  // Swipe Logic for Daily
-  const dailyView = document.getElementById('view-daily');
-  dailyView.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-  dailyView.addEventListener('touchend', e => {
-    const touchEndX = e.changedTouches[0].screenX;
-    if(touchEndX < touchStartX - 50) changeDay(1); // Swipe Left -> Next Day
-    if(touchEndX > touchStartX + 50) changeDay(-1); // Swipe Right -> Prev Day
-  });
-
-  // --- MONTHLY VIEW ---
-  async function renderMonth() {
-    const y = currentDate.getFullYear(), m = currentDate.getMonth();
-    document.getElementById('month-display').textContent = currentDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
-    
-    // Get Tasks for dots
-    const startStr = new Date(y, m, 1).toISOString().split('T')[0];
-    const endStr = new Date(y, m+1, 0).toISOString().split('T')[0];
-    
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('date_key')
-      .gte('date_key', startStr)
-      .lte('date_key', endStr);
-    
-    const taskDates = new Set(tasks?.map(t => t.date_key));
-
-    const header = document.getElementById('calendar-header');
-    header.innerHTML = '';
-    ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'].forEach(d => header.innerHTML += `<div class="cal-head">${d}</div>`);
-
-    const body = document.getElementById('calendar-body');
-    body.innerHTML = '';
-
-    const firstDay = new Date(y, m, 1);
-    const startDay = (firstDay.getDay() + 6) % 7; // Pzt 0 yapma
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-
-    // Empty cells
-    for(let i=0; i<startDay; i++) body.innerHTML += `<div></div>`;
-
-    const todayKey = getDayKey(new Date());
-
-    for(let i=1; i<=daysInMonth; i++) {
-      const dKey = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-      const isToday = dKey === todayKey;
-      const hasTask = taskDates.has(dKey);
-      
-      const el = document.createElement('div');
-      el.className = `cal-cell ${isToday ? 'today' : ''} ${hasTask ? 'has-task' : ''}`;
-      el.textContent = i;
-      el.onclick = () => {
-        currentDate = new Date(y, m, i);
-        navTo('daily');
-      };
-      body.appendChild(el);
-    }
-  }
-
-  function changeMonth(delta) {
-    currentDate.setMonth(currentDate.getMonth() + delta);
-    renderMonth();
-  }
-
-  // --- INBOX VIEW ---
-  async function renderInbox() {
-    const { data: tasks } = await supabase
-      .from('tasks')
-      .select('*')
-      .is('date_key', null)
-      .order('created_at', {ascending:false});
-      
-    const list = document.getElementById('inbox-list');
-    list.innerHTML = '';
-    tasks?.forEach(t => list.appendChild(createTaskCard(t, cachedTags.find(x => x.id === t.tag_id))));
-  }
-
-  // --- HABITS VIEW ---
-  async function renderHabits() {
-    const today = getDayKey(new Date()); // Always check against real today
-    
-    // Fetch Habits
-    const { data: habits } = await supabase.from('habits').select('*').order('created_at');
-    // Fetch Logs for today
-    const { data: logs } = await supabase.from('habit_logs').select('habit_id').eq('date_key', today);
-    const doneIds = new Set(logs?.map(l => l.habit_id));
-
-    const list = document.getElementById('habits-list');
-    list.innerHTML = '';
-    
-    habits?.forEach(h => {
-      const row = document.createElement('div');
-      row.className = 'habit-row';
-      const isDone = doneIds.has(h.id);
-      
-      row.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="checkbox" style="${isDone ? 'background:var(--gorev); border-color:var(--gorev); color:white;' : ''}">
-            ${isDone ? '✓' : ''}
-          </div>
-          <span style="${isDone ? 'opacity:0.5; text-decoration:line-through;' : ''}">${h.name}</span>
+  <div id="modal">
+    <div class="modal-content">
+      <div class="modal-form">
+        <h3 style="margin:0; margin-bottom:8px;">Yeni Ekle</h3>
+        <input id="m-text" type="text" placeholder="Ne yapılacak?" />
+        
+        <div style="display:flex; gap:8px;">
+          <select id="m-type" style="flex:1">
+            <option value="gorev">Görev</option>
+            <option value="termin">Termin</option>
+            <option value="hedef">Hedef</option>
+          </select>
+          <input id="m-time" type="time" style="width:100px;" />
         </div>
-        <button style="background:none; border:none; color:var(--muted);" onclick="deleteHabit('${h.id}')">🗑</button>
-      `;
+
+        <select id="m-tag"></select>
+
+        <div style="display:flex; gap:8px;">
+           <input id="m-date" type="date" style="flex:1" />
+           <button class="btn" style="width:auto; background:var(--card);" onclick="document.getElementById('m-date').value=''">Inbox</button>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+          <button class="btn secondary" onclick="closeModal()">İptal</button>
+          <button class="btn" onclick="saveTask()">Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- SUPABASE AYARLARI ---
+    const SUPABASE_URL = 'sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM'; // BURAYI DOLDUR
+    const SUPABASE_KEY = 'sb_secret_lnLPz5P2Q7u0UwDQChnU7Q_VWUzxWDi'; // BURAYI DOLDUR
+    const supabase = showSupabaseWarning() ? null : window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let session = null;
+    let selectedDate = new Date(); // Günlük görünüm için
+    let selectedMonth = new Date(); // Aylık görünüm için
+    let currentView = 'day';
+    let globalTags = [];
+
+    // --- INIT ---
+    function showSupabaseWarning() {
+       if(SUPABASE_URL.includes('YOUR')) {
+         alert('Lütfen HTML dosyasındaki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurunuz.');
+         return true;
+       }
+       return false;
+    }
+
+    window.onload = async () => {
+      if(!supabase) return;
+
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+      toggleAuthUI();
+
+      supabase.auth.onAuthStateChange((_event, _session) => {
+        session = _session;
+        toggleAuthUI();
+        if (session) loadAllData();
+      });
+    };
+
+    function toggleAuthUI() {
+      if (session) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        loadAllData();
+      } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app-screen').style.display = 'none';
+      }
+    }
+
+    // --- DATA LOADING ---
+    async function loadAllData() {
+      await fetchTags();
+      if(currentView === 'day') renderDayView();
+      if(currentView === 'month') renderMonthView();
+      if(currentView === 'inbox') renderInboxView();
+      if(currentView === 'habits') renderHabitsView();
+      if(currentView === 'tags') renderTagsView();
+    }
+
+    async function fetchTags() {
+      const { data } = await supabase.from('tags').select('*').order('list_order');
+      globalTags = data || [];
+      const select = document.getElementById('m-tag');
+      select.innerHTML = '<option value="">Tag Yok</option>';
+      globalTags.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name; opt.textContent = t.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // --- VIEW LOGIC ---
+    function switchView(viewName, btn) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + viewName).classList.add('active');
       
-      // Click on text/checkbox toggles status
-      row.children[0].onclick = () => toggleHabit(h.id, !isDone);
-      list.appendChild(row);
-    });
-  }
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if(btn) btn.classList.add('active');
 
-  async function toggleHabit(id, val) {
-    const today = getDayKey(new Date());
-    if(val) {
-      await supabase.from('habit_logs').insert({ habit_id: id, date_key: today });
-    } else {
-      await supabase.from('habit_logs').delete().eq('habit_id', id).eq('date_key', today);
+      currentView = viewName;
+      
+      // Başlık Güncelleme
+      const titles = { day: 'Bugün', month: 'Takvim', inbox: 'Brain Dump', habits: 'Alışkanlıklar', tags: 'Ayarlar' };
+      document.getElementById('header-title').textContent = titles[viewName];
+
+      loadAllData(); // Veriyi tazelemek için
     }
-    renderHabits();
-  }
 
-  async function deleteHabit(id) {
-    if(confirm('Silinsin mi?')) {
-      await supabase.from('habits').delete().eq('id', id);
-      renderHabits();
+    // --- 1. DAY VIEW & SWIPE LOGIC ---
+    function formatDateKey(d) { return d.toISOString().split('T')[0]; }
+
+    async function renderDayView() {
+      const dateKey = formatDateKey(selectedDate);
+      
+      // UI Update
+      const options = { weekday: 'long', month: 'long', day: 'numeric' };
+      document.getElementById('current-date-display').textContent = selectedDate.toLocaleDateString('tr-TR', {day:'numeric', month:'long'});
+      document.getElementById('current-day-name').textContent = selectedDate.toLocaleDateString('tr-TR', {weekday:'long'});
+
+      // Fetch Tasks
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('target_date', dateKey)
+        .order('is_done', { ascending: true }) // Yapılanlar alta
+        .order('created_at', { ascending: true });
+
+      const container = document.getElementById('day-container');
+      container.innerHTML = '';
+
+      if (tasks && tasks.length > 0) {
+        tasks.forEach(task => container.appendChild(createTaskCard(task)));
+      } else {
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--muted)">Bugün boş.</div>';
+      }
     }
-  }
 
-  // --- TAGS VIEW ---
-  function renderTagsView() {
-    const list = document.getElementById('tags-list');
-    list.innerHTML = '';
-    cachedTags.forEach(t => {
+    function createTaskCard(task) {
       const div = document.createElement('div');
-      div.className = 'habit-row'; // Use same style
+      div.className = `task-card ${task.type} ${task.is_done ? 'done' : ''}`;
+      
+      const tagObj = globalTags.find(t => t.name === task.tag);
+      const tagColor = tagObj ? tagObj.color : 'transparent';
+      
       div.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:16px; height:16px; border-radius:50%; background:${t.color}"></div>
-          <span>${t.name}</span>
+        <div class="check-circle" onclick="toggleTask('${task.id}', ${!task.is_done})"></div>
+        <div class="task-content">
+          <div class="task-text">${task.text}</div>
+          <div class="task-meta">
+             ${task.time ? `<span>🕒 ${task.time}</span>` : ''}
+             ${task.tag ? `<span class="tag-badge" style="color:${tagColor}">#${task.tag}</span>` : ''}
+          </div>
         </div>
-        <button style="color:var(--danger); background:none; border:none;" onclick="deleteTag('${t.id}')">Sil</button>
+        <button class="nav-item" onclick="deleteTask('${task.id}')" style="width:auto">🗑</button>
       `;
-      list.appendChild(div);
-    });
-  }
-
-  async function addTag() {
-    const name = document.getElementById('new-tag-name').value;
-    const color = document.getElementById('new-tag-color').value;
-    if(!name) return;
-    await supabase.from('tags').insert({ user_id: session.user.id, name, color });
-    document.getElementById('new-tag-name').value = '';
-    loadData();
-  }
-
-  async function deleteTag(id) {
-    if(confirm('Tag silinsin mi?')) {
-      await supabase.from('tags').delete().eq('id', id);
-      loadData();
+      return div;
     }
-  }
 
-  // --- SHARED COMPONENTS ---
-  function createTaskCard(t, tag) {
-    const div = document.createElement('div');
-    div.className = `card ${t.type} ${t.status ? 'done' : ''}`;
-    div.innerHTML = `
-      <div class="checkbox" onclick="toggleTask('${t.id}', ${!t.status})">
-        ${t.status ? '✓' : ''}
-      </div>
-      <div class="card-content">
-        <div class="card-text">${t.text}</div>
-        <div class="card-meta">
-          ${t.time_val ? `<span>⏰ ${t.time_val}</span>` : ''}
-          ${tag ? `<span class="tag-badge" style="color:${tag.color}; border:1px solid ${tag.color}">${tag.name}</span>` : ''}
-        </div>
-      </div>
-      <button onclick="deleteTask('${t.id}')" style="background:none; border:none; font-size:16px; color:var(--muted);">⋮</button>
-    `;
-    return div;
-  }
+    async function toggleTask(id, newState) {
+      await supabase.from('tasks').update({ is_done: newState }).eq('id', id);
+      loadAllData();
+    }
 
-  async function toggleTask(id, status) {
-    await supabase.from('tasks').update({ status }).eq('id', id);
-    if(currentView === 'daily') renderDaily();
-    else renderInbox();
-  }
-
-  async function deleteTask(id) {
-    if(confirm('Sil?')) {
+    async function deleteTask(id) {
+      if(!confirm('Silinsin mi?')) return;
       await supabase.from('tasks').delete().eq('id', id);
-      if(currentView === 'daily') renderDaily();
-      else renderInbox();
+      loadAllData();
     }
-  }
 
-  // --- ADD MODAL ---
-  function openAddModal() {
-    document.getElementById('add-modal').classList.add('open');
-    document.getElementById('m-text').focus();
-    
-    // Toggle Habit button based on view
-    const hDiv = document.getElementById('habit-adder');
-    if(currentView === 'habits') {
-      hDiv.style.display = 'block';
-    } else {
-      hDiv.style.display = 'none';
+    function changeDay(delta) {
+      selectedDate.setDate(selectedDate.getDate() + delta);
+      renderDayView();
     }
-  }
 
-  function closeAddModal() {
-    document.getElementById('add-modal').classList.remove('open');
-    document.getElementById('m-text').value = '';
-    document.getElementById('m-time').value = '';
-  }
-
-  function selectType(t) {
-    selectedType = t;
-    document.querySelectorAll('.type-opt').forEach(el => el.classList.remove('selected'));
-    document.querySelector(`.type-opt[data-val="${t}"]`).classList.add('selected');
-  }
-
-  function renderTagOptions() {
-    const s = document.getElementById('m-tag');
-    s.innerHTML = '<option value="">Tag Yok</option>';
-    cachedTags.forEach(t => {
-      s.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+    // Simple Swipe Detection for Day View
+    let touchStartX = 0;
+    const dayCont = document.getElementById('view-day');
+    dayCont.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+    dayCont.addEventListener('touchend', e => {
+      const touchEndX = e.changedTouches[0].screenX;
+      if (touchEndX < touchStartX - 50) changeDay(1); // Swipe Left -> Next Day
+      if (touchEndX > touchStartX + 50) changeDay(-1); // Swipe Right -> Prev Day
     });
-  }
 
-  async function saveTask() {
-    const text = document.getElementById('m-text').value;
-    if(!text) return;
-    
-    const timeVal = document.getElementById('m-time').value || null;
-    const tagId = document.getElementById('m-tag').value || null;
+    // --- 2. MONTH VIEW ---
+    async function renderMonthView() {
+      const y = selectedMonth.getFullYear(), m = selectedMonth.getMonth();
+      document.getElementById('month-display').textContent = selectedMonth.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
 
-    let dateKey = null;
-    if(currentView === 'daily' || currentView === 'month') {
-      dateKey = getDayKey(currentDate);
+      // O ayın görevlerinin olduğu günleri çekelim (nokta koymak için)
+      const startStr = new Date(y, m, 1).toISOString().split('T')[0];
+      const endStr = new Date(y, m + 1, 0).toISOString().split('T')[0];
+      
+      const { data: busyDays } = await supabase.from('tasks').select('target_date').gte('target_date', startStr).lte('target_date', endStr);
+      const busySet = new Set(busyDays?.map(x => x.target_date) || []);
+
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      // Headers
+      ['Pt','Sa','Ça','Pe','Cu','Ct','Pz'].forEach(d => {
+        grid.innerHTML += `<div class="cal-head">${d}</div>`;
+      });
+
+      const firstDay = new Date(y, m, 1).getDay(); // 0 is Sunday
+      const prevSpaces = (firstDay + 6) % 7; // Convert to Mon-Sun
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+      for(let i=0; i<prevSpaces; i++) grid.innerHTML += `<div></div>`;
+
+      for(let d=1; d<=daysInMonth; d++) {
+        const currentDateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = currentDateStr === formatDateKey(new Date());
+        const hasTask = busySet.has(currentDateStr);
+        
+        const cell = document.createElement('div');
+        cell.className = `cal-cell ${isToday ? 'today' : ''} ${hasTask ? 'has-task' : ''}`;
+        cell.textContent = d;
+        cell.onclick = () => {
+          selectedDate = new Date(y, m, d);
+          switchView('day', document.querySelectorAll('.nav-item')[0]);
+        };
+        grid.appendChild(cell);
+      }
     }
-    // Inbox ise dateKey null kalır
 
-    await supabase.from('tasks').insert({
-      user_id: session.user.id,
-      text,
-      type: selectedType,
-      time_val: timeVal,
-      tag_id: tagId,
-      date_key: dateKey
-    });
+    function changeMonth(delta) {
+      selectedMonth.setMonth(selectedMonth.getMonth() + delta);
+      renderMonthView();
+    }
+
+    // --- 3. INBOX VIEW ---
+    async function renderInboxView() {
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('target_date', null) // Tarihi olmayanlar
+        .order('created_at', { ascending: false });
+
+      const list = document.getElementById('inbox-list');
+      list.innerHTML = '';
+      if(tasks && tasks.length) tasks.forEach(t => list.appendChild(createTaskCard(t)));
+      else list.innerHTML = '<div style="color:var(--muted); text-align:center;">Inbox boş.</div>';
+    }
+
+    // --- 4. HABITS VIEW ---
+    async function renderHabitsView() {
+      // 1. Alışkanlıkları çek
+      const { data: habits } = await supabase.from('habits').select('*');
+      
+      // 2. Bugünün loglarını çek
+      const todayKey = formatDateKey(new Date());
+      const { data: logs } = await supabase.from('habit_logs').select('habit_id').eq('date', todayKey);
+      const doneSet = new Set(logs?.map(l => l.habit_id));
+
+      const list = document.getElementById('habits-list');
+      list.innerHTML = '';
+
+      habits?.forEach(h => {
+        const row = document.createElement('div');
+        row.className = 'habit-row';
+        const isDone = doneSet.has(h.id);
+        
+        row.innerHTML = `
+          <div style="font-size:16px;">${h.name}</div>
+          <button class="btn" style="width:auto; background: ${isDone ? 'var(--success)' : 'var(--card)'}; border:1px solid var(--line)"
+             onclick="toggleHabit('${h.id}', ${!isDone})">
+             ${isDone ? '✓' : 'Yap'}
+          </button>
+        `;
+        list.appendChild(row);
+      });
+
+      // Ekleme butonu
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn secondary';
+      addBtn.textContent = '+ Yeni Alışkanlık';
+      addBtn.style.marginTop = '16px';
+      addBtn.onclick = async () => {
+        const name = prompt('Alışkanlık adı:');
+        if(name) {
+          await supabase.from('habits').insert({ user_id: session.user.id, name });
+          renderHabitsView();
+        }
+      };
+      list.appendChild(addBtn);
+    }
+
+    async function toggleHabit(habitId, doCheck) {
+      const todayKey = formatDateKey(new Date());
+      if(doCheck) {
+        await supabase.from('habit_logs').insert({ habit_id: habitId, date: todayKey });
+      } else {
+        await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('date', todayKey);
+      }
+      renderHabitsView();
+    }
+
+    // --- 5. TAGS VIEW ---
+    function renderTagsView() {
+       const list = document.getElementById('tags-list');
+       list.innerHTML = '';
+       globalTags.forEach(t => {
+         const div = document.createElement('div');
+         div.style.cssText = 'padding:12px; background:var(--card); margin-bottom:4px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;';
+         div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+               <div style="width:12px; height:12px; border-radius:50%; background:${t.color}"></div>
+               ${t.name}
+            </div>
+            <button onclick="removeTag('${t.id}')" style="background:transparent; border:none; color:var(--danger);">Sil</button>
+         `;
+         list.appendChild(div);
+       });
+    }
+
+    async function addTag() {
+      const name = document.getElementById('new-tag-name').value;
+      const color = document.getElementById('new-tag-color').value;
+      if(!name) return;
+      await supabase.from('tags').insert({ user_id: session.user.id, name, color });
+      document.getElementById('new-tag-name').value = '';
+      loadAllData();
+    }
+
+    async function removeTag(id) {
+       if(!confirm('Tag silinsin mi?')) return;
+       await supabase.from('tags').delete().eq('id', id);
+       loadAllData();
+    }
+
+    // --- ADD TASK MODAL ---
+    function openAddModal() {
+      document.getElementById('modal').style.display = 'flex';
+      // Varsayılan tarih seçimi
+      if(currentView === 'day') document.getElementById('m-date').value = formatDateKey(selectedDate);
+      else if(currentView === 'inbox') document.getElementById('m-date').value = '';
+      else document.getElementById('m-date').value = formatDateKey(new Date());
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    async function saveTask() {
+      const text = document.getElementById('m-text').value;
+      const type = document.getElementById('m-type').value;
+      const time = document.getElementById('m-time').value;
+      const tag = document.getElementById('m-tag').value;
+      const dateVal = document.getElementById('m-date').value; // Boş ise null gidecek (Brain Dump)
+
+      if(!text) return;
+
+      const payload = {
+        user_id: session.user.id,
+        text,
+        type,
+        time: time || null,
+        tag: tag || null,
+        target_date: dateVal || null // Supabase bunu NULL olarak alır
+      };
+
+      const { error } = await supabase.from('tasks').insert(payload);
+      if(error) alert(error.message);
+      
+      closeModal();
+      document.getElementById('m-text').value = '';
+      loadAllData();
+    }
+
+    // --- AUTH ACTIONS ---
+    async function signIn() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if(error) document.getElementById('auth-msg').innerText = error.message;
+    }
     
-    closeAddModal();
-    loadData();
-  }
-
-  async function saveHabit() {
-    const text = document.getElementById('m-text').value;
-    if(!text) return;
-    await supabase.from('habits').insert({ user_id: session.user.id, name: text });
-    closeAddModal();
-    loadData();
-  }
-
-</script>
+    async function signUp() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await supabase.auth.signUp({ email, password });
+      if(error) document.getElementById('auth-msg').innerText = error.message;
+      else document.getElementById('auth-msg').innerText = "Kayıt başarılı! Lütfen mailini onayla veya giriş yap.";
+    }
+    
+    async function signOut() {
+      await supabase.auth.signOut();
+    }
+  </script>
 </body>
 </html>
