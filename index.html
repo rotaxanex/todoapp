@@ -2,9 +2,9 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15.2 (App Mode)</title>
+  <title>Minimal To-Do v15.1 (Custom Confirm)</title>
   <link rel="manifest" href="manifest.webmanifest">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,781 +13,1591 @@
     :root{
       --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --frame-termin:#fb7185; --frame-hedef:#60a5fa; --frame-gorev:#34d399;
+
+      --frame-termin:#fb7185;
+      --frame-hedef:#60a5fa;
+      --frame-gorev:#34d399;
+
       --monthCellH: 130px;
-      --bottom-nav-h: 60px;
     }
 
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    html, body{ height:100%; margin:0; background:var(--bg); color:var(--text); overscroll-behavior-y: none; }
+    *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    html, body{ height:100%; }
+    body{ margin:0; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; /* Giriş yapılana kadar gizli */ }
 
-    /* --- COMMON UI --- */
-    .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; }
-    .btn:hover{ border-color:#3a3a44; }
-    .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
-    .btn.primary{ background: var(--accent); color: #000; border-color:var(--accent); font-weight: 600; }
-    .hidden { display: none !important; }
-
-    /* --- DESKTOP STYLES (ORIGINAL v15.1) --- */
-    .desktop-only { display: block; height: 100%; }
-    
-    .wrap{ max-width:1440px; margin:0 auto; padding:16px; height: 100%; display: flex; flex-direction: column; }
     header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; }
     .left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
+
+    .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; }
+    .btn:hover{ border-color:#3a3a44; }
+    .btn:active{ transform: translateY(1px); }
+    .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
+    .btn.danger:hover{ border-color:rgba(251,113,133,.6); }
+    .btn.primary{ background: var(--accent); color: #000; border-color:var(--accent); font-weight: 600; }
+
     .seg{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
     .seg button{ border:0; background:transparent; color:var(--muted); padding:8px 12px; cursor:pointer; }
     .seg button.active{ color:var(--text); background:#1f1f24; }
+
     .bar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin:10px 0 12px; flex-wrap:wrap; }
     .nav{ display:flex; gap:8px; align-items:center; }
     .title{ font-size:14px; color:var(--muted); }
     .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    select, input[type="text"], input[type="search"], input[type="time"], input[type="email"], input[type="password"]{ background:#101014; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:8px 10px; outline:none; font-size:13px; }
-    .main{ display:grid; grid-template-columns: 1fr 240px; gap:12px; align-items:start; flex: 1; overflow: hidden; }
-    .calendarArea{ height: calc(100vh - 210px); overflow:auto; padding-right:4px; }
+
+    select, input[type="text"], input[type="search"], input[type="time"], input[type="email"], input[type="password"]{
+      background:#101014; color:var(--text);
+      border:1px solid var(--line); border-radius:12px;
+      padding:8px 10px; outline:none; font-size:13px;
+    }
+    select:focus, input:focus{ border-color:#3a3a44; }
+
+    .main{
+      display:grid;
+      grid-template-columns: 1fr 240px;
+      gap:12px;
+      align-items:start;
+    }
+
+    /* Base calendar area */
+    .calendarArea{
+      height: calc(100vh - 210px);
+      overflow:auto;
+      padding-right:4px;
+    }
     body.weekMode .calendarArea{ height: calc(100vh - 320px); }
     body.monthMode .calendarArea{ height: calc(100vh - 140px); }
+
     .grid{ display:grid; gap:10px; }
     .month{ grid-template-columns: repeat(7, 1fr); }
     .week{ grid-template-columns: repeat(7, 1fr); }
     .dow{ font-size:12px; color:var(--muted); padding:0 6px; }
-    .cell{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px; cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:hidden; min-width:0; }
+    body.weekMode .grid{ gap:8px; }
+
+    .cell{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:10px;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:hidden;
+      min-width:0;
+    }
     .cell.weekCell{ min-height:280px; }
     .cell.monthCell{ height: var(--monthCellH); }
-    .cell:hover{ border-color:#3a3a44; } .cell.out{ opacity:.55; } .cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
-    .dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; } .dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; } .date{ font-size:12px; color:var(--muted); } .count{ font-size:12px; color:var(--accent); }
-    .plusBtn{ width:26px; height:26px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; flex:0 0 auto; }
+    .cell:hover{ border-color:#3a3a44; }
+    .cell.out{ opacity:.55; }
+    .cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
+    .cell.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
+
+    .dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; }
+    .date{ font-size:12px; color:var(--muted); }
+    .count{ font-size:12px; color:var(--accent); }
+
+    .plusBtn{
+      width:26px; height:26px; display:grid; place-items:center;
+      border-radius:10px; border:1px solid var(--line);
+      background:transparent; color:var(--muted); cursor:pointer; flex:0 0 auto;
+    }
+    .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
+
     .cards{ display:flex; flex-direction:column; gap:6px; overflow:auto; min-height:0; padding-right:2px; }
-    
-    /* CARD (Shared Style) */
-    .card{ border:2px solid var(--frameColor, var(--line)); border-radius:12px; padding:6px 8px; background: var(--fillColor, rgba(255,255,255,0.04)); user-select:none; min-width:0; position:relative; }
+
+    .card{
+      border:2px solid var(--frameColor, var(--line));
+      border-radius:12px; padding:6px 8px;
+      background: var(--fillColor, rgba(255,255,255,0.04));
+      user-select:none; min-width:0; position:relative;
+    }
+    .card[draggable="true"]{ cursor:grab; }
+    .card:active{ cursor:grabbing; }
     .card.done{ opacity:.55; }
+
     .cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
-    .checkBtn{ width:18px; height:18px; display:grid; place-items:center; border-radius:7px; border:1px solid rgba(0,0,0,.25); background:rgba(0,0,0,.10); color:rgba(255,255,255,.85); cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px; }
+    .checkBtn{
+      width:18px; height:18px; display:grid; place-items:center;
+      border-radius:7px; border:1px solid rgba(0,0,0,.25);
+      background:rgba(0,0,0,.10); color:rgba(255,255,255,.85);
+      cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px;
+    }
     .cardBody{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; padding-right:22px; }
     .titleText{ font-size:12.8px; line-height:1.2; color: var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .timeText{ font-size:11px; line-height:1.1; color: rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    body.monthMode .card{ padding:4px 6px; border-radius:10px; } body.monthMode .cards{ gap:4px; } body.monthMode .checkBtn{ width:14px; height:14px; border-radius:6px; font-size:9px; margin-top:0; }
-    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; gap: 6px; } body.monthMode .titleText{ font-size:11px; flex: 1 1 auto; min-width: 0; } body.monthMode .timeText{ font-size:9.5px; opacity: .85; flex: 0 0 auto; }
-    .moreBtn{ position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.12); color:rgba(255,255,255,.85); cursor:pointer; display:grid; place-items:center; font-size:14px; line-height:1; }
-    
-    .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; } .panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
-    .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; } .panelHead h2{ margin:0; font-size:14px; } .muted{ color:var(--muted); font-size:12px; }
+
+    body.monthMode .card{ padding:4px 6px; border-radius:10px; }
+    body.monthMode .cards{ gap:4px; }
+    body.monthMode .checkBtn{ width:14px; height:14px; border-radius:6px; font-size:9px; margin-top:0; }
+    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; gap: 6px; }
+    body.monthMode .titleText{ font-size:11px; flex: 1 1 auto; min-width: 0; }
+    body.monthMode .timeText{ font-size:9.5px; opacity: .85; flex: 0 0 auto; }
+    body.monthMode .moreBtn{ width:16px; height:16px; top:5px; right:5px; font-size:12px; }
+
+    /* Scrollbars */
+    body.monthMode .monthCell .cards{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; }
+    body.monthMode .monthCell .cards::-webkit-scrollbar{ width: 5px; }
+    body.monthMode .monthCell .cards::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius: 999px; }
+
+    .moreBtn{
+      position:absolute; top:6px; right:6px; width:18px; height:18px;
+      border-radius:8px; border:1px solid rgba(255,255,255,.15);
+      background:rgba(0,0,0,.12); color:rgba(255,255,255,.85);
+      cursor:pointer; display:grid; place-items:center; font-size:14px; line-height:1;
+    }
+    .moreBtn:hover{ border-color:rgba(255,255,255,.25); }
+
+    .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
+    .panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
+    .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .panelHead h2{ margin:0; font-size:14px; }
+    .muted{ color:var(--muted); font-size:12px; }
+
+    .inbox.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
     .inboxList{ display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:40vh; padding-right:2px; }
-    .bottom{ margin-top: 0px; background:transparent; border:0; padding:0; } body.weekMode .bottom{ margin-top: -64px; }
-    .bottomGrid{ display:block; } body.weekMode .bottomGrid{ display:grid; grid-template-columns: 1fr 360px; gap:10px; align-items:start; }
+
+    .bottom{ margin-top: 0px; background:transparent; border:0; padding:0; }
+    body.weekMode .bottom{ margin-top: -64px; }
+    .bottomGrid{ display:block; }
+    body.weekMode .bottomGrid{ display:grid; grid-template-columns: 1fr 360px; gap:10px; align-items:start; }
+
     .panelLike{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
-    .bottomTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; } .panelLike h2{ margin:0; font-size:14px; }
-    form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; } .w{ min-width:160px; }
-    .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; } .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--line); background:#121216; padding:10px 12px; border-radius:14px; }
+    .bottomTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .panelLike h2{ margin:0; font-size:14px; }
+
+    form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .w{ min-width:160px; }
+
+    .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    .row{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border:1px solid var(--line); background:#121216; padding:10px 12px; border-radius:14px;
+    }
     .row .txt{ font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    body.monthMode .side{ display:none; } body.monthMode .main{ grid-template-columns: 1fr; } body.monthMode #bottomInboxSlot{ display:none; }
 
-    /* --- MOBILE APP STYLES (New) --- */
-    .mobile-only { display: none; height: 100%; flex-direction: column; position: relative; }
-    .m-header { padding:12px 16px; background:rgba(15,15,16,0.95); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
-    .m-content { flex:1; overflow-y:auto; padding:12px; padding-bottom:80px; }
-    .m-nav { position:fixed; bottom:0; left:0; width:100%; height:var(--bottom-nav-h); background:var(--card); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(5,1fr); z-index:20; padding-bottom:env(safe-area-inset-bottom); }
-    .m-nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; color:var(--muted); background:transparent; border:none; }
-    .m-nav-item.active { color:var(--accent); }
-    .m-nav-icon { font-size:18px; margin-bottom:2px; }
-    .fab { position:fixed; bottom: calc(var(--bottom-nav-h) + 16px); right:16px; width:56px; height:56px; border-radius:16px; background:var(--accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:28px; box-shadow:0 4px 15px rgba(0,0,0,0.5); border:none; z-index:15; }
-    
-    /* Mobile Calendar */
-    .m-cal-row { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:5px; }
-    .m-cal-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; font-size:14px; position:relative; }
-    .m-cal-cell.today { background:#333; font-weight:bold; }
-    .m-cal-cell.sel { background:var(--accent); color:#000; font-weight:bold; }
-    .m-dot { width:4px; height:4px; border-radius:50%; background:var(--frame-gorev); margin-top:2px; }
+    body.monthMode .side{ display:none; }
+    body.monthMode .main{ grid-template-columns: 1fr; }
+    body.monthMode #bottomInboxSlot{ display:none; }
 
-    /* OVERLAYS */
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
-    .modal { width:100%; max-width:400px; background:var(--card); border-radius:16px; padding:16px; border:1px solid var(--line); max-height:85vh; overflow-y:auto; box-shadow: var(--shadow); }
+    /* Modal */
+    .overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+      align-items:center; justify-content:center; padding:16px; z-index:50;
+    }
+    .modal{
+      width:min(760px, 100%); background:var(--card); border:1px solid var(--line);
+      border-radius:18px; padding:12px; box-shadow: var(--shadow); max-height: 86vh; overflow:auto;
+    }
     .modalTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .modalTop h3{ margin:0; font-size:14px; }
     .modalGrid{ display:grid; grid-template-columns: 1fr 170px 170px 1fr; gap:8px; margin-top:10px; }
     .modalGrid .full{ grid-column: 1 / -1; }
     .modalActions{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
 
-    /* Habit & Tags */
-    .habitsList{ display:flex; flex-direction:column; gap:10px; }
-    .habitRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border:1px solid var(--line); background:#121216; border-radius:14px; }
+    /* Tag Settings */
     .tagManager{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-    .tagItem{ display:grid; grid-template-columns: 1fr auto auto; gap:8px; align-items:center; border:1px solid var(--line); background:#121216; padding:8px 10px; border-radius:14px; }
-    .iconBtn{ width:38px; height:34px; display:grid; place-items:center; border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; }
+    .tagItem{
+      display:grid; grid-template-columns: 1fr auto auto; gap:8px; align-items:center;
+      border:1px solid var(--line); background:#121216; padding:8px 10px; border-radius:14px;
+    }
+    .tagItem.dragOver{ outline:2px dashed rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
+    .tagName{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .tagName span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; }
+    input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px solid var(--line); background:transparent; padding:0; }
 
-    /* Auth */
-    .authBox { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+    .iconBtn{
+      width:38px; height:34px; display:grid; place-items:center;
+      border-radius:12px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer;
+    }
+    .iconBtn:hover{ border-color:#3a3a44; color:var(--text); }
+
+    .habitsList{ display:flex; flex-direction:column; gap:10px; }
+    .habitRow{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:8px 10px; border:1px solid var(--line); background:#121216; border-radius:14px;
+    }
+    .habitRow.dragging{ opacity:.6; }
+    .habitRow.dragOver{ outline:2px dashed rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
+    .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .habitRow span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .habitRow input[type="checkbox"]{ width:18px; height:18px; }
+
+    /* AUTH SCREEN CSS */
+    #authOverlay {
+      position: fixed; inset: 0; background: var(--bg); z-index: 999;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .authBox {
+      width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 20px; padding: 24px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .authBox h2 { text-align: center; margin-bottom: 8px; font-size: 20px; }
     .authError { color: #fb7185; font-size: 13px; text-align: center; min-height: 18px; }
 
-    /* RESPONSIVE SWITCH */
-    @media (max-width: 900px) {
-      .desktop-only { display: none !important; }
-      .mobile-only { display: flex !important; }
+    @media (max-width: 900px){
+      .main{ grid-template-columns: 1fr; }
+      .side{ position:static; }
+      .calendarArea{ height:auto; max-height:none; }
+      body.weekMode .bottomGrid{ grid-template-columns: 1fr; }
+      body.monthMode .side{ display:none; }
+      body.weekMode .bottom{ margin-top: 0px; }
     }
   </style>
 </head>
+
 <body>
 
-  <div id="authOverlay" class="overlay" style="display:flex; z-index:999; background:var(--bg);">
+  <div id="authOverlay">
     <div class="authBox">
-      <h2 style="text-align:center; margin:0;">Minimal To-Do</h2>
-      <p style="text-align:center; color:var(--muted); font-size:13px;">Giriş Yapın (Sync)</p>
-      <input type="email" id="authEmail" placeholder="E-posta" />
+      <h2>Minimal To-Do</h2>
+      <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
+      
+      <input type="email" id="authEmail" placeholder="E-posta adresi" />
       <input type="password" id="authPass" placeholder="Şifre" />
-      <div id="authError" class="authError"></div>
-      <button id="btnLogin" class="btn primary">Giriş Yap</button>
-      <button id="btnSignup" class="btn">Kayıt Ol</button>
+      
+      <div class="authError" id="authError"></div>
+
+      <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
+      <button id="btnSignup" class="btn" type="button">Kayıt Ol</button>
+
+      <div style="margin-top:10px; font-size:11px; color:var(--muted); line-height:1.4;">
+        Kayıt olduğunuzda verileriniz Supabase veritabanında şifreli olarak saklanır ve her yerden erişilebilir olur.
+      </div>
     </div>
   </div>
 
-  <div id="appWrap" style="display:none; height:100%;">
-    
-    <div class="desktop-only wrap">
-      <header>
-        <div class="left">
-          <h1>Minimal To-Do v15.2</h1>
-          <div class="seg">
-            <button id="btnWeek" class="active">Hafta</button>
-            <button id="btnMonth">Ay</button>
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
-          <button id="btnLogout" class="btn danger">Çıkış</button>
-          <button id="tagSettingsBtn" class="btn">Tag Ayarları</button>
-        </div>
-      </header>
-
-      <div class="bar">
-        <div class="nav">
-          <button id="prev" class="btn">◀</button>
-          <button id="today" class="btn">Bugün</button>
-          <button id="next" class="btn">▶</button>
-        </div>
-        <div class="filters">
-          <div class="title" id="rangeTitle"></div>
-          <select id="tagFilter"><option value="__all__">Tag: Hepsi</option></select>
-          <select id="typeFilter"><option value="__preset__">Tür: Görünüme göre</option><option value="gorev">Görev</option><option value="termin">Termin</option><option value="hedef">Hedef</option></select>
-          <input id="search" type="search" placeholder="Ara…" />
+  <div class="wrap" id="appWrap">
+    <header>
+      <div class="left">
+        <h1>Minimal To-Do v15.1 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <div class="seg" role="tablist" aria-label="Görünüm">
+          <button id="btnWeek" class="active" type="button">Hafta</button>
+          <button id="btnMonth" type="button">Ay</button>
         </div>
       </div>
 
-      <div class="main">
-        <div>
-          <div id="calendarArea" class="calendarArea">
-            <div class="grid" id="dowRow"></div>
-            <div class="grid week" id="grid"></div>
-          </div>
-          <section class="bottom">
-            <div class="bottomGrid" id="bottomGrid">
-              <div class="panelLike">
-                <div class="bottomTop">
-                  <div><h2 id="panelTitle">Seçili gün</h2><div class="muted">Sıralama: Termin → Hedef → Görev</div></div>
-                  <button id="clearDone" class="btn">Tamamlananları temizle</button>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
+        <button id="btnLogout" class="btn danger" type="button" style="font-size:12px;">Çıkış</button>
+        <button id="tagSettingsBtn" class="btn" type="button">Tag Ayarları</button>
+        <button id="btnInstall" class="btn" type="button" style="display:none;">Yükle</button>
+      </div>
+    </header>
+
+    <div class="bar">
+      <div class="nav">
+        <button id="prev" class="btn" type="button">◀</button>
+        <button id="today" class="btn" type="button">Bugün</button>
+        <button id="next" class="btn" type="button">▶</button>
+      </div>
+
+      <div class="filters">
+        <div class="title" id="rangeTitle"></div>
+
+        <select id="tagFilter" title="Tag filtresi">
+          <option value="__all__">Tag: Hepsi</option>
+        </select>
+
+        <select id="typeFilter" title="Tür filtresi">
+          <option value="__preset__">Tür: Görünüme göre (preset)</option>
+          <option value="__all__">Tür: Hepsi</option>
+          <option value="termin">Sadece termin</option>
+          <option value="hedef">Sadece hedef</option>
+          <option value="gorev">Sadece görev</option>
+        </select>
+
+        <input id="search" type="search" placeholder="Ara…" />
+      </div>
+    </div>
+
+    <div class="main">
+      <div>
+        <div id="calendarArea" class="calendarArea">
+          <div class="grid" id="dowRow"></div>
+          <div class="grid week" id="grid"></div>
+        </div>
+
+        <section class="bottom" id="bottom">
+          <div class="bottomGrid" id="bottomGrid">
+            <div class="panelLike">
+              <div class="bottomTop">
+                <div>
+                  <h2 id="panelTitle">Seçili gün</h2>
+                  <div class="muted">Sıralama: Termin → Hedef → Görev • Saat • Tag</div>
                 </div>
-                <form id="addForm" autocomplete="off">
-                  <input class="w" id="taskInput" type="text" placeholder="Başlık…" />
-                  <input class="w" id="timeInput" type="time" />
-                  <select class="w" id="typeInput"><option value="termin">Termin</option><option value="hedef">Hedef</option><option value="gorev">Görev</option></select>
-                  <select class="w" id="tagInput"></select>
-                  <select class="w" id="whereInput"><option value="selected">Seçili güne</option><option value="inbox">Inbox</option></select>
-                  <button id="addSubmit" class="btn" type="submit">Ekle</button>
-                </form>
-                <div class="list" id="taskList"></div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button id="clearDone" class="btn" type="button">Tamamlananları temizle</button>
+                </div>
               </div>
-              <div id="bottomInboxSlot" class="panelLike"></div>
+
+              <form id="addForm" autocomplete="off">
+                <input class="w" id="taskInput" type="text" placeholder="Başlık…" maxlength="120" />
+                <input class="w" id="timeInput" type="time" title="Saat" />
+                <select class="w" id="typeInput" title="Tür">
+                  <option value="termin">Termin</option>
+                  <option value="hedef">Hedef</option>
+                  <option value="gorev">Görev</option>
+                </select>
+                <select class="w" id="tagInput" title="Tag (dropdown)"></select>
+
+                <select class="w" id="whereInput" title="Nereye eklensin?">
+                  <option value="selected">Seçili güne</option>
+                  <option value="inbox">Inbox (Brain Dump)</option>
+                </select>
+
+                <button id="addSubmit" class="btn" type="submit">Ekle</button>
+              </form>
+
+              <div class="list" id="taskList"></div>
             </div>
-          </section>
+
+            <div id="bottomInboxSlot" class="panelLike"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <div id="inbox" class="panelBox inbox" aria-label="Brain Dump">
+          <div class="panelHead">
+            <div>
+              <h2>Brain Dump</h2>
+              <div class="muted">Güne atanmamış kartlar</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button id="inboxAdd" class="plusBtn" type="button">+</button>
+              <button id="clearInboxDone" class="btn" type="button">Temizle</button>
+            </div>
+          </div>
+          <div class="muted" id="inboxCount"></div>
+          <div id="inboxList" class="inboxList"></div>
         </div>
-        <aside class="side">
-          <div id="inbox" class="panelBox inbox">
-            <div class="panelHead">
-              <div><h2>Brain Dump</h2><div class="muted">Güne atanmamış</div></div>
-              <div style="display:flex;gap:5px;"><button id="inboxAdd" class="plusBtn">+</button><button id="clearInboxDone" class="btn">Temizle</button></div>
-            </div>
-            <div class="muted" id="inboxCount"></div>
-            <div id="inboxList" class="inboxList"></div>
-          </div>
-          <div id="habitsBox" class="panelBox">
-            <div class="panelHead">
-              <div><h2>Habits</h2><div class="muted" id="habitsSub">Her gün sıfırlanır</div></div>
-              <div style="display:flex;gap:5px;"><button id="habitAddBtn" class="plusBtn">+</button><button id="habitResetBtn" class="btn">Reset</button></div>
-            </div>
-            <div class="habitsList" id="habitsList"></div>
-          </div>
-        </aside>
-      </div>
-    </div>
 
-    <div class="mobile-only">
-      <div class="m-header">
-        <span style="font-weight:bold; font-size:18px;">Minimal To-Do</span>
-        <span id="mHeaderDate" style="font-size:12px; color:var(--accent);"></span>
-      </div>
-      <div id="mContent" class="m-content"></div>
-      <button id="mFab" class="fab">+</button>
-      <div class="m-nav">
-        <button class="m-nav-item active" onclick="switchMobileTab('day')"><span class="m-nav-icon">📅</span><span>Gün</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('month')"><span class="m-nav-icon">🗓</span><span>Takvim</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('inbox')"><span class="m-nav-icon">📥</span><span>Inbox</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('habits')"><span class="m-nav-icon">✅</span><span>Habit</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('settings')"><span class="m-nav-icon">⚙</span><span>Ayar</span></button>
-      </div>
+        <div id="habitsBox" class="panelBox">
+          <div class="panelHead">
+            <div>
+              <h2>Habits</h2>
+              <div class="muted" id="habitsSub">Her gün sıfırlanır</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button id="habitAddBtn" class="plusBtn" type="button">+</button>
+              <button id="habitResetBtn" class="btn" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="habitsList" id="habitsList"></div>
+        </div>
+      </aside>
     </div>
-
   </div>
 
-  <div id="overlay" class="overlay">
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modalTop">
-        <h3 id="modalTitle">Ekle</h3>
-        <button id="modalClose" class="btn">Kapat</button>
+        <h3 id="modalTitle">Modal</h3>
+        <button id="modalClose" class="btn" type="button">Kapat</button>
       </div>
+
       <div id="quickAddSection">
         <div class="muted" id="modalWhere"></div>
         <div class="modalGrid">
-          <input id="mText" class="full" type="text" placeholder="Başlık…" />
+          <input id="mText" class="full" type="text" placeholder="Başlık…" maxlength="120" />
           <input id="mTime" type="time" />
-          <select id="mType"><option value="termin">Termin</option><option value="hedef">Hedef</option><option value="gorev">Görev</option></select>
+          <select id="mType">
+            <option value="termin">Termin</option>
+            <option value="hedef">Hedef</option>
+            <option value="gorev">Görev</option>
+          </select>
           <select id="mTag"></select>
+          <div class="full muted">Enter = Kaydet/Ekle</div>
         </div>
+
         <div class="modalActions">
-          <button id="modalDelete" class="btn danger" style="display:none;">Sil</button>
+          <button id="modalDelete" class="btn danger" type="button" style="display:none;">Sil</button>
           <div style="display:flex; gap:8px; margin-left:auto;">
-            <button id="modalSave" class="btn">Ekle</button>
+            <button id="modalSave" class="btn" type="button">Ekle</button>
           </div>
         </div>
       </div>
+
       <div id="tagSettingsSection" style="display:none;">
-        <div class="muted">Tag sıralamasını değiştir.</div>
+        <div class="muted">Tag sıralamasını drag-drop ile değiştir.</div>
         <div class="tagManager" id="tagManager"></div>
       </div>
     </div>
   </div>
 
-  <div id="confirmOverlay" class="overlay" style="z-index:110;">
-    <div class="modal" style="text-align:center; width:300px;">
-      <h3 style="margin-top:0;">Emin misin?</h3>
-      <p id="confirmMsg" style="color:var(--muted);">Bu işlem geri alınamaz.</p>
-      <div style="display:flex; gap:10px; justify-content:center; margin-top:16px;">
-        <button id="confirmNo" class="btn">İptal</button>
-        <button id="confirmYes" class="btn danger">Evet, Sil</button>
+  <div id="confirmOverlay" class="overlay" style="z-index:60;">
+    <div class="modal" style="width:300px; max-width:90%;">
+      <h3 style="margin-top:0; text-align:center;">Emin misin?</h3>
+      <div id="confirmMsg" style="text-align:center; color:var(--muted); margin-bottom:16px;">Bu işlem geri alınamaz.</div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="confirmNo" class="btn" type="button">İptal</button>
+        <button id="confirmYes" class="btn danger" type="button">Evet, Sil</button>
       </div>
     </div>
   </div>
 
-<script>
-// ==========================================
-// 1. AYARLAR
-// ==========================================
-const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
-const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
+  <script>
+    // ----------------------------------------------------------------------
+    // SUPABASE AYARLARI (BURAYA KENDİ BİLGİLERİNİ YAPIŞTIR)
+    // ----------------------------------------------------------------------
+    const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
+    const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
+    // ----------------------------------------------------------------------
 
-let db = { days:{}, inbox:[], habits:[], tags:[{name:'genel', color:'#7dd3fc', order:1}], habitState:{date:'', doneIds:[]} };
-let currentUser = null;
-let _supabase = null;
-// UI State
-let mode = 'week';
-let anchor = new Date();
-let selected = new Date();
-let mobileTab = 'day';
-let dragPayload = null;
-let modalContext = { mode:'add', dest:'day', dayKey:null };
+    const LOCAL_KEY = 'minimal_todo_v15_offline';
+    let db = null;
+    let currentUser = null;
+    let _supabase = null;
 
-// Init
-if(SUPABASE_URL && SUPABASE_KEY) {
-  _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  initApp();
-} else { alert("Supabase Keylerini girin!"); }
+    // Supabase Init
+    if(SUPABASE_URL && SUPABASE_KEY) {
+      _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+      console.warn("Supabase bilgileri girilmemiş!");
+    }
 
-async function initApp() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if(session) handleSession(session); else document.getElementById('authOverlay').style.display = 'flex';
-  _supabase.auth.onAuthStateChange((_event, session) => {
-    if(session) handleSession(session); else location.reload();
-  });
-}
+    // Custom Confirm Logic
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const confirmMsg = document.getElementById('confirmMsg');
+    const confirmYes = document.getElementById('confirmYes');
+    const confirmNo = document.getElementById('confirmNo');
+    let onConfirmYes = null;
 
-async function handleSession(session) {
-  currentUser = session.user;
-  document.getElementById('authOverlay').style.display = 'none';
-  document.getElementById('appWrap').style.display = 'block';
-  document.getElementById('userEmailDisplay').textContent = currentUser.email;
-  await loadRemoteDB();
-  render();
-}
+    function showConfirm(text, callback) {
+      confirmMsg.textContent = text;
+      onConfirmYes = callback;
+      confirmOverlay.style.display = 'flex';
+    }
 
-// ==========================================
-// 2. DATA UTILS (DATE FIX)
-// ==========================================
-function dayKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const da = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${da}`;
-}
-function todayKey() { return dayKey(new Date()); }
-function addDays(d, n) { const x=new Date(d); x.setDate(x.getDate()+n); return x; }
-function startOfWeek(d) { const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
-function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth()+1, 0); }
-function normalizeTagName(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,'-'); }
-function fixItem(t){ return { id:t.id||crypto.randomUUID(), text:(t.text||'').trim(), done:!!t.done, type:t.type||'gorev', tag:t.tag||'', time:t.time||'', created:t.created||Date.now() }; }
-function typeFrameColor(type){ return type==='termin'?'#fb7185': type==='hedef'?'#60a5fa':'#34d399'; }
-function hexToRgba(hex, alpha){
-  let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c=hex.substring(1).split(''); if(c.length==3)c=[c[0],c[0],c[1],c[1],c[2],c[2]]; c='0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')'; } return 'rgba(50,50,50,'+alpha+')';
-}
+    confirmYes.addEventListener('click', () => {
+      if(onConfirmYes) onConfirmYes();
+      confirmOverlay.style.display = 'none';
+      onConfirmYes = null;
+    });
 
-// ==========================================
-// 3. DB SYNC
-// ==========================================
-const LOCAL_KEY = 'minimal_todo_v15_2_app';
-async function loadRemoteDB() {
-  try { const raw=localStorage.getItem(LOCAL_KEY); if(raw) db=JSON.parse(raw); } catch{}
-  if(currentUser) {
-    const { data } = await _supabase.from('user_data').select('content').eq('id', currentUser.id).single();
-    if(data && data.content) { db=data.content; localStorage.setItem(LOCAL_KEY, JSON.stringify(db)); }
-    else if(!db.days) saveDB(db);
-  }
-}
-let saveTimer=null;
-function saveDB(newDB) {
-  if(newDB) db=newDB;
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-  if(saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    if(currentUser) await _supabase.from('user_data').upsert({ id: currentUser.id, content: db, updated_at: new Date() });
-  }, 1000);
-}
+    confirmNo.addEventListener('click', () => {
+      confirmOverlay.style.display = 'none';
+      onConfirmYes = null;
+    });
 
-// ==========================================
-// 4. RENDERERS
-// ==========================================
-function render() {
-  // DB Cleaning
-  for(const k in db.days) db.days[k] = (db.days[k]||[]).map(fixItem);
-  db.inbox = (db.inbox||[]).map(fixItem);
-  
-  // Desktop Render (Original)
-  rebuildTagDropdowns();
-  renderDesktop();
-  
-  // Mobile Render (New)
-  renderMobile();
-}
+    // Auth Elementleri
+    const authOverlay = document.getElementById('authOverlay');
+    const authEmail = document.getElementById('authEmail');
+    const authPass = document.getElementById('authPass');
+    const authError = document.getElementById('authError');
+    const btnLogin = document.getElementById('btnLogin');
+    const btnSignup = document.getElementById('btnSignup');
+    const appWrap = document.getElementById('appWrap');
+    const btnLogout = document.getElementById('btnLogout');
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
 
-// --- DESKTOP LOGIC (v15.1 Original) ---
-function renderDesktop() {
-  const dowRow = document.getElementById('dowRow');
-  const grid = document.getElementById('grid');
-  const rangeTitle = document.getElementById('rangeTitle');
-  const DOW = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
-  
-  // DOW
-  dowRow.innerHTML = '';
-  dowRow.className = 'grid ' + (mode==='month' ? 'month' : 'week');
-  DOW.forEach(d => { dowRow.innerHTML += `<div class="dow">${d}</div>`; });
-
-  // Grid
-  grid.className = 'grid ' + (mode==='month' ? 'month' : 'week');
-  grid.innerHTML = '';
-  let cells = [];
-  if(mode === 'week'){
-    const start = startOfWeek(anchor);
-    const end = addDays(start, 6);
-    rangeTitle.textContent = `${start.getDate()} ${start.toLocaleDateString('tr-TR',{month:'short'})} - ${end.getDate()} ${end.toLocaleDateString('tr-TR',{month:'short'})}`;
-    for(let i=0; i<7; i++) cells.push({d: addDays(start, i), out:false});
-  } else {
-    const first = startOfMonth(anchor);
-    rangeTitle.textContent = anchor.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
-    const start = startOfWeek(first);
-    const total = Math.ceil((endOfMonth(anchor) - start + 1) / 86400000);
-    const rows = Math.ceil(total/7)*7; 
-    for(let i=0; i<rows; i++) { const d=addDays(start,i); cells.push({d:d, out: d.getMonth()!==anchor.getMonth()}); }
-    document.documentElement.style.setProperty('--monthCellH', Math.max(115, Math.floor((document.getElementById('calendarArea').clientHeight - 40) / (rows/7))) + 'px');
-  }
-
-  cells.forEach(c => {
-    const k = dayKey(c.d);
-    const items = (db.days[k]||[]).filter(passesFilters).sort(itemSort);
-    const cell = document.createElement('div');
-    cell.className = `cell ${mode==='month'?'monthCell':'weekCell'} ${c.out?'out':''} ${k===dayKey(selected)?'sel':''}`;
-    cell.innerHTML = `
-      <div class="dateRow">
-        <div class="dateLeft"><div class="date">${c.d.getDate()}</div><button class="plusBtn" onclick="openModalAdd({dest:'day', dayKey:'${k}'})">+</button></div>
-        <div class="count">${items.filter(x=>!x.done).length||''}</div>
-      </div>
-      <div class="cards"></div>
-    `;
-    const cardCont = cell.querySelector('.cards');
-    items.forEach(it => cardCont.appendChild(makeCard(it, {from:'day', dayKey:k})));
-    
-    cell.onclick = (e) => { if(e.target===cell || e.target.classList.contains('date')) { selected=c.d; render(); } };
-    cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('dragOver'); });
-    cell.addEventListener('dragleave', () => cell.classList.remove('dragOver'));
-    cell.addEventListener('drop', e => {
-      e.preventDefault(); cell.classList.remove('dragOver');
-      if(!dragPayload) return;
-      if(dragPayload.from==='inbox') {
-        const idx = db.inbox.findIndex(x=>x.id===dragPayload.itemId);
-        if(idx>-1) { db.days[k] = db.days[k]||[]; db.days[k].push(db.inbox.splice(idx,1)[0]); }
-      } else {
-        const fromK = dragPayload.dayKey;
-        const idx = (db.days[fromK]||[]).findIndex(x=>x.id===dragPayload.itemId);
-        if(idx>-1) { db.days[k] = db.days[k]||[]; db.days[k].push(db.days[fromK].splice(idx,1)[0]); }
+    // Başlangıç: Session kontrol
+    async function initApp() {
+      if(!_supabase) {
+        alert("Lütfen kodun içindeki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurun.");
+        return;
       }
-      saveDB(); render();
-    });
-    grid.appendChild(cell);
-  });
-
-  renderInbox();
-  renderHabits();
-  renderPanel();
-  dockInboxForMode();
-}
-
-// --- MOBILE LOGIC (App Mode) ---
-function renderMobile() {
-  const mContent = document.getElementById('mContent');
-  const mHeader = document.getElementById('mHeaderDate');
-  const mFab = document.getElementById('mFab');
-  
-  // Active Tab Style
-  document.querySelectorAll('.m-nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll(`.m-nav-item`)[['day','month','inbox','habits','settings'].indexOf(mobileTab)].classList.add('active');
-  
-  mContent.innerHTML = '';
-  mFab.style.display = (mobileTab==='settings') ? 'none' : 'flex';
-
-  if(mobileTab === 'day') {
-    mHeader.textContent = selected.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'short'});
-    
-    const wrap = document.createElement('div');
-    wrap.className = 'mobile-day-wrapper';
-    
-    // Swipe
-    let ts = 0;
-    wrap.addEventListener('touchstart', e => ts = e.touches[0].clientX);
-    wrap.addEventListener('touchend', e => {
-      const te = e.changedTouches[0].clientX;
-      if(ts - te > 50) { selected = addDays(selected, 1); render(); }
-      if(te - ts > 50) { selected = addDays(selected, -1); render(); }
-    });
-
-    const items = (db.days[dayKey(selected)]||[]).sort(itemSort);
-    if(items.length === 0) wrap.innerHTML = '<div class="empty-state">Bugün boş.<br>+ ile ekle.</div>';
-    else items.forEach(it => wrap.appendChild(makeCard(it, {from:'day', dayKey:dayKey(selected)})));
-    
-    mContent.appendChild(wrap);
-    mFab.onclick = () => openModalAdd({dest:'day', dayKey:dayKey(selected)});
-  
-  } else if (mobileTab === 'month') {
-    mHeader.textContent = selected.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
-    const grid = document.createElement('div');
-    const start = startOfWeek(startOfMonth(selected));
-    
-    const hRow = document.createElement('div');
-    hRow.className = 'm-cal-row m-cal-head';
-    ['Pt','Sa','Ça','Pe','Cu','Ct','Pa'].forEach(d => hRow.innerHTML+=`<span>${d}</span>`);
-    grid.appendChild(hRow);
-
-    const bodyDiv = document.createElement('div');
-    bodyDiv.className = 'm-cal-grid';
-
-    for(let i=0; i<42; i++) {
-      const d = addDays(start, i);
-      const k = dayKey(d);
-      const items = (db.days[k]||[]);
       
-      const cell = document.createElement('div');
-      cell.className = `m-cal-cell ${k===todayKey()?'today':''} ${k===dayKey(selected)?'selected':''} ${d.getMonth()!==selected.getMonth()?'diff-month':''}`;
-      
-      let dots = '';
-      items.filter(x=>!x.done).slice(0,3).forEach(it => {
-        dots += `<div class="m-dot" style="background:${typeFrameColor(it.type)}"></div>`;
+      const { data: { session } } = await _supabase.auth.getSession();
+      if(session) {
+        handleSession(session);
+      } else {
+        showAuth();
+      }
+
+      // Auth durum değişikliğini dinle
+      _supabase.auth.onAuthStateChange((_event, session) => {
+        if(session) handleSession(session);
+        else showAuth();
       });
+    }
+
+    function showAuth() {
+      authOverlay.style.display = 'flex';
+      appWrap.style.display = 'none';
+      currentUser = null;
+    }
+
+    async function handleSession(session) {
+      currentUser = session.user;
+      authOverlay.style.display = 'none';
+      appWrap.style.display = 'block';
+      userEmailDisplay.textContent = currentUser.email;
       
-      cell.innerHTML = `<span>${d.getDate()}</span><div class="m-dots">${dots}</div>`;
-      cell.onclick = () => { selected = d; mobileTab = 'day'; render(); };
-      bodyDiv.appendChild(cell);
+      await loadRemoteDB();
+      render();
     }
-    grid.appendChild(bodyDiv);
-    mContent.appendChild(grid);
-    mFab.onclick = () => openModalAdd({dest:'day', dayKey:dayKey(selected)});
 
-  } else if (mobileTab === 'inbox') {
-    mHeader.textContent = 'Inbox';
-    const items = (db.inbox||[]).sort(itemSort);
-    if(items.length===0) mContent.innerHTML='<div class="empty-state">Inbox boş.</div>';
-    else items.forEach(it => mContent.appendChild(makeCard(it, {from:'inbox'})));
-    mFab.onclick = () => openModalAdd({dest:'inbox'});
-  
-  } else if (mobileTab === 'habits') {
-    mHeader.textContent = 'Habits';
-    // Reuse existing habit renderer logic but adapt for mobile
-    const today = todayKey();
-    if(!db.habitState || db.habitState.date !== today) { db.habitState = {date:today, doneIds:[]}; saveDB(); }
-    if(!db.habits.length) mContent.innerHTML='<div class="empty-state">Alışkanlık yok.</div>';
-    db.habits.forEach(h => {
-      const isDone = db.habitState.doneIds.includes(h.id);
-      const row = document.createElement('div');
-      row.className = 'card';
-      row.style.cssText = `display:flex; justify-content:space-between; align-items:center; border-left:none; ${isDone?'opacity:0.5':''}`;
-      row.innerHTML = `<span>${h.name}</span> <div class="checkBtn" style="${isDone?'background:var(--accent);color:#000':''}">${isDone?'✓':''}</div>`;
-      row.onclick = () => {
-        if(isDone) db.habitState.doneIds = db.habitState.doneIds.filter(x=>x!==h.id);
-        else db.habitState.doneIds.push(h.id);
-        saveDB(); render();
+    // Login
+    btnLogin.addEventListener('click', async () => {
+      authError.textContent = 'Giriş yapılıyor...';
+      const email = authEmail.value;
+      const password = authPass.value;
+      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+      if(error) authError.textContent = error.message;
+      else authError.textContent = '';
+    });
+
+    // Signup
+    btnSignup.addEventListener('click', async () => {
+      authError.textContent = 'Kayıt olunuyor...';
+      const email = authEmail.value;
+      const password = authPass.value;
+      const { data, error } = await _supabase.auth.signUp({ email, password });
+      if(error) {
+        authError.textContent = error.message;
+      } else {
+        alert("Kayıt başarılı! Lütfen giriş yapın (Eğer e-posta onayı açıksa onaylayın).");
+        authError.textContent = 'Kayıt başarılı.';
+      }
+    });
+
+    // Logout
+    btnLogout.addEventListener('click', async () => {
+      await _supabase.auth.signOut();
+    });
+
+    // ----------------------------------------------------------------------
+    // VERİTABANI YÖNETİMİ
+    // ----------------------------------------------------------------------
+
+    function getEmptyDB() {
+      return { 
+        days:{}, 
+        inbox:[], 
+        tags: [
+          { name:'akademik',  color:'#7dd3fc', order:1 },
+          { name:'praktikum', color:'#34d399', order:2 },
+          { name:'finans',    color:'#fbbf24', order:3 },
+          { name:'ev',        color:'#fb7185', order:4 },
+        ], 
+        habits:[], 
+        habitState:{ date: todayKey(), doneIds:[] } 
       };
-      // Long press delete
-      let pt;
-      row.addEventListener('touchstart', ()=>{ pt=setTimeout(()=>{ showConfirm('Silinsin mi?', ()=>{ db.habits=db.habits.filter(x=>x.id!==h.id); saveDB(); render(); }); },800); });
-      row.addEventListener('touchend', ()=>{ clearTimeout(pt); });
-      mContent.appendChild(row);
-    });
-    mFab.onclick = () => { const n=prompt('Yeni Alışkanlık:'); if(n){ db.habits.push({id:crypto.randomUUID(), name:n}); saveDB(); render(); } };
-
-  } else if (mobileTab === 'settings') {
-    mHeader.textContent = 'Ayarlar';
-    mContent.innerHTML = `
-      <div class="card" style="border-left:none;">
-        <h3>Tag Yönetimi</h3>
-        <div id="mTags"></div>
-        <div style="margin-top:10px; display:flex; gap:5px;">
-           <input id="newTagName" placeholder="Yeni Tag">
-           <input type="color" id="newTagColor" value="#7dd3fc" style="width:50px;">
-           <button class="btn" onclick="addTagMobile()">Ekle</button>
-        </div>
-      </div>
-      <button class="btn danger" style="width:100%; margin-top:20px;" onclick="logout()">Çıkış Yap</button>
-    `;
-    const tagList = mContent.querySelector('#mTags');
-    db.tags.forEach(t => {
-      const row = document.createElement('div');
-      row.style.cssText = "display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;";
-      row.innerHTML = `<span style="color:${t.color}">● ${t.name}</span> <button class="btn danger" style="padding:2px 6px; font-size:10px;">Sil</button>`;
-      row.querySelector('button').onclick = () => { 
-        showConfirm('Tag silinsin mi?', () => { db.tags=db.tags.filter(x=>x.name!==t.name); saveDB(); render(); }); 
-      };
-      tagList.appendChild(row);
-    });
-  }
-}
-
-function switchMobileTab(t) { mobileTab = t; render(); }
-function addTagMobile() {
-  const n = document.getElementById('newTagName').value;
-  const c = document.getElementById('newTagColor').value;
-  if(n) { db.tags.push({name:n, color:c, order:99}); saveDB(); render(); }
-}
-
-// --- SHARED HELPERS ---
-function makeCard(item, origin){
-  const card = document.createElement('div');
-  card.className = 'card' + (item.done ? ' done' : '');
-  card.draggable = true;
-  
-  // Type Color (Left Border)
-  card.style.setProperty('--frameColor', typeFrameColor(item.type));
-  
-  // Tag Color (Background)
-  const meta = tagMeta(item.tag);
-  if(meta) card.style.background = hexToRgba(meta.color, 0.15);
-
-  const more = document.createElement('button');
-  more.className='moreBtn'; more.type='button'; more.textContent='⋯';
-  more.onclick = (e) => { e.stopPropagation(); openModalEdit(origin, item.id); };
-
-  const row = document.createElement('div'); row.className = 'cardRow';
-  const check = document.createElement('button'); check.className = 'checkBtn'; check.textContent = item.done ? '✓' : '';
-  check.onclick = (e) => { e.stopPropagation(); item.done = !item.done; saveDB(); render(); };
-
-  const body = document.createElement('div'); body.className = 'cardBody';
-  const title = document.createElement('div'); title.className = 'titleText'; title.textContent = item.text;
-  body.appendChild(title);
-  if(item.time){
-    const time = document.createElement('div'); time.className = 'timeText'; time.textContent = item.time + (item.tag ? ' • '+item.tag : '');
-    body.appendChild(time);
-  }
-
-  row.appendChild(check); row.appendChild(body);
-  card.appendChild(more); card.appendChild(row);
-  
-  card.addEventListener('dragstart', (e)=>{ dragPayload = { ...origin, itemId: item.id }; e.dataTransfer.setData('text', ''); });
-  // Edit on click body
-  body.onclick = () => openModalEdit(origin, item.id);
-
-  return card;
-}
-
-function renderInbox(){
-  const inboxList = document.getElementById('inboxList');
-  inboxList.innerHTML = '';
-  const items = (db.inbox||[]).filter(passesFilters).sort(itemSort);
-  document.getElementById('inboxCount').textContent = items.length ? `Count: ${items.length}` : 'Boş';
-  items.forEach(it => inboxList.appendChild(makeCard(it, {from:'inbox'})));
-}
-
-function renderHabits(){
-  const habitsList = document.getElementById('habitsList');
-  habitsList.innerHTML = '';
-  ensureHabitReset();
-  const done = new Set(db.habitState.doneIds);
-  db.habits.forEach(h => {
-    const row = document.createElement('div'); row.className='habitRow';
-    const cb = document.createElement('input'); cb.type='checkbox'; cb.checked=done.has(h.id);
-    cb.onchange = () => { cb.checked?done.add(h.id):done.delete(h.id); db.habitState.doneIds=[...done]; saveDB(); render(); };
-    const span = document.createElement('span'); span.textContent=h.name;
-    const del = document.createElement('button'); del.className='iconBtn'; del.textContent='🗑';
-    del.onclick = () => showConfirm('Sil?', ()=>{ db.habits=db.habits.filter(x=>x.id!==h.id); saveDB(); render(); });
-    const lab = document.createElement('label'); lab.appendChild(cb); lab.appendChild(span);
-    row.appendChild(lab); row.appendChild(del);
-    habitsList.appendChild(row);
-  });
-}
-
-function renderPanel(){
-  const list = document.getElementById('taskList');
-  list.innerHTML = '';
-  const k = dayKey(selected);
-  document.getElementById('panelTitle').textContent = fmtDay(selected);
-  (db.days[k]||[]).filter(passesFilters).sort(itemSort).forEach(it => {
-    const row = document.createElement('div'); row.className='row';
-    const txt = document.createElement('div'); txt.className='txt';
-    txt.textContent = it.text + (it.time?` • ${it.time}`:'');
-    if(it.done) txt.style.color='var(--muted)';
-    row.appendChild(txt);
-    list.appendChild(row);
-  });
-}
-
-function dockInboxForMode(){
-  const side = document.querySelector('.side');
-  const bottomSlot = document.getElementById('bottomInboxSlot');
-  const inbox = document.getElementById('inbox');
-  if(mode==='week' && bottomSlot) { document.body.classList.add('weekMode'); document.body.classList.remove('monthMode'); bottomSlot.appendChild(inbox); }
-  else { document.body.classList.remove('weekMode'); document.body.classList.add('monthMode'); side.insertBefore(inbox, side.firstChild); }
-}
-
-// --- MODAL ---
-function openModalAdd(ctx){
-  modalContext = { mode:'add', dest:ctx.dest, dayKey:ctx.dayKey||dayKey(selected) };
-  document.getElementById('modalTitle').textContent = 'Ekle';
-  document.getElementById('mText').value='';
-  document.getElementById('mTime').value='';
-  document.getElementById('modalDelete').style.display='none';
-  document.getElementById('overlay').style.display='flex';
-  document.getElementById('quickAddSection').style.display='block';
-  document.getElementById('tagSettingsSection').style.display='none';
-  rebuildTagDropdowns();
-  setTimeout(()=>document.getElementById('mText').focus(),0);
-}
-function openModalEdit(origin, itemId){
-  const it = findItem(origin, itemId);
-  if(!it) return;
-  modalContext = { mode:'edit', origin, itemId };
-  document.getElementById('modalTitle').textContent = 'Düzenle';
-  document.getElementById('mText').value=it.text;
-  document.getElementById('mTime').value=it.time;
-  document.getElementById('mType').value=it.type;
-  document.getElementById('modalDelete').style.display='block';
-  document.getElementById('overlay').style.display='flex';
-  document.getElementById('quickAddSection').style.display='block';
-  document.getElementById('tagSettingsSection').style.display='none';
-  rebuildTagDropdowns();
-  document.getElementById('mTag').value=it.tag;
-}
-document.getElementById('modalSave').onclick = () => {
-  const txt = document.getElementById('mText').value;
-  if(!txt) return;
-  if(modalContext.mode==='add') {
-    addItemTo(modalContext.dest, modalContext.dayKey, {
-      text:txt, time:document.getElementById('mTime').value,
-      type:document.getElementById('mType').value, tag:document.getElementById('mTag').value
-    });
-  } else {
-    const it = findItem(modalContext.origin, modalContext.itemId);
-    if(it) {
-      it.text=txt; it.time=document.getElementById('mTime').value;
-      it.type=document.getElementById('mType').value; it.tag=document.getElementById('mTag').value;
-      saveDB();
     }
-  }
-  document.getElementById('overlay').style.display='none'; render();
-};
-document.getElementById('modalDelete').onclick = () => {
-  showConfirm('Silinsin mi?', ()=>{ deleteItem(modalContext.origin, modalContext.itemId); document.getElementById('overlay').style.display='none'; });
-};
-document.getElementById('modalClose').onclick = () => document.getElementById('overlay').style.display='none';
 
-// --- UTILS ---
-function passesFilters(item){
-  const q = document.getElementById('search').value.toLowerCase();
-  if(q && !item.text.toLowerCase().includes(q)) return false;
-  const tf = document.getElementById('tagFilter').value;
-  if(tf!=='__all__' && item.tag!==tf) return false;
-  const tpf = document.getElementById('typeFilter').value;
-  if(tpf==='__preset__') { if(mode==='month' && item.type==='gorev') return false; }
-  else if(tpf!=='__all__' && item.type!==tpf) return false;
-  return true;
-}
-function itemSort(a,b){
-  const rank={termin:0,hedef:1,gorev:2};
-  if(rank[a.type]!==rank[b.type]) return rank[a.type]-rank[b.type];
-  const ta=a.time||'99', tb=b.time||'99';
-  return ta.localeCompare(tb);
-}
+    // Veriyi çek
+    async function loadRemoteDB() {
+      if(!currentUser) return;
+      
+      // Önce yerel yedeği al (varsa)
+      let localData = null;
+      try {
+        const raw = localStorage.getItem(LOCAL_KEY);
+        if(raw) localData = JSON.parse(raw);
+      } catch {}
 
-// --- EVENT LISTENERS ---
-document.getElementById('btnWeek').onclick = () => { mode='week'; document.getElementById('btnWeek').classList.add('active'); document.getElementById('btnMonth').classList.remove('active'); document.getElementById('typeFilter').value='__preset__'; render(); };
-document.getElementById('btnMonth').onclick = () => { mode='month'; document.getElementById('btnMonth').classList.add('active'); document.getElementById('btnWeek').classList.remove('active'); document.getElementById('typeFilter').value='__preset__'; render(); };
-document.getElementById('prev').onclick = () => { anchor = mode==='week' ? addDays(anchor, -7) : new Date(anchor.getFullYear(), anchor.getMonth()-1, 1); render(); };
-document.getElementById('next').onclick = () => { anchor = mode==='week' ? addDays(anchor, 7) : new Date(anchor.getFullYear(), anchor.getMonth()+1, 1); render(); };
-document.getElementById('today').onclick = () => { anchor = new Date(); selected = new Date(); render(); };
-document.getElementById('tagFilter').onchange = render;
-document.getElementById('typeFilter').onchange = render;
-document.getElementById('search').oninput = render;
-document.getElementById('addForm').onsubmit = (e) => {
-  e.preventDefault();
-  const txt = document.getElementById('taskInput').value; if(!txt) return;
-  addItemTo(document.getElementById('whereInput').value==='inbox'?'inbox':'day', dayKey(selected), {
-    text:txt, time:document.getElementById('timeInput').value,
-    type:document.getElementById('typeInput').value, tag:document.getElementById('tagInput').value
-  });
-  document.getElementById('taskInput').value=''; render();
-};
-document.getElementById('clearDone').onclick = () => { db.days[dayKey(selected)] = (db.days[dayKey(selected)]||[]).filter(x=>!x.done); saveDB(); render(); };
-document.getElementById('clearInboxDone').onclick = () => { db.inbox = db.inbox.filter(x=>!x.done); saveDB(); render(); };
-document.getElementById('inboxAdd').onclick = () => openModalAdd({dest:'inbox'});
-document.getElementById('tagSettingsBtn').onclick = () => {
-  document.getElementById('modalTitle').textContent = 'Tag Ayarları';
-  document.getElementById('quickAddSection').style.display='none';
-  document.getElementById('tagSettingsSection').style.display='block';
-  document.getElementById('overlay').style.display='flex';
-  renderTagManager();
-};
-document.getElementById('inbox').ondragover = e => { e.preventDefault(); e.dataTransfer.dropEffect='move'; };
-document.getElementById('inbox').ondrop = e => {
-  e.preventDefault();
-  if(!dragPayload || dragPayload.from!=='day') return;
-  const idx = db.days[dragPayload.dayKey].findIndex(x=>x.id===dragPayload.itemId);
-  if(idx>-1) { db.inbox.push(db.days[dragPayload.dayKey].splice(idx,1)[0]); saveDB(); render(); }
-};
+      // Sunucudan çek
+      const { data, error } = await _supabase
+        .from('user_data')
+        .select('content')
+        .eq('id', currentUser.id)
+        .single();
 
-document.getElementById('btnLogin').onclick = async () => {
-  const { error } = await _supabase.auth.signInWithPassword({ email: document.getElementById('authEmail').value, password: document.getElementById('authPass').value });
-  if(error) document.getElementById('authError').textContent = error.message;
-};
-document.getElementById('btnSignup').onclick = async () => {
-  const { error } = await _supabase.auth.signUp({ email: document.getElementById('authEmail').value, password: document.getElementById('authPass').value });
-  if(error) document.getElementById('authError').textContent = error.message; else alert("Kayıt olundu.");
-};
-document.getElementById('btnLogout').onclick = () => { _supabase.auth.signOut(); location.reload(); };
+      if (error && error.code !== 'PGRST116') {
+        console.error("Veri çekme hatası:", error);
+      }
 
-// Start
-document.getElementById('typeFilter').value='__preset__';
-window.onresize = () => { if(mode==='month') render(); };
-</script>
+      if (data && data.content) {
+        // Sunucuda veri var, onu kullan
+        db = data.content;
+        // Yereli güncelle
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+      } else {
+        // Sunucuda veri yok (yeni kullanıcı)
+        if(localData) {
+          db = localData;
+          saveDB(db); 
+        } else {
+          db = getEmptyDB();
+          saveDB(db);
+        }
+      }
+    }
+
+    // Veriyi kaydet (Debounce ile)
+    let saveTimeout = null;
+    function saveDB(newDB) {
+      if(!newDB) return;
+      db = newDB;
+      
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+
+      if(saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        if(!currentUser) return;
+        await _supabase
+          .from('user_data')
+          .upsert({ 
+            id: currentUser.id, 
+            content: db,
+            updated_at: new Date()
+          });
+      }, 1000); 
+    }
+
+    // ----------------------------------------------------------------------
+    // STANDART UYGULAMA MANTIĞI
+    // ----------------------------------------------------------------------
+    
+    // PWA install
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    }
+    let deferredPrompt = null;
+    const btnInstall = document.getElementById('btnInstall');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstall.style.display = 'inline-block';
+    });
+    btnInstall.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      btnInstall.style.display = 'none';
+    });
+
+    function dayKey(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const da = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${da}`;
+    }
+    function todayKey(){ return dayKey(new Date()); }
+
+    function startOfWeek(date){
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const day = (d.getDay() + 6) % 7;
+      d.setDate(d.getDate() - day);
+      return d;
+    }
+    function addDays(date, n){
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      d.setDate(d.getDate()+n);
+      return d;
+    }
+    function startOfMonth(date){ return new Date(date.getFullYear(), date.getMonth(), 1); }
+    function endOfMonth(date){ return new Date(date.getFullYear(), date.getMonth()+1, 0); }
+
+    function fmtRange(a,b){
+      const opts = { day:'2-digit', month:'short', year:'numeric' };
+      return `${a.toLocaleDateString('tr-TR', opts)} – ${b.toLocaleDateString('tr-TR', opts)}`;
+    }
+    function fmtDay(d){
+      return d.toLocaleDateString('tr-TR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+    }
+
+    function normalizeTagName(s){
+      return (s||'').trim().toLowerCase().replace(/\s+/g,'-');
+    }
+
+    function fixItem(t){
+      const id = t.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random());
+      const type = (['gorev','termin','hedef'].includes(t.type) ? t.type : 'gorev');
+      return {
+        id,
+        text: (t.text||'').trim(),
+        done: !!t.done,
+        type,
+        tag: (t.tag || ''),
+        time: (t.time || ''),
+        created: t.created || Date.now()
+      };
+    }
+
+    function getCssVar(name){
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+    function typeFrameColor(type){
+      if (type === 'termin') return getCssVar('--frame-termin');
+      if (type === 'hedef') return getCssVar('--frame-hedef');
+      return getCssVar('--frame-gorev');
+    }
+
+    function hexToRgba(hex, alpha){
+      if (!hex) return `rgba(255,255,255,${alpha})`;
+      const h = hex.replace('#','').trim();
+      const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
+      const r = parseInt(full.slice(0,2),16);
+      const g = parseInt(full.slice(2,4),16);
+      const b = parseInt(full.slice(4,6),16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function typeRank(type){
+      if (type === 'termin') return 0;
+      if (type === 'hedef') return 1;
+      return 2;
+    }
+    function timeKey(t){ return t.time ? t.time : '99:99'; }
+
+    const DOW = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
+    let mode = 'week';
+    let anchor = new Date();
+    let selected = new Date();
+    let dragPayload = null;
+
+    function ensureHabitReset(){
+      if(!db) return;
+      const today = todayKey();
+      db.habitState = db.habitState || { date: today, doneIds: [] };
+      if (db.habitState.date !== today){
+        db.habitState = { date: today, doneIds: [] };
+        saveDB(db);
+      }
+    }
+
+    // UI refs
+    const calendarArea = document.getElementById('calendarArea');
+    const grid = document.getElementById('grid');
+    const dowRow = document.getElementById('dowRow');
+    const rangeTitle = document.getElementById('rangeTitle');
+    const btnWeek = document.getElementById('btnWeek');
+    const btnMonth = document.getElementById('btnMonth');
+
+    const panelTitle = document.getElementById('panelTitle');
+    const taskList = document.getElementById('taskList');
+
+    const addForm = document.getElementById('addForm');
+    const taskInput = document.getElementById('taskInput');
+    const timeInput = document.getElementById('timeInput');
+    const typeInput = document.getElementById('typeInput');
+    const tagInput = document.getElementById('tagInput');
+    const whereInput = document.getElementById('whereInput');
+    const addSubmit = document.getElementById('addSubmit');
+    const clearDone = document.getElementById('clearDone');
+
+    const tagFilter = document.getElementById('tagFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const search = document.getElementById('search');
+
+    const inbox = document.getElementById('inbox');
+    const inboxList = document.getElementById('inboxList');
+    const inboxCount = document.getElementById('inboxCount');
+    const clearInboxDone = document.getElementById('clearInboxDone');
+    const inboxAdd = document.getElementById('inboxAdd');
+    const bottomInboxSlot = document.getElementById('bottomInboxSlot');
+
+    const habitsList = document.getElementById('habitsList');
+    const habitAddBtn = document.getElementById('habitAddBtn');
+    const habitResetBtn = document.getElementById('habitResetBtn');
+    const habitsSub = document.getElementById('habitsSub');
+
+    // Modal
+    const overlay = document.getElementById('overlay');
+    const modalClose = document.getElementById('modalClose');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalWhere = document.getElementById('modalWhere');
+    const mText = document.getElementById('mText');
+    const mTime = document.getElementById('mTime');
+    const mType = document.getElementById('mType');
+    const mTag = document.getElementById('mTag');
+    const quickAddSection = document.getElementById('quickAddSection');
+    const tagSettingsSection = document.getElementById('tagSettingsSection');
+    const tagSettingsBtn = document.getElementById('tagSettingsBtn');
+    const tagManager = document.getElementById('tagManager');
+    const modalSave = document.getElementById('modalSave');
+    const modalDelete = document.getElementById('modalDelete');
+
+    let modalContext = { mode:'add', dest:'day', dayKey:null, origin:null, itemId:null };
+
+    function closeModal(){ overlay.style.display = 'none'; }
+    modalClose.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closeModal(); });
+
+    overlay.addEventListener('keydown', (e)=>{
+      if (overlay.style.display !== 'flex') return;
+      if (tagSettingsSection.style.display === 'block') return;
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        modalSave.click();
+      }
+    });
+
+    tagSettingsBtn.addEventListener('click', ()=>{
+      modalTitle.textContent = 'Tag Ayarları';
+      quickAddSection.style.display = 'none';
+      tagSettingsSection.style.display = 'block';
+      overlay.style.display = 'flex';
+      renderTagManager();
+    });
+
+    function tagMeta(name){ return (db && db.tags) ? db.tags.find(x=>x.name===name) : null; }
+    function tagOrder(name){
+      if (!name) return 9999;
+      const m = tagMeta(name);
+      return m ? (m.order ?? 9999) : 9999;
+    }
+    function itemSort(a,b){
+      const ra = typeRank(a.type), rb = typeRank(b.type);
+      if (ra !== rb) return ra - rb;
+      const ta = timeKey(a), tb = timeKey(b);
+      if (ta < tb) return -1;
+      if (ta > tb) return 1;
+      const oa = tagOrder(a.tag), ob = tagOrder(b.tag);
+      if (oa !== ob) return oa - ob;
+      return (a.created||0) - (b.created||0);
+    }
+
+    function presetTypesForMode(){
+      if (mode === 'month') return new Set(['termin','hedef']);
+      return new Set(['termin','hedef','gorev']);
+    }
+    function passesFilters(item){
+      const q = (search.value||'').trim().toLowerCase();
+      if (q && !(item.text||'').toLowerCase().includes(q)) return false;
+      const tf = tagFilter.value;
+      if (tf && tf !== '__all__' && item.tag !== tf) return false;
+      const tpf = typeFilter.value;
+      if (tpf === '__preset__'){
+        if (!presetTypesForMode().has(item.type)) return false;
+      } else if (tpf !== '__all__' && item.type !== tpf) return false;
+      return true;
+    }
+
+    function rebuildTagDropdowns(){
+      if(!db) return;
+      db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
+
+      tagInput.innerHTML = '';
+      const opt0 = document.createElement('option');
+      opt0.value='__none__'; opt0.textContent='Tag: yok';
+      tagInput.appendChild(opt0);
+      for (const t of db.tags){
+        const o = document.createElement('option');
+        o.value=t.name; o.textContent=t.name;
+        tagInput.appendChild(o);
+      }
+
+      mTag.innerHTML = '';
+      const m0 = document.createElement('option');
+      m0.value='__none__'; m0.textContent='Tag: yok';
+      mTag.appendChild(m0);
+      for (const t of db.tags){
+        const o = document.createElement('option');
+        o.value=t.name; o.textContent=t.name;
+        mTag.appendChild(o);
+      }
+
+      const current = tagFilter.value || '__all__';
+      tagFilter.innerHTML = '';
+      const all = document.createElement('option');
+      all.value='__all__'; all.textContent='Tag: Hepsi';
+      tagFilter.appendChild(all);
+      for (const t of db.tags){
+        const o = document.createElement('option');
+        o.value=t.name; o.textContent = `Tag: ${t.name}`;
+        tagFilter.appendChild(o);
+      }
+      tagFilter.value = db.tags.some(x=>x.name===current) ? current : '__all__';
+    }
+
+    function addItemTo(dest, dayK, item){
+      item = fixItem(item);
+      if (dest === 'inbox'){
+        db.inbox = db.inbox || [];
+        db.inbox.push(item);
+      } else {
+        db.days[dayK] = db.days[dayK] || [];
+        db.days[dayK].push(item);
+      }
+      saveDB(db);
+    }
+
+    function findItem(origin, itemId){
+      if (!origin || !itemId) return null;
+      if (origin.from === 'inbox'){
+        return (db.inbox||[]).find(x=>x.id===itemId) || null;
+      }
+      if (origin.from === 'day'){
+        return (db.days[origin.dayKey]||[]).find(x=>x.id===itemId) || null;
+      }
+      return null;
+    }
+
+    function deleteItem(origin, itemId){
+      if (origin.from === 'inbox'){
+        db.inbox = (db.inbox||[]).filter(x=>x.id!==itemId);
+      } else if (origin.from === 'day'){
+        const k = origin.dayKey;
+        const arr = db.days[k] || [];
+        const kept = arr.filter(x=>x.id!==itemId);
+        if (kept.length) db.days[k]=kept; else delete db.days[k];
+      }
+      saveDB(db);
+      render();
+    }
+
+    function openModalAdd(ctx){
+      modalContext = { mode:'add', dest:ctx.dest, dayKey:ctx.dayKey, origin:null, itemId:null };
+      modalTitle.textContent = (ctx.dest === 'inbox') ? 'Inbox’a ekle' : 'Güne ekle';
+      modalWhere.textContent = (ctx.dest === 'inbox') ? 'Hedef: Brain Dump' : `Hedef gün: ${ctx.dayKey}`;
+
+      quickAddSection.style.display = 'block';
+      tagSettingsSection.style.display = 'none';
+      overlay.style.display = 'flex';
+
+      rebuildTagDropdowns();
+      mText.value = '';
+      mTime.value = '';
+      mTag.value = '__none__';
+
+      const defaultType = (ctx.dest === 'inbox') ? 'gorev' : (mode === 'month') ? 'termin' : 'gorev';
+      mType.value = defaultType;
+
+      modalDelete.style.display = 'none';
+      modalSave.textContent = 'Ekle';
+      setTimeout(()=>mText.focus(), 0);
+    }
+
+    function openModalEdit(origin, itemId){
+      const it = findItem(origin, itemId);
+      if (!it) return;
+
+      modalContext = { mode:'edit', dest:null, dayKey:null, origin, itemId };
+      modalTitle.textContent = 'Düzenle';
+      modalWhere.textContent = origin.from === 'inbox' ? 'Konum: Brain Dump' : `Konum: ${origin.dayKey}`;
+
+      quickAddSection.style.display = 'block';
+      tagSettingsSection.style.display = 'none';
+      overlay.style.display = 'flex';
+
+      rebuildTagDropdowns();
+      mText.value = it.text || '';
+      mTime.value = it.time || '';
+      mType.value = it.type || 'gorev';
+      mTag.value = it.tag ? it.tag : '__none__';
+
+      modalDelete.style.display = 'inline-block';
+      modalSave.textContent = 'Kaydet';
+      setTimeout(()=>mText.focus(), 0);
+    }
+
+    modalSave.addEventListener('click', ()=>{
+      const text = (mText.value||'').trim();
+      if (!text) return;
+
+      if (modalContext.mode === 'add'){
+        addItemTo(modalContext.dest, modalContext.dayKey, {
+          text,
+          time: mTime.value || '',
+          type: mType.value,
+          tag: (mTag.value==='__none__' ? '' : mTag.value),
+          done:false,
+          created: Date.now()
+        });
+        closeModal();
+        render();
+        return;
+      }
+
+      if (modalContext.mode === 'edit'){
+        const it = findItem(modalContext.origin, modalContext.itemId);
+        if (!it) { closeModal(); return; }
+        it.text = text;
+        it.time = mTime.value || '';
+        it.type = mType.value;
+        it.tag  = (mTag.value==='__none__' ? '' : mTag.value);
+        saveDB(db);
+        closeModal();
+        render();
+      }
+    });
+
+    // CUSTOM CONFIRM UYGULANDI
+    modalDelete.addEventListener('click', ()=>{
+      if (modalContext.mode !== 'edit') return;
+      
+      showConfirm('Bu kart silinsin mi?', () => {
+        deleteItem(modalContext.origin, modalContext.itemId);
+        closeModal();
+      });
+    });
+
+    function renderDOW(){
+      dowRow.innerHTML = '';
+      dowRow.className = 'grid ' + (mode==='month' ? 'month' : 'week');
+      for (const name of DOW){
+        const el = document.createElement('div');
+        el.className='dow'; el.textContent=name;
+        dowRow.appendChild(el);
+      }
+    }
+
+    function makeCard(item, origin){
+      const meta = tagMeta(item.tag);
+      const tagColor = meta?.color || null;
+
+      const card = document.createElement('div');
+      card.className = 'card' + (item.done ? ' done' : '');
+      card.draggable = true;
+
+      card.style.setProperty('--frameColor', typeFrameColor(item.type));
+      card.style.setProperty('--fillColor', tagColor ? hexToRgba(tagColor, 0.22) : 'rgba(255,255,255,0.04)');
+
+      const more = document.createElement('button');
+      more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
+      more.addEventListener('click', (e)=>{ e.stopPropagation(); openModalEdit(origin, item.id); });
+
+      const row = document.createElement('div');
+      row.className = 'cardRow';
+
+      const check = document.createElement('button');
+      check.className = 'checkBtn'; check.type = 'button';
+      check.title = item.done ? 'Geri al' : 'Tamamla';
+      check.textContent = item.done ? '↩' : '✓';
+      check.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        item.done = !item.done;
+        saveDB(db);
+        render();
+      });
+
+      const body = document.createElement('div');
+      body.className = 'cardBody';
+
+      const title = document.createElement('div');
+      title.className = 'titleText'; title.textContent = item.text || '(başlıksız)';
+      body.appendChild(title);
+
+      if (item.time){
+        const time = document.createElement('div');
+        time.className = 'timeText'; time.textContent = item.time;
+        body.appendChild(time);
+      }
+
+      row.appendChild(check); row.appendChild(body);
+      card.appendChild(more); card.appendChild(row);
+
+      card.addEventListener('dragstart', (e)=>{
+        dragPayload = { ...origin, itemId: item.id };
+        e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      return card;
+    }
+
+    function renderInbox(){
+      inboxList.innerHTML = '';
+      if(!db) return;
+      const items = (db.inbox||[]).map(fixItem).filter(passesFilters).sort(itemSort);
+      const openCount = items.filter(x=>!x.done).length;
+      inboxCount.textContent = items.length ? `Açık: ${openCount} • Toplam: ${items.length}` : 'Boş';
+
+      if (!items.length){
+        const empty = document.createElement('div');
+        empty.className='muted'; empty.textContent='Inbox boş. + ile hızlı ekle.';
+        inboxList.appendChild(empty);
+        return;
+      }
+      for (const it of items){
+        inboxList.appendChild(makeCard(it, {from:'inbox'}));
+      }
+    }
+
+    function renderHabits(){
+      ensureHabitReset();
+      habitsList.innerHTML = '';
+      if(!db) return;
+      const done = new Set(db.habitState?.doneIds || []);
+      const total = (db.habits||[]).length;
+      habitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
+
+      if (!total){
+        const empty = document.createElement('div');
+        empty.className='muted'; empty.textContent='Alışkanlık eklemek için +';
+        habitsList.appendChild(empty);
+        return;
+      }
+
+      let dragHabitId = null;
+      for (const h of db.habits){
+        const row = document.createElement('div');
+        row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
+
+        const lab = document.createElement('label');
+        const cb = document.createElement('input');
+        cb.type='checkbox'; cb.checked = done.has(h.id);
+        cb.addEventListener('change', ()=>{
+          ensureHabitReset();
+          const s = new Set(db.habitState.doneIds || []);
+          cb.checked ? s.add(h.id) : s.delete(h.id);
+          db.habitState.doneIds = [...s];
+          saveDB(db);
+          renderHabits();
+        });
+
+        const name = document.createElement('span'); name.textContent = h.name;
+        lab.appendChild(cb); lab.appendChild(name);
+
+        const del = document.createElement('button');
+        del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+        
+        // CUSTOM CONFIRM UYGULANDI
+        del.addEventListener('click', ()=>{
+          showConfirm(`"${h.name}" silinsin mi?`, () => {
+            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+            ensureHabitReset();
+            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
+            saveDB(db);
+            renderHabits();
+          });
+        });
+
+        row.appendChild(lab); row.appendChild(del);
+
+        row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
+        row.addEventListener('dragend', ()=>{
+          dragHabitId = null; row.classList.remove('dragging');
+          [...habitsList.querySelectorAll('.habitRow')].forEach(x=>x.classList.remove('dragOver'));
+        });
+        row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
+        row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
+        row.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          row.classList.remove('dragOver');
+          const targetId = row.dataset.habit;
+          if (!dragHabitId || !targetId || dragHabitId === targetId) return;
+          const ids = db.habits.map(x=>x.id);
+          const from = ids.indexOf(dragHabitId);
+          const to = ids.indexOf(targetId);
+          if (from < 0 || to < 0) return;
+          const moved = db.habits.splice(from,1)[0];
+          db.habits.splice(to,0,moved);
+          saveDB(db);
+          renderHabits();
+        });
+
+        habitsList.appendChild(row);
+      }
+    }
+
+    function renderPanel(){
+      const k = dayKey(selected);
+      panelTitle.textContent = fmtDay(selected);
+      const items = (db && db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
+
+      taskList.innerHTML = '';
+      if (!items.length){
+        const empty = document.createElement('div');
+        empty.className='muted'; empty.style.padding='10px 2px';
+        empty.textContent='Bu gün için (filtreye göre) kart yok.';
+        taskList.appendChild(empty);
+        return;
+      }
+      for (const it of items){
+        const row = document.createElement('div');
+        row.className='row';
+        const txt = document.createElement('div');
+        txt.className='txt';
+        txt.textContent = it.text + (it.time ? ` • ${it.time}` : '');
+        txt.style.color = it.done ? 'var(--muted)' : 'var(--text)';
+        row.appendChild(txt);
+        taskList.appendChild(row);
+      }
+    }
+
+    function adjustMonthCellHeight(totalCells){
+      const rows = Math.max(5, Math.min(6, Math.ceil(totalCells / 7)));
+      const areaH = calendarArea.clientHeight;
+      const dowH = dowRow.getBoundingClientRect().height || 18;
+      const gaps = (rows - 1) * 10 + 10;
+      const topPadding = 14;
+      const cellH = Math.floor((areaH - dowH - gaps - topPadding) / rows);
+      const clamped = Math.max(115, Math.min(185, cellH));
+      document.documentElement.style.setProperty('--monthCellH', clamped + 'px');
+    }
+
+    function dockInboxForMode(){
+      const side = document.querySelector('.side');
+      if (mode === 'week'){
+        document.body.classList.add('weekMode');
+        document.body.classList.remove('monthMode');
+        const inboxOpt = whereInput.querySelector('option[value="inbox"]');
+        if (inboxOpt) inboxOpt.disabled = false;
+        if (bottomInboxSlot && inbox.parentElement !== bottomInboxSlot){
+          bottomInboxSlot.appendChild(inbox);
+        }
+      } else {
+        document.body.classList.remove('weekMode');
+        document.body.classList.add('monthMode');
+        whereInput.value = 'selected';
+        const inboxOpt = whereInput.querySelector('option[value="inbox"]');
+        if (inboxOpt) inboxOpt.disabled = true;
+        if (inbox.parentElement !== side){
+          side.insertBefore(inbox, side.firstChild);
+        }
+      }
+    }
+
+    function renderTagManager(){
+      tagManager.innerHTML = '';
+      const addRow = document.createElement('div');
+      addRow.className = 'tagItem';
+      addRow.innerHTML = `
+        <input id="newTagText" type="text" placeholder="Yeni tag (örn: kompozit)" />
+        <input id="newTagColor" type="color" value="#7dd3fc" />
+        <button id="newTagBtn" class="btn" type="button">Ekle</button>
+      `;
+      tagManager.appendChild(addRow);
+
+      const newTagText = addRow.querySelector('#newTagText');
+      const newTagColor = addRow.querySelector('#newTagColor');
+
+      addRow.querySelector('#newTagBtn').addEventListener('click', ()=>{
+        const name = normalizeTagName(newTagText.value);
+        if (!name) return;
+        if (db.tags.some(x=>x.name===name)) return;
+        const maxOrder = Math.max(0, ...db.tags.map(x=>x.order||0));
+        db.tags.push({ name, color: newTagColor.value || '#7dd3fc', order: maxOrder+1 });
+        saveDB(db);
+        rebuildTagDropdowns();
+        render();
+        renderTagManager();
+      });
+
+      const hint = document.createElement('div');
+      hint.className='muted'; hint.textContent='Tag sıralamasını sürükleyip bırakarak değiştir.';
+      tagManager.appendChild(hint);
+
+      if(!db) return;
+      db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
+      let dragTagName = null;
+
+      for (const t of db.tags){
+        const row = document.createElement('div');
+        row.className='tagItem'; row.draggable = true; row.dataset.tag = t.name;
+
+        const nameBox = document.createElement('div');
+        nameBox.className='tagName';
+        const d = document.createElement('span'); d.className='dot'; d.style.background=t.color || '#999';
+        const s = document.createElement('span'); s.textContent=t.name;
+        nameBox.appendChild(d); nameBox.appendChild(s);
+
+        const color = document.createElement('input');
+        color.type='color'; color.value = t.color || '#7dd3fc';
+        color.addEventListener('input', ()=>{
+          t.color = color.value;
+          saveDB(db);
+          render();
+        });
+
+        const del = document.createElement('button');
+        del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+        
+        // CUSTOM CONFIRM UYGULANDI
+        del.addEventListener('click', ()=>{
+          showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, () => {
+            db.tags = db.tags.filter(x=>x.name!==t.name);
+            for (const k of Object.keys(db.days)){
+              db.days[k].forEach(it=>{ if (it.tag===t.name) it.tag=''; });
+            }
+            (db.inbox||[]).forEach(it=>{ if (it.tag===t.name) it.tag=''; });
+            saveDB(db);
+            rebuildTagDropdowns();
+            render();
+            renderTagManager();
+          });
+        });
+
+        row.appendChild(nameBox); row.appendChild(color); row.appendChild(del);
+
+        row.addEventListener('dragstart', ()=>{ dragTagName = t.name; });
+        row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
+        row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
+        row.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          row.classList.remove('dragOver');
+          const targetName = row.dataset.tag;
+          if (!dragTagName || !targetName || dragTagName === targetName) return;
+          const names = db.tags.slice().sort((a,b)=>(a.order??9999)-(b.order??9999)).map(x=>x.name);
+          const from = names.indexOf(dragTagName);
+          const to = names.indexOf(targetName);
+          if (from<0 || to<0) return;
+          names.splice(from,1);
+          names.splice(to,0,dragTagName);
+          names.forEach((name, idx)=>{
+            const m = db.tags.find(x=>x.name===name);
+            if (m) m.order = idx+1;
+          });
+          saveDB(db);
+          rebuildTagDropdowns();
+          render();
+          renderTagManager();
+        });
+
+        tagManager.appendChild(row);
+      }
+    }
+
+    function render(){
+      if(!db) return; // DB henüz yüklenmediyse çizme
+
+      for (const k of Object.keys(db.days||{})){
+        db.days[k] = (db.days[k]||[]).map(fixItem);
+      }
+      db.inbox = (db.inbox||[]).map(fixItem);
+
+      rebuildTagDropdowns();
+      renderDOW();
+      dockInboxForMode();
+
+      grid.className = 'grid ' + (mode==='month' ? 'month' : 'week');
+      grid.innerHTML = '';
+
+      let cells = [];
+      if (mode === 'week'){
+        const start = startOfWeek(anchor);
+        const end = addDays(start, 6);
+        rangeTitle.textContent = fmtRange(start, end);
+        for (let i=0;i<7;i++) cells.push({ date: addDays(start,i), out:false });
+      } else {
+        const first = startOfMonth(anchor);
+        const last = endOfMonth(anchor);
+        const start = startOfWeek(first);
+        const end = addDays(startOfWeek(last), 6);
+        rangeTitle.textContent = anchor.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
+        const totalDays = Math.round((end - start) / (24*3600*1000)) + 1;
+        for (let i=0;i<totalDays;i++){
+          const d = addDays(start,i);
+          cells.push({ date:d, out: d.getMonth() !== anchor.getMonth() });
+        }
+        adjustMonthCellHeight(cells.length);
+      }
+
+      const selKey = dayKey(selected);
+
+      for (const c of cells){
+        const k = dayKey(c.date);
+        const items = (db.days[k]||[]).filter(passesFilters).sort(itemSort);
+        const openCount = items.filter(x=>!x.done).length;
+
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + (mode==='month' ? 'monthCell' : 'weekCell') + (c.out ? ' out' : '') + (k===selKey ? ' sel' : '');
+        cell.dataset.key = k;
+
+        const top = document.createElement('div');
+        top.className='dateRow';
+
+        const left = document.createElement('div');
+        left.className='dateLeft';
+        const dateEl = document.createElement('div');
+        dateEl.className='date'; dateEl.textContent = String(c.date.getDate()).padStart(2,'0');
+        const plus = document.createElement('button');
+        plus.className='plusBtn'; plus.type='button'; plus.textContent='+';
+        plus.addEventListener('click', (e)=>{ e.stopPropagation(); openModalAdd({ dest:'day', dayKey:k }); });
+
+        left.appendChild(dateEl); left.appendChild(plus);
+
+        const count = document.createElement('div');
+        count.className='count'; count.textContent = openCount ? `${openCount}` : '';
+
+        top.appendChild(left); top.appendChild(count);
+
+        const cards = document.createElement('div');
+        cards.className='cards';
+        for (const it of items){
+          cards.appendChild(makeCard(it, { from:'day', dayKey:k }));
+        }
+
+        cell.appendChild(top); cell.appendChild(cards);
+
+        cell.addEventListener('click', ()=>{
+          selected = c.date;
+          if (mode==='month' && c.out){
+            anchor = new Date(c.date.getFullYear(), c.date.getMonth(), 1);
+          }
+          render();
+        });
+
+        cell.addEventListener('dragover', (e)=>{ e.preventDefault(); cell.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+        cell.addEventListener('dragleave', ()=>cell.classList.remove('dragOver'));
+        cell.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          cell.classList.remove('dragOver');
+          let payload = dragPayload;
+          try {
+            const txt = e.dataTransfer.getData('text/plain');
+            if (txt) payload = JSON.parse(txt);
+          } catch {}
+          if (!payload?.itemId) return;
+
+          const toKey = k;
+          if (payload.from === 'inbox'){
+            const idx = (db.inbox||[]).findIndex(x=>x.id===payload.itemId);
+            if (idx === -1) return;
+            const [moved] = db.inbox.splice(idx,1);
+            db.days[toKey] = db.days[toKey] || [];
+            db.days[toKey].push(moved);
+          } else if (payload.from === 'day'){
+            const fromKey = payload.dayKey;
+            if (!fromKey || fromKey===toKey) return;
+            const fromArr = db.days[fromKey] || [];
+            const idx = fromArr.findIndex(x=>x.id===payload.itemId);
+            if (idx === -1) return;
+            const [moved] = fromArr.splice(idx,1);
+            if (!fromArr.length) delete db.days[fromKey];
+            db.days[toKey] = db.days[toKey] || [];
+            db.days[toKey].push(moved);
+          }
+          saveDB(db);
+          dragPayload = null;
+          selected = c.date;
+          render();
+        });
+
+        grid.appendChild(cell);
+      }
+
+      renderInbox();
+      renderHabits();
+      renderPanel();
+    }
+
+    // Controls
+    document.getElementById('prev').addEventListener('click', ()=>{
+      anchor = (mode==='week') ? addDays(anchor, -7) : new Date(anchor.getFullYear(), anchor.getMonth()-1, 1);
+      render();
+    });
+    document.getElementById('next').addEventListener('click', ()=>{
+      anchor = (mode==='week') ? addDays(anchor, 7) : new Date(anchor.getFullYear(), anchor.getMonth()+1, 1);
+      render();
+    });
+    document.getElementById('today').addEventListener('click', ()=>{
+      anchor = new Date();
+      selected = new Date();
+      render();
+    });
+
+    btnWeek.addEventListener('click', ()=>{
+      mode='week';
+      btnWeek.classList.add('active'); btnMonth.classList.remove('active');
+      anchor = new Date(selected);
+      typeFilter.value = '__preset__';
+      typeInput.value = 'gorev';
+      render();
+    });
+    btnMonth.addEventListener('click', ()=>{
+      mode='month';
+      btnMonth.classList.add('active'); btnWeek.classList.remove('active');
+      anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
+      typeFilter.value = '__preset__';
+      typeInput.value = 'termin';
+      render();
+    });
+
+    tagFilter.addEventListener('change', render);
+    typeFilter.addEventListener('change', render);
+    search.addEventListener('input', render);
+
+    taskInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        addSubmit.click();
+      }
+    });
+
+    addForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const text = (taskInput.value||'').trim();
+      if (!text) return;
+
+      const item = {
+        text,
+        time: timeInput.value || '',
+        type: typeInput.value,
+        tag: (tagInput.value==='__none__' ? '' : tagInput.value),
+        done:false,
+        created: Date.now()
+      };
+
+      if (whereInput.value === 'inbox'){
+        addItemTo('inbox', null, item);
+      } else {
+        addItemTo('day', dayKey(selected), item);
+      }
+
+      taskInput.value=''; timeInput.value=''; tagInput.value='__none__';
+      render();
+      taskInput.focus();
+    });
+
+    clearDone.addEventListener('click', ()=>{
+      const k = dayKey(selected);
+      const items = db.days[k] || [];
+      const kept = items.filter(t=>!t.done);
+      if (kept.length) db.days[k]=kept; else delete db.days[k];
+      saveDB(db);
+      render();
+    });
+
+    clearInboxDone.addEventListener('click', ()=>{
+      db.inbox = (db.inbox||[]).filter(t=>!t.done);
+      saveDB(db);
+      render();
+    });
+
+    inboxAdd.addEventListener('click', ()=>openModalAdd({ dest:'inbox', dayKey:null }));
+
+    inbox.addEventListener('dragover', (e)=>{ e.preventDefault(); inbox.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+    inbox.addEventListener('dragleave', ()=>inbox.classList.remove('dragOver'));
+    inbox.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      inbox.classList.remove('dragOver');
+      let payload = dragPayload;
+      try {
+        const txt = e.dataTransfer.getData('text/plain');
+        if (txt) payload = JSON.parse(txt);
+      } catch {}
+      if (!payload?.itemId) return;
+
+      if (payload.from === 'day'){
+        const fromKey = payload.dayKey;
+        const fromArr = db.days[fromKey] || [];
+        const idx = fromArr.findIndex(x=>x.id===payload.itemId);
+        if (idx === -1) return;
+        const [moved] = fromArr.splice(idx,1);
+        if (!fromArr.length) delete db.days[fromKey];
+        db.inbox = db.inbox || [];
+        db.inbox.push(moved);
+        saveDB(db);
+        dragPayload = null;
+        render();
+      }
+    });
+
+    habitAddBtn.addEventListener('click', ()=>{
+      const name = prompt('Yeni alışkanlık:');
+      if (!name) return;
+      db.habits = db.habits || [];
+      db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name: name.trim() });
+      saveDB(db);
+      renderHabits();
+    });
+
+    habitResetBtn.addEventListener('click', ()=>{
+      db.habitState = { date: todayKey(), doneIds: [] };
+      saveDB(db);
+      renderHabits();
+    });
+
+    typeFilter.value='__preset__';
+    typeInput.value = 'gorev';
+
+    // Başlat
+    initApp();
+
+    window.addEventListener('resize', ()=>{
+      if (mode === 'month') render();
+    });
+  </script>
 </body>
 </html>
