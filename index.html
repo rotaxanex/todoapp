@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v17.1 (Timezone Fix)</title>
+  <title>Minimal To-Do v16.6 (Color Fix)</title>
+  <link rel="manifest" href="manifest.webmanifest">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -12,431 +13,443 @@
     :root{
       --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --frame-termin:#fb7185; --frame-hedef:#60a5fa; --frame-gorev:#34d399;
+
+      --frame-termin:#fb7185;
+      --frame-hedef:#60a5fa;
+      --frame-gorev:#34d399;
+
       --bottom-nav-h: 60px;
+      --monthCellH: 130px;
     }
 
     *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    html, body{ height:100%; margin:0; background:var(--bg); color:var(--text); overscroll-behavior-y: none; }
+    html, body{ height:100%; overscroll-behavior-y: none; }
+    body{ margin:0; background:var(--bg); color:var(--text); }
 
     /* --- COMMON UI --- */
-    .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 12px; border-radius:12px; cursor:pointer; font-size:13px; }
+    .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; }
     .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
     .btn.primary{ background: var(--accent); color: #000; border-color:var(--accent); font-weight: 600; }
     input, select{ background:#101014; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:8px; outline:none; }
-    
-    /* Helpers */
     .hidden { display: none !important; }
-    .card { border-left: 3px solid var(--line); border-radius:8px; padding:8px 10px; background: var(--card); border:1px solid var(--line); border-left-width:3px; margin-bottom:6px; position:relative; user-select:none; }
-    .card.done { opacity:0.5; }
-    .checkBtn { width:20px; height:20px; border-radius:6px; border:1px solid var(--muted); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:transparent; }
-    .card.done .checkBtn { background:var(--accent); border-color:var(--accent); color:#000; }
 
-    /* --- LAYOUT SWITCHING --- */
-    #desktopView { display: block; height: 100%; }
-    #mobileView { display: none; height: 100%; flex-direction: column; }
+    /* CARD STYLES */
+    .card{
+      border-left: 4px solid var(--line); /* Tür rengi buraya gelecek */
+      background: var(--card); /* Tag rengi (transparent) buraya gelecek */
+      border-radius:12px; padding:8px 10px;
+      border-top:1px solid var(--line); border-bottom:1px solid var(--line); border-right:1px solid var(--line);
+      user-select:none; position:relative; margin-bottom:6px;
+    }
+    .card.done{ opacity:.5; }
+    .cardRow{ display:flex; align-items:flex-start; gap:10px; }
+    .checkBtn{
+      width:20px; height:20px; border-radius:6px; border:1px solid var(--muted);
+      background:rgba(0,0,0,0.3); color:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+    .card.done .checkBtn{ background:var(--accent); border-color:var(--accent); color:#000; }
+    .cardBody{ flex:1; display:flex; flex-direction:column; gap:2px; }
+    .titleText{ font-size:14px; color:var(--text); line-height:1.3; }
+    .timeText{ font-size:11px; color:rgba(255,255,255,0.7); }
 
-    @media (max-width: 900px) {
-      #desktopView { display: none; }
-      #mobileView { display: flex; }
+    /* --- DESKTOP LAYOUT --- */
+    .desktop-layout { max-width:1440px; margin:0 auto; padding:16px; display:block; height:100%; }
+    header{ display:flex; gap:12px; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .desktop-grid { display:grid; grid-template-columns: 1fr 280px; gap:12px; align-items:start; height: calc(100vh - 80px); }
+    .calendarArea { height: 100%; overflow:auto; padding-right:5px; }
+    .grid { display:grid; gap:10px; }
+    .week { grid-template-columns: repeat(7, 1fr); }
+    .month { grid-template-columns: repeat(7, 1fr); }
+    
+    .cell { 
+      background:var(--card); border:1px solid var(--line); border-radius:16px; 
+      padding:10px; min-height:120px; cursor:pointer; display:flex; flex-direction:column; gap:8px; 
+    }
+    .cell.monthCell { height: var(--monthCellH); }
+    .cell:hover { border-color: var(--accent); }
+    .cell.sel { border-color: var(--accent); background: #1f1f24; }
+    .cell.out { opacity: 0.4; }
+
+    .side { display:flex; flex-direction:column; gap:12px; height:100%; overflow:auto; }
+    .panelBox { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; }
+
+    /* --- MOBILE LAYOUT --- */
+    .mobile-layout { display:none; flex-direction:column; height:100%; position:relative; }
+    .mobile-header {
+      padding: 12px 16px; background: rgba(15,15,16,0.95); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; align-items:center;
+      z-index: 10;
+    }
+    .mobile-title { font-size:18px; font-weight:700; }
+    .mobile-date { font-size:13px; color:var(--accent); }
+    
+    .mobile-content { flex:1; overflow-y:auto; overflow-x:hidden; padding:12px; padding-bottom: 80px; position:relative; }
+
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0; height: var(--bottom-nav-h);
+      background: var(--card); border-top: 1px solid var(--line);
+      display:grid; grid-template-columns: repeat(5, 1fr);
+      z-index: 20; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .nav-item {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px; color:var(--muted); font-size:10px; cursor:pointer; border:none; background:transparent;
+    }
+    .nav-item.active { color:var(--accent); }
+    .nav-icon { font-size: 18px; }
+
+    .mobile-day-wrapper { min-height: 80vh; }
+    .empty-state { text-align:center; color:var(--muted); margin-top:40px; font-size:14px; }
+
+    .m-cal-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:2px; margin-top:10px; }
+    .m-cal-head { text-align:center; font-size:12px; color:var(--muted); padding-bottom:8px; }
+    .m-cal-cell {
+      aspect-ratio: 1; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      font-size:14px; position:relative; cursor:pointer;
+    }
+    .m-cal-cell.today { background: #2a2a2f; color: var(--text); font-weight:bold; }
+    .m-cal-cell.selected { background: var(--accent); color: #000; font-weight:bold; }
+    .m-cal-cell.diff-month { opacity: 0.3; }
+    .m-dots { display:flex; gap:2px; margin-top:2px; }
+    .m-dot { width:4px; height:4px; border-radius:50%; background: var(--frame-gorev); }
+
+    .fab {
+      position:fixed; bottom: calc(var(--bottom-nav-h) + 20px); right: 20px;
+      width:56px; height:56px; border-radius:16px; background:var(--accent); color:#000;
+      display:flex; align-items:center; justify-content:center; font-size:28px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      border:none; cursor:pointer; z-index:15;
     }
 
-    /* --- DESKTOP STYLES --- */
-    .d-wrap { max-width:1440px; margin:0 auto; padding:16px; height:100%; display:grid; grid-template-rows: auto 1fr; gap:12px; }
-    .d-header { display:flex; justify-content:space-between; align-items:center; }
-    .d-grid { display:grid; grid-template-columns: 1fr 280px; gap:12px; height:100%; overflow:hidden; }
-    .d-main { overflow-y:auto; padding-right:5px; display:flex; flex-direction:column; gap:10px; }
-    .d-side { overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
-    .panel { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; }
-    
-    /* Calendar Grid Desktop */
-    .cal-grid { display:grid; gap:10px; }
-    .cal-grid.week { grid-template-columns: repeat(7, 1fr); }
-    .cal-grid.month { grid-template-columns: repeat(7, 1fr); }
-    .cal-cell { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px; min-height:140px; cursor:pointer; }
-    .cal-cell:hover { border-color:var(--accent); }
-    .cal-cell.sel { border-color:var(--accent); background:#1f1f24; }
-    .cal-cell.out { opacity:0.4; }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+    .modal { width:100%; max-width:400px; background:var(--card); border-radius:16px; padding:16px; border:1px solid var(--line); max-height:85vh; overflow-y:auto; }
 
-    /* --- MOBILE STYLES --- */
-    .m-header { padding:12px 16px; background:rgba(15,15,16,0.95); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
-    .m-content { flex:1; overflow-y:auto; padding:12px; padding-bottom:80px; }
-    .m-nav { position:fixed; bottom:0; width:100%; height:var(--bottom-nav-h); background:var(--card); border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(5,1fr); z-index:20; }
-    .m-nav-item { display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:10px; color:var(--muted); background:transparent; border:none; }
-    .m-nav-item.active { color:var(--accent); }
-    .m-nav-icon { font-size:18px; margin-bottom:2px; }
-    .fab { position:fixed; bottom:80px; right:20px; width:56px; height:56px; border-radius:16px; background:var(--accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:28px; box-shadow:0 4px 15px rgba(0,0,0,0.5); border:none; z-index:15; }
-
-    /* Mobile Calendar */
-    .m-cal-row { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:5px; }
-    .m-cal-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; font-size:14px; position:relative; }
-    .m-cal-cell.today { background:#333; font-weight:bold; }
-    .m-cal-cell.sel { background:var(--accent); color:#000; font-weight:bold; }
-    .m-dot { width:4px; height:4px; border-radius:50%; background:var(--frame-gorev); margin-top:2px; }
-
-    /* --- AUTH & MODAL --- */
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999; display:none; align-items:center; justify-content:center; padding:20px; }
-    .modal-box { width:100%; max-width:400px; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px; }
+    @media (max-width: 900px) {
+      .desktop-layout { display: none; }
+      .mobile-layout { display: flex; }
+    }
   </style>
 </head>
 <body>
 
-  <div id="authOverlay" class="overlay" style="display:flex;">
-    <div class="modal-box">
-      <h2 style="text-align:center; margin-top:0;">Minimal To-Do v17.1</h2>
-      <p style="text-align:center; color:var(--muted);">Devam etmek için giriş yapın</p>
+  <div id="authOverlay" class="overlay" style="display:flex; z-index:999; background:var(--bg);">
+    <div class="modal">
+      <h2 style="text-align:center;">Minimal To-Do</h2>
+      <p style="text-align:center; color:var(--muted); font-size:13px;">Giriş Yapın (Sync)</p>
       <input type="email" id="authEmail" placeholder="E-posta" style="width:100%; margin-bottom:10px;">
       <input type="password" id="authPass" placeholder="Şifre" style="width:100%; margin-bottom:10px;">
-      <div id="authError" style="color:#fb7185; font-size:12px; min-height:18px; text-align:center; margin-bottom:10px;"></div>
+      <div id="authError" style="color:#fb7185; font-size:12px; text-align:center; margin-bottom:10px;"></div>
       <button id="btnLogin" class="btn primary" style="width:100%; margin-bottom:8px;">Giriş Yap</button>
       <button id="btnSignup" class="btn" style="width:100%;">Kayıt Ol</button>
     </div>
   </div>
 
-  <div id="appContainer" class="hidden" style="height:100%;">
+  <div class="wrap" id="appWrap" style="display:none; height:100%;">
     
-    <div id="desktopView">
-      <div class="d-wrap">
-        <div class="d-header">
-          <h2>Minimal To-Do <span style="font-size:12px; color:var(--muted);">Desktop</span></h2>
-          <div style="display:flex; gap:10px;">
-            <button class="btn" id="dBtnWeek">Hafta</button>
-            <button class="btn" id="dBtnMonth">Ay</button>
-            <span style="width:10px;"></span>
-            <button class="btn danger" onclick="logout()">Çıkış</button>
-          </div>
+    <div class="desktop-layout">
+      <header>
+        <h1>Minimal To-Do <span style="font-size:11px; color:var(--accent);">Desktop</span></h1>
+        <div style="display:flex; gap:8px; align-items:center;">
+           <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
+           <button class="btn" onclick="openModalAdd({dest:'day'})">Hızlı Ekle</button>
+           <button class="btn danger" id="btnLogoutD">Çıkış</button>
         </div>
-        <div class="d-grid">
-          <div class="d-main">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <button class="btn" onclick="navDate(-7)">◀</button>
-              <span id="dDateTitle" style="font-weight:bold;"></span>
-              <button class="btn" onclick="navDate(7)">▶</button>
+      </header>
+      <div class="desktop-grid">
+        <div class="calendarArea">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div style="display:flex; gap:5px;">
+               <button id="btnWeekD" class="btn">Hafta</button>
+               <button id="btnMonthD" class="btn">Ay</button>
             </div>
-            <div id="dCalGrid" class="cal-grid week"></div>
+            <div>
+              <button id="prevD" class="btn">◀</button>
+              <button id="todayD" class="btn">Bugün</button>
+              <button id="nextD" class="btn">▶</button>
+            </div>
           </div>
-          <aside class="d-side">
-            <div class="panel">
-              <h3>Seçili Gün</h3>
-              <div id="dDayList"></div>
-              <button class="btn primary" style="width:100%; margin-top:10px;" onclick="openModal({dest:'day'})">+ Ekle</button>
-            </div>
-            <div class="panel">
-              <h3>Inbox</h3>
-              <div id="dInboxList"></div>
-              <button class="btn" style="width:100%; margin-top:5px;" onclick="openModal({dest:'inbox'})">+</button>
-            </div>
-            <div class="panel">
-              <h3>Habits</h3>
-              <div id="dHabitsList"></div>
-            </div>
-          </aside>
+          <div id="desktopCalendarTitle" style="text-align:center; margin-bottom:10px; color:var(--muted);"></div>
+          <div id="desktopGrid" class="grid week"></div>
         </div>
+        
+        <aside class="side">
+          <div class="panelBox">
+             <h3>Seçili Gün</h3>
+             <div id="dDayList" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+          <div class="panelBox">
+            <h3>Inbox</h3>
+            <div id="dInboxList" style="max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:8px;"></div>
+            <button class="btn" style="width:100%; margin-top:10px;" onclick="openModalAdd({dest:'inbox'})">+</button>
+          </div>
+          <div class="panelBox">
+            <h3>Habits</h3>
+            <div id="dHabitsList" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+        </aside>
       </div>
     </div>
 
-    <div id="mobileView">
-      <div class="m-header">
-        <span style="font-weight:bold; font-size:18px;">Minimal To-Do</span>
-        <span id="mHeaderDate" style="font-size:12px; color:var(--accent);"></span>
+    <div class="mobile-layout">
+      <div class="mobile-header">
+        <div class="mobile-title">Minimal To-Do</div>
+        <div class="mobile-date" id="mobileHeaderDate"></div>
+        <button class="btn" id="mobileSyncBtn" style="padding:4px 8px; font-size:10px;">Sync</button>
       </div>
-      
-      <div id="mContent" class="m-content"></div>
-      
-      <button id="mFab" class="fab">+</button>
-      
-      <div class="m-nav">
-        <button class="m-nav-item active" onclick="switchMobileTab('day')">
-          <span class="m-nav-icon">📅</span><span>Gün</span>
-        </button>
-        <button class="m-nav-item" onclick="switchMobileTab('month')">
-          <span class="m-nav-icon">🗓</span><span>Takvim</span>
-        </button>
-        <button class="m-nav-item" onclick="switchMobileTab('inbox')">
-          <span class="m-nav-icon">📥</span><span>Inbox</span>
-        </button>
-        <button class="m-nav-item" onclick="switchMobileTab('habits')">
-          <span class="m-nav-icon">✅</span><span>Habit</span>
-        </button>
-        <button class="m-nav-item" onclick="switchMobileTab('settings')">
-          <span class="m-nav-icon">⚙</span><span>Ayar</span>
-        </button>
+
+      <div class="mobile-content" id="mobileContent"></div>
+
+      <button class="fab" id="mobileFab">+</button>
+
+      <div class="bottom-nav">
+        <button class="nav-item active" data-tab="day"><span class="nav-icon">📅</span><span>Gün</span></button>
+        <button class="nav-item" data-tab="month"><span class="nav-icon">🗓</span><span>Takvim</span></button>
+        <button class="nav-item" data-tab="inbox"><span class="nav-icon">📥</span><span>Inbox</span></button>
+        <button class="nav-item" data-tab="habits"><span class="nav-icon">✅</span><span>Habit</span></button>
+        <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙</span><span>Ayar</span></button>
       </div>
     </div>
 
   </div>
 
-  <div id="itemModal" class="overlay">
-    <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+  <div id="overlay" class="overlay">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
         <h3 id="modalTitle" style="margin:0;">Ekle</h3>
-        <button class="btn" onclick="closeModal()">Kapat</button>
+        <button id="modalClose" class="btn">X</button>
       </div>
-      <input id="inpText" type="text" placeholder="Görev başlığı..." style="width:100%; margin-bottom:10px;">
-      <div style="display:flex; gap:10px; margin-bottom:10px;">
-        <input id="inpTime" type="time" style="flex:1;">
-        <select id="inpType" style="flex:1;">
-          <option value="gorev">Görev</option>
-          <option value="termin">Termin</option>
-          <option value="hedef">Hedef</option>
-        </select>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <input id="mText" type="text" placeholder="Başlık..." />
+        <div style="display:flex; gap:8px;">
+          <input id="mTime" type="time" style="flex:1;">
+          <select id="mType" style="flex:1;">
+            <option value="gorev">Görev</option>
+            <option value="termin">Termin</option>
+            <option value="hedef">Hedef</option>
+          </select>
+        </div>
+        <select id="mTag"><option value="">Tag Yok</option></select>
+        
+        <div style="display:flex; justify-content:space-between; margin-top:10px;">
+          <button id="modalDelete" class="btn danger" style="display:none;">Sil</button>
+          <button id="modalSave" class="btn primary" style="margin-left:auto;">Kaydet</button>
+        </div>
       </div>
-      <select id="inpTag" style="width:100%; margin-bottom:15px;"></select>
-      
-      <div style="display:flex; justify-content:space-between;">
-        <button id="btnDelete" class="btn danger" style="display:none;">Sil</button>
-        <button id="btnSave" class="btn primary" style="margin-left:auto;">Kaydet</button>
+    </div>
+  </div>
+
+  <div id="confirmOverlay" class="overlay" style="z-index:110;">
+    <div class="modal" style="text-align:center;">
+      <h3 style="margin-top:0;">Emin misin?</h3>
+      <p id="confirmMsg" style="color:var(--muted);">Bu işlem geri alınamaz.</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:16px;">
+        <button id="confirmNo" class="btn">İptal</button>
+        <button id="confirmYes" class="btn danger">Evet, Sil</button>
       </div>
     </div>
   </div>
 
 <script>
-// ==========================================
-// 1. CONFIG & STATE
-// ==========================================
-// BURAYA KENDİ KEYLERİNİ YAPIŞTIR
 const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
-// ------------------------------------------
 
 let db = { days:{}, inbox:[], habits:[], tags:[{name:'genel', color:'#7dd3fc'}], habitState:{date:'', doneIds:[]} };
 let currentUser = null;
 let _supabase = null;
 let selectedDate = new Date();
-let mobileTab = 'day';
-let desktopMode = 'week'; 
-let modalCtx = null; 
+let mobileTab = 'day'; 
+let desktopMode = 'week';
+let modalCtx = null;
 
-// ==========================================
-// 2. INITIALIZATION
-// ==========================================
-window.addEventListener('DOMContentLoaded', () => {
-  if(SUPABASE_URL && SUPABASE_KEY) {
-    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    initAuth();
-  } else {
-    alert("Supabase URL ve Key girilmemiş (index.html altını kontrol et)");
-  }
-});
+if(SUPABASE_URL && SUPABASE_KEY) {
+  _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  initApp();
+} else {
+  alert("Supabase Keylerini girmeyi unutma!");
+}
 
-async function initAuth() {
+async function initApp() {
   const { data: { session } } = await _supabase.auth.getSession();
-  if(session) handleLogin(session);
-  
+  if(session) handleSession(session);
+  else document.getElementById('authOverlay').style.display = 'flex';
+
   _supabase.auth.onAuthStateChange((_event, session) => {
-    if(session) handleLogin(session);
-    else showAuthScreen();
+    if(session) handleSession(session);
+    else location.reload();
   });
 }
 
-function showAuthScreen() {
-  document.getElementById('authOverlay').style.display = 'flex';
-  document.getElementById('appContainer').classList.add('hidden');
-}
-
-async function handleLogin(session) {
+async function handleSession(session) {
   currentUser = session.user;
   document.getElementById('authOverlay').style.display = 'none';
-  document.getElementById('appContainer').classList.remove('hidden');
-  await loadData();
-  render();
+  document.getElementById('appWrap').style.display = 'block';
+  document.getElementById('userEmailDisplay').textContent = currentUser.email;
+  await loadRemoteDB();
+  renderAll();
 }
 
-// ==========================================
-// 3. DATABASE SYNC & UTILS (FIXED)
-// ==========================================
-const LOCAL_KEY = 'minimal_todo_v17_fix';
-
-function uuid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-
-// *** TIMEZONE FIX ***
-// `toISOString` kullanmak yerine yerel saati kullanıyoruz.
-function dayKey(d) { 
+// DATE UTILS
+function formatDateKey(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const da = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${da}`;
 }
-// ********************
-
-function todayKey() { return dayKey(new Date()); }
-function addDay(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function todayKey() { return formatDateKey(new Date()); }
+function addDays(d, n) { const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth()+1, 0); }
 function getStartOfWeek(d) { const x = new Date(d); const day = (x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
-function navDate(n) { selectedDate = addDay(selectedDate, n); render(); }
-function switchMobileTab(t) { mobileTab = t; render(); }
+function hexToRgba(hex, alpha) {
+  let c;
+  if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+      c= hex.substring(1).split('');
+      if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+      c= '0x'+c.join('');
+      return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+  }
+  return `rgba(50,50,50,${alpha})`;
+}
 
-async function loadData() {
-  const local = localStorage.getItem(LOCAL_KEY);
-  if(local) db = JSON.parse(local);
-
+// DB
+const LOCAL_KEY = 'minimal_todo_v16_6_final';
+async function loadRemoteDB() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if(raw) db = JSON.parse(raw);
+  } catch{}
   if(currentUser) {
     const { data } = await _supabase.from('user_data').select('content').eq('id', currentUser.id).single();
     if(data && data.content) {
       db = data.content;
       localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-    }
+    } else if(!db.days) saveDB(db);
   }
 }
-
-let saveTimer = null;
-function saveDB() {
+let saveTimeout = null;
+function saveDB(newDB) {
+  if(newDB) db = newDB;
   localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-  if(saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    if(currentUser) {
-      await _supabase.from('user_data').upsert({ id: currentUser.id, content: db, updated_at: new Date() });
-    }
+  if(saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    if(currentUser) await _supabase.from('user_data').upsert({ id: currentUser.id, content: db, updated_at: new Date() });
   }, 1000);
-  render();
 }
 
-function logout() {
-  _supabase.auth.signOut();
-  location.reload();
-}
-
-// ==========================================
-// 4. RENDERING
-// ==========================================
-function render() {
+// RENDER
+function renderAll() {
   renderDesktop();
   renderMobile();
 }
 
-// --- DESKTOP RENDERER ---
 function renderDesktop() {
-  const dGrid = document.getElementById('dCalGrid');
-  const dTitle = document.getElementById('dDateTitle');
+  const dGrid = document.getElementById('desktopGrid');
+  document.getElementById('desktopCalendarTitle').textContent = selectedDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
   dGrid.innerHTML = '';
-  
-  dTitle.textContent = selectedDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
   
   let days = [];
   if(desktopMode === 'week') {
     const start = getStartOfWeek(selectedDate);
-    for(let i=0; i<7; i++) days.push({d: addDay(start, i), out: false});
-    dGrid.className = 'cal-grid week';
+    for(let i=0; i<7; i++) days.push({d: addDays(start, i), out: false});
+    dGrid.className = 'grid week';
   } else {
-    const start = getStartOfWeek(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
-    for(let i=0; i<42; i++) { // 6 weeks
-      const d = addDay(start, i);
+    const start = getStartOfWeek(startOfMonth(selectedDate));
+    for(let i=0; i<42; i++) {
+      const d = addDays(start, i);
       days.push({d: d, out: d.getMonth() !== selectedDate.getMonth()});
     }
-    dGrid.className = 'cal-grid month';
+    dGrid.className = 'grid month';
   }
 
   days.forEach(dayObj => {
-    const k = dayKey(dayObj.d);
-    const isSel = k === dayKey(selectedDate);
+    const k = formatDateKey(dayObj.d);
+    const isSel = k === formatDateKey(selectedDate);
     const items = (db.days[k]||[]).filter(i => !i.done);
-    
     const el = document.createElement('div');
-    el.className = `cal-cell ${dayObj.out ? 'out' : ''} ${isSel ? 'sel' : ''}`;
-    el.innerHTML = `<div style="font-size:12px; color:var(--muted); margin-bottom:5px;">${dayObj.d.getDate()} <span style="float:right">${items.length||''}</span></div>`;
-    
+    el.className = `cell ${dayObj.out ? 'out' : ''} ${isSel ? 'sel' : ''} ${desktopMode==='month'?'monthCell':''}`;
+    el.innerHTML = `<div style="font-size:12px; color:var(--muted);">${dayObj.d.getDate()} <span style="float:right;color:var(--accent)">${items.length||''}</span></div>`;
     items.slice(0, 3).forEach(it => {
       let color = 'var(--frame-gorev)';
       if(it.type === 'termin') color = 'var(--frame-termin)';
-      if(it.type === 'hedef') color = 'var(--frame-hedef)';
-      const dot = document.createElement('div');
-      dot.style.cssText = `height:4px; width:20px; border-radius:2px; margin-bottom:2px; background:${color};`;
-      el.appendChild(dot);
+      else if(it.type === 'hedef') color = 'var(--frame-hedef)';
+      el.innerHTML += `<div style="height:4px; width:20px; border-radius:2px; margin-top:4px; background:${color};"></div>`;
     });
-
-    el.onclick = () => { selectedDate = dayObj.d; render(); };
+    el.onclick = () => { selectedDate = dayObj.d; renderAll(); };
     dGrid.appendChild(el);
   });
 
-  renderList(document.getElementById('dDayList'), db.days[dayKey(selectedDate)]||[], 'day');
+  renderList(document.getElementById('dDayList'), db.days[formatDateKey(selectedDate)]||[], 'day');
   renderList(document.getElementById('dInboxList'), db.inbox, 'inbox');
   renderHabits(document.getElementById('dHabitsList'));
 }
 
-// --- MOBILE RENDERER ---
 function renderMobile() {
-  const mContent = document.getElementById('mContent');
-  const mHeader = document.getElementById('mHeaderDate');
-  const mFab = document.getElementById('mFab');
-  
-  document.querySelectorAll('.m-nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll(`.m-nav-item`)[['day','month','inbox','habits','settings'].indexOf(mobileTab)].classList.add('active');
-  
+  const mContent = document.getElementById('mobileContent');
+  const mHeader = document.getElementById('mobileHeaderDate');
+  const mFab = document.getElementById('mobileFab');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll(`.nav-item`)[['day','month','inbox','habits','settings'].indexOf(mobileTab)].classList.add('active');
   mContent.innerHTML = '';
-  mFab.style.display = (mobileTab==='settings') ? 'none' : 'flex';
+  mFab.style.display = (mobileTab === 'settings') ? 'none' : 'flex';
 
   if(mobileTab === 'day') {
     mHeader.textContent = selectedDate.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'short'});
-    
     const wrap = document.createElement('div');
-    wrap.style.minHeight = '60vh';
+    wrap.className = 'mobile-day-wrapper';
     let ts = 0;
     wrap.addEventListener('touchstart', e => ts = e.touches[0].clientX);
     wrap.addEventListener('touchend', e => {
       const te = e.changedTouches[0].clientX;
-      if(ts - te > 50) navDate(1);
-      if(te - ts > 50) navDate(-1);
+      if(ts - te > 50) { selectedDate = addDays(selectedDate, 1); renderAll(); }
+      if(te - ts > 50) { selectedDate = addDays(selectedDate, -1); renderAll(); }
     });
-
-    renderList(wrap, db.days[dayKey(selectedDate)]||[], 'day');
-    if(!wrap.hasChildNodes()) wrap.innerHTML = '<div style="text-align:center;color:var(--muted);margin-top:50px;">Bugün boş.<br>+ ile ekle.</div>';
+    renderList(wrap, db.days[formatDateKey(selectedDate)]||[], 'day');
+    if(!wrap.hasChildNodes()) wrap.innerHTML = '<div class="empty-state">Bugün boş.<br>+ ile ekle.</div>';
     mContent.appendChild(wrap);
-    mFab.onclick = () => openModal({dest:'day'});
-  
+    mFab.onclick = () => openModalAdd({dest:'day'});
   } else if (mobileTab === 'month') {
     mHeader.textContent = selectedDate.toLocaleDateString('tr-TR', {month:'long', year:'numeric'});
     const grid = document.createElement('div');
-    const start = getStartOfWeek(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
-    
-    // Headers
+    const start = getStartOfWeek(startOfMonth(selectedDate));
     const hRow = document.createElement('div');
-    hRow.className = 'm-cal-row';
-    ['Pt','Sa','Ça','Pe','Cu','Ct','Pa'].forEach(d => hRow.innerHTML+=`<span style="font-size:12px;color:var(--muted)">${d}</span>`);
+    hRow.className = 'm-cal-grid m-cal-head';
+    ['Pt','Sa','Ça','Pe','Cu','Ct','Pa'].forEach(d => hRow.innerHTML+=`<span>${d}</span>`);
     grid.appendChild(hRow);
-
+    const bodyDiv = document.createElement('div');
+    bodyDiv.className = 'm-cal-grid';
     for(let i=0; i<42; i++) {
-      const d = addDay(start, i);
-      const k = dayKey(d);
-      const isToday = k === todayKey();
-      const isSel = k === dayKey(selectedDate);
+      const d = addDays(start, i);
+      const k = formatDateKey(d);
       const items = (db.days[k]||[]);
-      
       const cell = document.createElement('div');
-      cell.className = `m-cal-cell ${isToday?'today':''} ${isSel?'sel':''}`;
-      cell.style.opacity = d.getMonth()===selectedDate.getMonth() ? 1 : 0.3;
-      
+      cell.className = `m-cal-cell ${k===todayKey()?'today':''} ${k===formatDateKey(selectedDate)?'selected':''} ${d.getMonth()!==selectedDate.getMonth()?'diff-month':''}`;
       let dots = '';
       items.filter(x=>!x.done).slice(0,3).forEach(it => {
         let c = 'var(--frame-gorev)';
-        if(it.type==='termin') c = 'var(--frame-termin)';
+        if(it.type==='termin') c = 'var(--frame-termin)'; else if(it.type==='hedef') c = 'var(--frame-hedef)';
         dots += `<div class="m-dot" style="background:${c}"></div>`;
       });
-      
-      cell.innerHTML = `<span>${d.getDate()}</span><div style="display:flex;gap:2px;">${dots}</div>`;
-      cell.onclick = () => { selectedDate = d; mobileTab = 'day'; render(); };
-      
-      if(i%7 === 0) { const r = document.createElement('div'); r.className='m-cal-row'; grid.appendChild(r); }
-      grid.lastChild.appendChild(cell);
+      cell.innerHTML = `<span>${d.getDate()}</span><div class="m-dots">${dots}</div>`;
+      cell.onclick = () => { selectedDate = d; mobileTab = 'day'; renderAll(); };
+      bodyDiv.appendChild(cell);
     }
+    grid.appendChild(bodyDiv);
     mContent.appendChild(grid);
-    mFab.onclick = () => openModal({dest:'day'});
-
+    mFab.onclick = () => openModalAdd({dest:'day'});
   } else if (mobileTab === 'inbox') {
     mHeader.textContent = 'Inbox';
     renderList(mContent, db.inbox, 'inbox');
-    mFab.onclick = () => openModal({dest:'inbox'});
-  
+    mFab.onclick = () => openModalAdd({dest:'inbox'});
   } else if (mobileTab === 'habits') {
     mHeader.textContent = 'Habits';
     renderHabits(mContent);
     mFab.onclick = () => {
       const n = prompt('Yeni Alışkanlık:');
-      if(n) { db.habits.push({id:uuid(), name:n}); saveDB(); }
+      if(n) { db.habits.push({id:crypto.randomUUID(), name:n}); saveDB(); renderAll(); }
     };
-
   } else if (mobileTab === 'settings') {
     mHeader.textContent = 'Ayarlar';
     mContent.innerHTML = `
-      <div class="card">
+      <div class="card" style="border-left:4px solid var(--line);">
         <h3>Tag Yönetimi</h3>
         <div id="mTags"></div>
         <div style="margin-top:10px; display:flex; gap:5px;">
@@ -452,22 +465,19 @@ function renderMobile() {
       const row = document.createElement('div');
       row.style.cssText = "display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;";
       row.innerHTML = `<span style="color:${t.color}">● ${t.name}</span> <button class="btn danger" style="padding:2px 6px; font-size:10px;">Sil</button>`;
-      row.querySelector('button').onclick = () => { db.tags=db.tags.filter(x=>x.name!==t.name); saveDB(); };
+      row.querySelector('button').onclick = () => { showConfirm('Tag silinsin mi?', () => { db.tags=db.tags.filter(x=>x.name!==t.name); saveDB(); renderAll(); }); };
       tagList.appendChild(row);
     });
   }
 }
 
-// ==========================================
-// 5. HELPER RENDERERS
-// ==========================================
+// *** LIST RENDERER (RENK DUZELTMESİ) ***
 function renderList(container, list, origin) {
   container.innerHTML = '';
   if(!list || list.length === 0) {
     if(origin!=='day') container.innerHTML = '<div style="color:var(--muted); font-size:12px; text-align:center; padding:10px;">Boş</div>';
     return;
   }
-  
   const sorted = [...list].sort((a,b) => {
     if(a.done !== b.done) return a.done ? 1 : -1;
     return (a.time||'99') > (b.time||'99') ? 1 : -1;
@@ -476,73 +486,74 @@ function renderList(container, list, origin) {
   sorted.forEach(item => {
     const el = document.createElement('div');
     el.className = `card ${item.done ? 'done' : ''}`;
-    let bc = 'var(--line)';
-    if(item.type==='termin') bc='var(--frame-termin)';
-    else if(item.type==='hedef') bc='var(--frame-hedef)';
-    else if(item.type==='gorev') bc='var(--frame-gorev)';
-    el.style.borderLeftColor = bc;
+    
+    // 1. Sol Şerit = TÜR RENGİ
+    let typeColor = 'var(--frame-gorev)';
+    if(item.type==='termin') typeColor='var(--frame-termin)';
+    else if(item.type==='hedef') typeColor='var(--frame-hedef)';
+    el.style.borderLeftColor = typeColor;
+
+    // 2. Arkaplan = TAG RENGİ (Şeffaf)
+    if(item.tag) {
+      const t = db.tags.find(tag => tag.name === item.tag);
+      if(t && t.color) {
+        el.style.background = hexToRgba(t.color, 0.15); // %15 opacity
+      }
+    }
 
     el.innerHTML = `
-      <div style="display:flex; gap:10px; align-items:flex-start;">
+      <div class="cardRow">
         <div class="checkBtn">${item.done?'✓':''}</div>
-        <div style="flex:1;">
-           <div style="font-size:14px;">${item.text}</div>
-           <div style="font-size:11px; color:var(--muted);">${item.time ? '🕒 '+item.time : ''} ${item.tag ? '• '+item.tag : ''}</div>
+        <div class="cardBody">
+           <div class="titleText">${item.text}</div>
+           <div class="timeText">${item.time ? '🕒 '+item.time : ''} ${item.tag ? '• '+item.tag : ''}</div>
         </div>
       </div>
     `;
-    
-    el.querySelector('.checkBtn').onclick = (e) => { e.stopPropagation(); item.done = !item.done; saveDB(); };
-    el.onclick = () => openModal({mode:'edit', item:item, origin:origin});
+    el.querySelector('.checkBtn').onclick = (e) => { e.stopPropagation(); item.done = !item.done; saveDB(); renderAll(); };
+    el.onclick = () => openModalAdd({mode:'edit', item:item, origin:origin});
     container.appendChild(el);
   });
 }
 
 function renderHabits(container) {
   container.innerHTML = '';
-  const today = todayKey();
-  if(db.habitState.date !== today) { db.habitState = {date:today, doneIds:[]}; saveDB(); }
+  const today = formatDateKey(new Date());
+  if(!db.habitState || db.habitState.date !== today) { db.habitState = {date:today, doneIds:[]}; saveDB(); }
   if(!db.habits.length) { container.innerHTML = '<div style="text-align:center;color:var(--muted);">Boş</div>'; return; }
-
   db.habits.forEach(h => {
     const isDone = db.habitState.doneIds.includes(h.id);
     const el = document.createElement('div');
     el.className = 'card';
-    el.style.cssText = `display:flex; justify-content:space-between; align-items:center; ${isDone?'opacity:0.5':''}`;
+    el.style.cssText = `display:flex; justify-content:space-between; align-items:center; border-left:4px solid var(--line); ${isDone?'opacity:0.5':''}`;
     el.innerHTML = `<span>${h.name}</span> <div class="checkBtn" style="${isDone?'background:var(--accent);color:#000':''}">${isDone?'✓':''}</div>`;
     el.onclick = () => {
       if(isDone) db.habitState.doneIds = db.habitState.doneIds.filter(x=>x!==h.id);
       else db.habitState.doneIds.push(h.id);
-      saveDB();
+      saveDB(); renderAll();
     };
     container.appendChild(el);
   });
 }
 
-// ==========================================
-// 6. MODAL & ACTIONS
-// ==========================================
 function addTag() {
   const n = document.getElementById('newTagName').value;
   const c = document.getElementById('newTagColor').value;
-  if(n) { db.tags.push({name:n, color:c}); saveDB(); }
+  if(n) { db.tags.push({name:n, color:c}); saveDB(); renderAll(); }
 }
 
-function openModal(ctx) {
+function openModalAdd(ctx) {
   modalCtx = ctx;
-  const modal = document.getElementById('itemModal');
+  const modal = document.getElementById('overlay');
   const title = document.getElementById('modalTitle');
-  const txt = document.getElementById('inpText');
-  const time = document.getElementById('inpTime');
-  const type = document.getElementById('inpType');
-  const tag = document.getElementById('inpTag');
-  const delBtn = document.getElementById('btnDelete');
-
+  const txt = document.getElementById('mText');
+  const time = document.getElementById('mTime');
+  const type = document.getElementById('mType');
+  const tag = document.getElementById('mTag');
+  const delBtn = document.getElementById('modalDelete');
   tag.innerHTML = '<option value="">Tag Yok</option>';
   db.tags.forEach(t => tag.innerHTML += `<option value="${t.name}">${t.name}</option>`);
-
   modal.style.display = 'flex';
-  
   if(ctx.mode === 'edit') {
     title.textContent = 'Düzenle';
     txt.value = ctx.item.text;
@@ -551,7 +562,7 @@ function openModal(ctx) {
     tag.value = ctx.item.tag || '';
     delBtn.style.display = 'block';
   } else {
-    title.textContent = 'Yeni Ekle';
+    title.textContent = 'Ekle';
     txt.value = '';
     time.value = '';
     type.value = 'gorev';
@@ -560,61 +571,55 @@ function openModal(ctx) {
   }
 }
 
-function closeModal() { document.getElementById('itemModal').style.display = 'none'; }
+function closeModal() { document.getElementById('overlay').style.display = 'none'; }
 
-document.getElementById('btnSave').onclick = () => {
-  const txt = document.getElementById('inpText').value;
+document.getElementById('modalSave').onclick = () => {
+  const txt = document.getElementById('mText').value;
   if(!txt) return;
-  
   if(modalCtx.mode === 'edit') {
-    modalCtx.item.text = txt;
-    modalCtx.item.time = document.getElementById('inpTime').value;
-    modalCtx.item.type = document.getElementById('inpType').value;
-    modalCtx.item.tag = document.getElementById('inpTag').value;
+    modalCtx.item.text = txt; modalCtx.item.time = document.getElementById('mTime').value;
+    modalCtx.item.type = document.getElementById('mType').value; modalCtx.item.tag = document.getElementById('mTag').value;
   } else {
-    const newItem = {
-      id: uuid(), text: txt, time: document.getElementById('inpTime').value,
-      type: document.getElementById('inpType').value, tag: document.getElementById('inpTag').value,
-      done: false, created: Date.now()
-    };
+    const newItem = { id: crypto.randomUUID(), text: txt, time: document.getElementById('mTime').value, type: document.getElementById('mType').value, tag: document.getElementById('mTag').value, done: false, created: Date.now() };
     if(modalCtx.dest === 'inbox') db.inbox.push(newItem);
-    else {
-      const k = dayKey(selectedDate);
-      if(!db.days[k]) db.days[k] = [];
-      db.days[k].push(newItem);
-    }
+    else { const k = formatDateKey(selectedDate); if(!db.days[k]) db.days[k] = []; db.days[k].push(newItem); }
   }
-  saveDB();
-  closeModal();
+  saveDB(); closeModal(); renderAll();
 };
 
-document.getElementById('btnDelete').onclick = () => {
-  if(confirm("Silmek istediğine emin misin?")) {
+document.getElementById('modalDelete').onclick = () => {
+  showConfirm("Silmek istediğine emin misin?", () => {
     if(modalCtx.origin === 'inbox') db.inbox = db.inbox.filter(x => x.id !== modalCtx.item.id);
-    else { const k = dayKey(selectedDate); db.days[k] = db.days[k].filter(x => x.id !== modalCtx.item.id); }
-    saveDB();
-    closeModal();
-  }
+    else { const k = formatDateKey(selectedDate); db.days[k] = db.days[k].filter(x => x.id !== modalCtx.item.id); }
+    saveDB(); closeModal(); renderAll();
+  });
 };
 
-// Desktop Nav
-document.getElementById('dBtnWeek').onclick = () => { desktopMode='week'; render(); };
-document.getElementById('dBtnMonth').onclick = () => { desktopMode='month'; render(); };
+const confirmOverlay = document.getElementById('confirmOverlay');
+let confirmCallback = null;
+function showConfirm(msg, cb) {
+  document.getElementById('confirmMsg').textContent = msg; confirmCallback = cb; confirmOverlay.style.display = 'flex';
+}
+document.getElementById('confirmYes').onclick = () => { if(confirmCallback) confirmCallback(); confirmOverlay.style.display = 'none'; };
+document.getElementById('confirmNo').onclick = () => { confirmOverlay.style.display = 'none'; };
 
-// Auth Events
+document.querySelectorAll('.nav-item').forEach(el => { el.onclick = () => { mobileTab = el.dataset.tab; renderAll(); }; });
+document.getElementById('prevD').onclick = () => { selectedDate = addDays(selectedDate, -7); renderAll(); };
+document.getElementById('nextD').onclick = () => { selectedDate = addDays(selectedDate, 7); renderAll(); };
+document.getElementById('todayD').onclick = () => { selectedDate = new Date(); renderAll(); };
+document.getElementById('btnWeekD').onclick = () => { desktopMode='week'; renderAll(); };
+document.getElementById('btnMonthD').onclick = () => { desktopMode='month'; renderAll(); };
+
 document.getElementById('btnLogin').onclick = async () => {
-  const email = document.getElementById('authEmail').value;
-  const pass = document.getElementById('authPass').value;
-  const { error } = await _supabase.auth.signInWithPassword({email, password:pass});
+  const { error } = await _supabase.auth.signInWithPassword({ email: document.getElementById('authEmail').value, password: document.getElementById('authPass').value });
   if(error) document.getElementById('authError').textContent = error.message;
 };
 document.getElementById('btnSignup').onclick = async () => {
-  const email = document.getElementById('authEmail').value;
-  const pass = document.getElementById('authPass').value;
-  const { error } = await _supabase.auth.signUp({email, password:pass});
-  if(error) document.getElementById('authError').textContent = error.message;
-  else alert("Kayıt olundu, giriş yapabilirsiniz.");
+  const { error } = await _supabase.auth.signUp({ email: document.getElementById('authEmail').value, password: document.getElementById('authPass').value });
+  if(error) document.getElementById('authError').textContent = error.message; else alert("Kayıt olundu, giriş yapabilirsiniz.");
 };
+document.getElementById('btnLogoutD').onclick = () => logout();
+function logout() { _supabase.auth.signOut(); location.reload(); }
 </script>
 </body>
 </html>
