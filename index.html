@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v17.2 (Fixes)</title>
+  <title>Minimal To-Do v17.1 (Timezone Fix)</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -25,16 +25,9 @@
     .btn.primary{ background: var(--accent); color: #000; border-color:var(--accent); font-weight: 600; }
     input, select{ background:#101014; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:8px; outline:none; }
     
+    /* Helpers */
     .hidden { display: none !important; }
-    
-    /* Card Styles */
-    .card { 
-      border-radius:8px; padding:8px 10px; background: var(--card); 
-      border:1px solid var(--line); 
-      /* Sol kenar çizgisi (Tag rengi veya Type rengi için) */
-      border-left-width:4px; 
-      margin-bottom:6px; position:relative; user-select:none; 
-    }
+    .card { border-left: 3px solid var(--line); border-radius:8px; padding:8px 10px; background: var(--card); border:1px solid var(--line); border-left-width:3px; margin-bottom:6px; position:relative; user-select:none; }
     .card.done { opacity:0.5; }
     .checkBtn { width:20px; height:20px; border-radius:6px; border:1px solid var(--muted); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:transparent; }
     .card.done .checkBtn { background:var(--accent); border-color:var(--accent); color:#000; }
@@ -56,6 +49,7 @@
     .d-side { overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
     .panel { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; }
     
+    /* Calendar Grid Desktop */
     .cal-grid { display:grid; gap:10px; }
     .cal-grid.week { grid-template-columns: repeat(7, 1fr); }
     .cal-grid.month { grid-template-columns: repeat(7, 1fr); }
@@ -73,6 +67,7 @@
     .m-nav-icon { font-size:18px; margin-bottom:2px; }
     .fab { position:fixed; bottom:80px; right:20px; width:56px; height:56px; border-radius:16px; background:var(--accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:28px; box-shadow:0 4px 15px rgba(0,0,0,0.5); border:none; z-index:15; }
 
+    /* Mobile Calendar */
     .m-cal-row { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:5px; }
     .m-cal-cell { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; font-size:14px; position:relative; }
     .m-cal-cell.today { background:#333; font-weight:bold; }
@@ -88,8 +83,8 @@
 
   <div id="authOverlay" class="overlay" style="display:flex;">
     <div class="modal-box">
-      <h2 style="text-align:center; margin-top:0;">Minimal To-Do v17.2</h2>
-      <p style="text-align:center; color:var(--muted);">Giriş Yapın</p>
+      <h2 style="text-align:center; margin-top:0;">Minimal To-Do v17.1</h2>
+      <p style="text-align:center; color:var(--muted);">Devam etmek için giriş yapın</p>
       <input type="email" id="authEmail" placeholder="E-posta" style="width:100%; margin-bottom:10px;">
       <input type="password" id="authPass" placeholder="Şifre" style="width:100%; margin-bottom:10px;">
       <div id="authError" style="color:#fb7185; font-size:12px; min-height:18px; text-align:center; margin-bottom:10px;"></div>
@@ -145,14 +140,27 @@
         <span style="font-weight:bold; font-size:18px;">Minimal To-Do</span>
         <span id="mHeaderDate" style="font-size:12px; color:var(--accent);"></span>
       </div>
+      
       <div id="mContent" class="m-content"></div>
+      
       <button id="mFab" class="fab">+</button>
+      
       <div class="m-nav">
-        <button class="m-nav-item active" onclick="switchMobileTab('day')"><span class="m-nav-icon">📅</span><span>Gün</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('month')"><span class="m-nav-icon">🗓</span><span>Takvim</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('inbox')"><span class="m-nav-icon">📥</span><span>Inbox</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('habits')"><span class="m-nav-icon">✅</span><span>Habit</span></button>
-        <button class="m-nav-item" onclick="switchMobileTab('settings')"><span class="m-nav-icon">⚙</span><span>Ayar</span></button>
+        <button class="m-nav-item active" onclick="switchMobileTab('day')">
+          <span class="m-nav-icon">📅</span><span>Gün</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('month')">
+          <span class="m-nav-icon">🗓</span><span>Takvim</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('inbox')">
+          <span class="m-nav-icon">📥</span><span>Inbox</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('habits')">
+          <span class="m-nav-icon">✅</span><span>Habit</span>
+        </button>
+        <button class="m-nav-item" onclick="switchMobileTab('settings')">
+          <span class="m-nav-icon">⚙</span><span>Ayar</span>
+        </button>
       </div>
     </div>
 
@@ -174,6 +182,7 @@
         </select>
       </div>
       <select id="inpTag" style="width:100%; margin-bottom:15px;"></select>
+      
       <div style="display:flex; justify-content:space-between;">
         <button id="btnDelete" class="btn danger" style="display:none;">Sil</button>
         <button id="btnSave" class="btn primary" style="margin-left:auto;">Kaydet</button>
@@ -185,7 +194,7 @@
 // ==========================================
 // 1. CONFIG & STATE
 // ==========================================
-// KENDI KEYLERINIZI EKLEYIN
+// BURAYA KENDİ KEYLERİNİ YAPIŞTIR
 const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
 // ------------------------------------------
@@ -193,7 +202,7 @@ const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM";
 let db = { days:{}, inbox:[], habits:[], tags:[{name:'genel', color:'#7dd3fc'}], habitState:{date:'', doneIds:[]} };
 let currentUser = null;
 let _supabase = null;
-let selectedDate = new Date(); // Javascript Date object just for UI Navigation
+let selectedDate = new Date();
 let mobileTab = 'day';
 let desktopMode = 'week'; 
 let modalCtx = null; 
@@ -206,15 +215,17 @@ window.addEventListener('DOMContentLoaded', () => {
     _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     initAuth();
   } else {
-    alert("Supabase URL ve Key girilmemiş!");
+    alert("Supabase URL ve Key girilmemiş (index.html altını kontrol et)");
   }
 });
 
 async function initAuth() {
   const { data: { session } } = await _supabase.auth.getSession();
   if(session) handleLogin(session);
+  
   _supabase.auth.onAuthStateChange((_event, session) => {
-    if(session) handleLogin(session); else showAuthScreen();
+    if(session) handleLogin(session);
+    else showAuthScreen();
   });
 }
 
@@ -232,36 +243,27 @@ async function handleLogin(session) {
 }
 
 // ==========================================
-// 3. DATE & TIME UTILS (FIXED)
+// 3. DATABASE SYNC & UTILS (FIXED)
 // ==========================================
-// Tarihleri tamamen string olarak yönetiyoruz, saat diliminden etkilenmemesi için.
-function formatDateKey(d) {
-  // Yerel saati kullanarak YYYY-MM-DD oluşturur.
+const LOCAL_KEY = 'minimal_todo_v17_fix';
+
+function uuid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+// *** TIMEZONE FIX ***
+// `toISOString` kullanmak yerine yerel saati kullanıyoruz.
+function dayKey(d) { 
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const da = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${da}`;
 }
+// ********************
 
-function addDay(d, n) { 
-  const result = new Date(d); 
-  result.setDate(result.getDate() + n); 
-  return result; 
-}
-
-function getStartOfWeek(d) { 
-  const result = new Date(d); 
-  const day = (result.getDay() + 6) % 7; 
-  result.setDate(result.getDate() - day); 
-  return result; 
-}
-
-function uuid() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-
-// ==========================================
-// 4. DATABASE SYNC
-// ==========================================
-const LOCAL_KEY = 'minimal_todo_v17_2';
+function todayKey() { return dayKey(new Date()); }
+function addDay(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function getStartOfWeek(d) { const x = new Date(d); const day = (x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
+function navDate(n) { selectedDate = addDay(selectedDate, n); render(); }
+function switchMobileTab(t) { mobileTab = t; render(); }
 
 async function loadData() {
   const local = localStorage.getItem(LOCAL_KEY);
@@ -288,21 +290,26 @@ function saveDB() {
   render();
 }
 
-function logout() { _supabase.auth.signOut(); location.reload(); }
+function logout() {
+  _supabase.auth.signOut();
+  location.reload();
+}
 
 // ==========================================
-// 5. RENDERING
+// 4. RENDERING
 // ==========================================
 function render() {
   renderDesktop();
   renderMobile();
 }
 
-// --- DESKTOP ---
+// --- DESKTOP RENDERER ---
 function renderDesktop() {
   const dGrid = document.getElementById('dCalGrid');
-  document.getElementById('dDateTitle').textContent = selectedDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
+  const dTitle = document.getElementById('dDateTitle');
   dGrid.innerHTML = '';
+  
+  dTitle.textContent = selectedDate.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
   
   let days = [];
   if(desktopMode === 'week') {
@@ -311,7 +318,7 @@ function renderDesktop() {
     dGrid.className = 'cal-grid week';
   } else {
     const start = getStartOfWeek(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
-    for(let i=0; i<42; i++) {
+    for(let i=0; i<42; i++) { // 6 weeks
       const d = addDay(start, i);
       days.push({d: d, out: d.getMonth() !== selectedDate.getMonth()});
     }
@@ -319,8 +326,8 @@ function renderDesktop() {
   }
 
   days.forEach(dayObj => {
-    const k = formatDateKey(dayObj.d); // FIX: Safe Key
-    const isSel = k === formatDateKey(selectedDate);
+    const k = dayKey(dayObj.d);
+    const isSel = k === dayKey(selectedDate);
     const items = (db.days[k]||[]).filter(i => !i.done);
     
     const el = document.createElement('div');
@@ -331,19 +338,21 @@ function renderDesktop() {
       let color = 'var(--frame-gorev)';
       if(it.type === 'termin') color = 'var(--frame-termin)';
       if(it.type === 'hedef') color = 'var(--frame-hedef)';
-      el.innerHTML += `<div style="height:4px; width:20px; border-radius:2px; margin-bottom:2px; background:${color};"></div>`;
+      const dot = document.createElement('div');
+      dot.style.cssText = `height:4px; width:20px; border-radius:2px; margin-bottom:2px; background:${color};`;
+      el.appendChild(dot);
     });
 
     el.onclick = () => { selectedDate = dayObj.d; render(); };
     dGrid.appendChild(el);
   });
 
-  renderList(document.getElementById('dDayList'), db.days[formatDateKey(selectedDate)]||[], 'day');
+  renderList(document.getElementById('dDayList'), db.days[dayKey(selectedDate)]||[], 'day');
   renderList(document.getElementById('dInboxList'), db.inbox, 'inbox');
   renderHabits(document.getElementById('dHabitsList'));
 }
 
-// --- MOBILE ---
+// --- MOBILE RENDERER ---
 function renderMobile() {
   const mContent = document.getElementById('mContent');
   const mHeader = document.getElementById('mHeaderDate');
@@ -351,23 +360,24 @@ function renderMobile() {
   
   document.querySelectorAll('.m-nav-item').forEach(el => el.classList.remove('active'));
   document.querySelectorAll(`.m-nav-item`)[['day','month','inbox','habits','settings'].indexOf(mobileTab)].classList.add('active');
+  
   mContent.innerHTML = '';
   mFab.style.display = (mobileTab==='settings') ? 'none' : 'flex';
 
   if(mobileTab === 'day') {
     mHeader.textContent = selectedDate.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'short'});
+    
     const wrap = document.createElement('div');
     wrap.style.minHeight = '60vh';
-    
     let ts = 0;
     wrap.addEventListener('touchstart', e => ts = e.touches[0].clientX);
     wrap.addEventListener('touchend', e => {
       const te = e.changedTouches[0].clientX;
-      if(ts - te > 50) { selectedDate = addDay(selectedDate, 1); render(); }
-      if(te - ts > 50) { selectedDate = addDay(selectedDate, -1); render(); }
+      if(ts - te > 50) navDate(1);
+      if(te - ts > 50) navDate(-1);
     });
 
-    renderList(wrap, db.days[formatDateKey(selectedDate)]||[], 'day');
+    renderList(wrap, db.days[dayKey(selectedDate)]||[], 'day');
     if(!wrap.hasChildNodes()) wrap.innerHTML = '<div style="text-align:center;color:var(--muted);margin-top:50px;">Bugün boş.<br>+ ile ekle.</div>';
     mContent.appendChild(wrap);
     mFab.onclick = () => openModal({dest:'day'});
@@ -377,6 +387,7 @@ function renderMobile() {
     const grid = document.createElement('div');
     const start = getStartOfWeek(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
     
+    // Headers
     const hRow = document.createElement('div');
     hRow.className = 'm-cal-row';
     ['Pt','Sa','Ça','Pe','Cu','Ct','Pa'].forEach(d => hRow.innerHTML+=`<span style="font-size:12px;color:var(--muted)">${d}</span>`);
@@ -384,9 +395,9 @@ function renderMobile() {
 
     for(let i=0; i<42; i++) {
       const d = addDay(start, i);
-      const k = formatDateKey(d);
-      const isToday = k === formatDateKey(new Date());
-      const isSel = k === formatDateKey(selectedDate);
+      const k = dayKey(d);
+      const isToday = k === todayKey();
+      const isSel = k === dayKey(selectedDate);
       const items = (db.days[k]||[]);
       
       const cell = document.createElement('div');
@@ -425,7 +436,7 @@ function renderMobile() {
   } else if (mobileTab === 'settings') {
     mHeader.textContent = 'Ayarlar';
     mContent.innerHTML = `
-      <div class="card" style="border-left:none;">
+      <div class="card">
         <h3>Tag Yönetimi</h3>
         <div id="mTags"></div>
         <div style="margin-top:10px; display:flex; gap:5px;">
@@ -448,7 +459,7 @@ function renderMobile() {
 }
 
 // ==========================================
-// 6. HELPER RENDERERS
+// 5. HELPER RENDERERS
 // ==========================================
 function renderList(container, list, origin) {
   container.innerHTML = '';
@@ -465,20 +476,11 @@ function renderList(container, list, origin) {
   sorted.forEach(item => {
     const el = document.createElement('div');
     el.className = `card ${item.done ? 'done' : ''}`;
-    
-    // --- FIX: TAG RENKLERİ ---
-    // Eğer Tag varsa Tag rengini, yoksa Type rengini kenara verelim.
-    let color = 'var(--line)';
-    if(item.tag) {
-      const t = db.tags.find(tag => tag.name === item.tag);
-      if(t) color = t.color;
-    } else {
-      if(item.type==='termin') color='var(--frame-termin)';
-      else if(item.type==='hedef') color='var(--frame-hedef)';
-      else if(item.type==='gorev') color='var(--frame-gorev)';
-    }
-    el.style.borderLeftColor = color;
-    // -------------------------
+    let bc = 'var(--line)';
+    if(item.type==='termin') bc='var(--frame-termin)';
+    else if(item.type==='hedef') bc='var(--frame-hedef)';
+    else if(item.type==='gorev') bc='var(--frame-gorev)';
+    el.style.borderLeftColor = bc;
 
     el.innerHTML = `
       <div style="display:flex; gap:10px; align-items:flex-start;">
@@ -498,7 +500,7 @@ function renderList(container, list, origin) {
 
 function renderHabits(container) {
   container.innerHTML = '';
-  const today = formatDateKey(new Date());
+  const today = todayKey();
   if(db.habitState.date !== today) { db.habitState = {date:today, doneIds:[]}; saveDB(); }
   if(!db.habits.length) { container.innerHTML = '<div style="text-align:center;color:var(--muted);">Boş</div>'; return; }
 
@@ -506,7 +508,7 @@ function renderHabits(container) {
     const isDone = db.habitState.doneIds.includes(h.id);
     const el = document.createElement('div');
     el.className = 'card';
-    el.style.cssText = `display:flex; justify-content:space-between; align-items:center; border-left:none; ${isDone?'opacity:0.5':''}`;
+    el.style.cssText = `display:flex; justify-content:space-between; align-items:center; ${isDone?'opacity:0.5':''}`;
     el.innerHTML = `<span>${h.name}</span> <div class="checkBtn" style="${isDone?'background:var(--accent);color:#000':''}">${isDone?'✓':''}</div>`;
     el.onclick = () => {
       if(isDone) db.habitState.doneIds = db.habitState.doneIds.filter(x=>x!==h.id);
@@ -518,7 +520,7 @@ function renderHabits(container) {
 }
 
 // ==========================================
-// 7. MODAL ACTIONS
+// 6. MODAL & ACTIONS
 // ==========================================
 function addTag() {
   const n = document.getElementById('newTagName').value;
@@ -577,7 +579,7 @@ document.getElementById('btnSave').onclick = () => {
     };
     if(modalCtx.dest === 'inbox') db.inbox.push(newItem);
     else {
-      const k = formatDateKey(selectedDate);
+      const k = dayKey(selectedDate);
       if(!db.days[k]) db.days[k] = [];
       db.days[k].push(newItem);
     }
@@ -589,18 +591,17 @@ document.getElementById('btnSave').onclick = () => {
 document.getElementById('btnDelete').onclick = () => {
   if(confirm("Silmek istediğine emin misin?")) {
     if(modalCtx.origin === 'inbox') db.inbox = db.inbox.filter(x => x.id !== modalCtx.item.id);
-    else { const k = formatDateKey(selectedDate); db.days[k] = db.days[k].filter(x => x.id !== modalCtx.item.id); }
+    else { const k = dayKey(selectedDate); db.days[k] = db.days[k].filter(x => x.id !== modalCtx.item.id); }
     saveDB();
     closeModal();
   }
 };
 
-function navDate(n) { selectedDate = addDay(selectedDate, n); render(); }
-function switchMobileTab(t) { mobileTab = t; render(); }
-
+// Desktop Nav
 document.getElementById('dBtnWeek').onclick = () => { desktopMode='week'; render(); };
 document.getElementById('dBtnMonth').onclick = () => { desktopMode='month'; render(); };
 
+// Auth Events
 document.getElementById('btnLogin').onclick = async () => {
   const email = document.getElementById('authEmail').value;
   const pass = document.getElementById('authPass').value;
