@@ -520,6 +520,69 @@ body.monthMode .titleText {
 body.monthMode .cards {
   gap: 2px;
 }
+
+    /* --- SAĞ PANEL FORM DÜZENİ VE AYIRACI --- */
+
+/* Formu Grid yapısına geçiriyoruz */
+body.monthMode #addForm {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr auto; /* Son satır için oranlar */
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line); /* Panelin altına çizgi */
+  margin-bottom: 12px;
+}
+
+/* 1. Satır: Başlık (Tam genişlik) */
+body.monthMode #taskInput {
+  grid-column: 1 / -1;
+}
+
+/* 2. Satır: Saat ve Tür (Yarı yarıya) */
+body.monthMode #timeInput { grid-column: 1 / 2; }
+body.monthMode #typeInput { grid-column: 2 / -1; }
+
+/* 3. Satır: Tag - Konum - Ekle */
+body.monthMode #tagInput   { grid-column: 1 / 2; } /* Sol */
+body.monthMode #whereInput { grid-column: 2 / 3; } /* Orta */
+body.monthMode #addSubmit  { grid-column: 3 / 4; } /* Sağ */
+
+
+/* --- CANLI RENKLER VE KART GÖRÜNÜMÜ --- */
+
+/* Kartların şeffaflığını kaldırıp rengi basıyoruz */
+body.monthMode .card {
+  background: var(--fillColor) !important; /* Rengi zorla */
+  border: 1px solid var(--frameColor) !important; /* Çerçeve rengini geri getir */
+  margin-bottom: 2px;
+  border-radius: 4px;
+  opacity: 1; /* Solukluğu kaldır */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Biraz derinlik kat */
+}
+
+/* Tamamlananlar hafif soluk kalsın */
+body.monthMode .card.done {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+}
+
+/* SAAT GÖRÜNÜMÜNÜ İYİLEŞTİRME */
+/* Renkli kart üzerinde saatin okunması için koyu zemin */
+body.monthMode .timeText {
+  background: rgba(0, 0, 0, 0.45) !important; /* Koyu yarı saydam zemin */
+  color: #fff !important; /* Beyaz yazı */
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+/* Sağ Paneldeki Liste için ayar */
+body.monthMode #taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
   </style>
 </head>
 
@@ -1340,69 +1403,83 @@ body.monthMode .cards {
       }
     }
 
-    function makeCard(item, origin){
-      const meta = tagMeta(item.tag);
-      const tagColor = meta?.color || null;
+    // --- makeCard FONKSİYONU BAŞLANGIÇ ---
+function makeCard(item, origin){
+  const meta = tagMeta(item.tag);
+  const typeColor = typeFrameColor(item.type); // Tür rengini al
+  
+  // Tag varsa tag rengini, yoksa tür rengini kullan
+  const baseColor = meta?.color ? meta.color : typeColor; 
+  
+  const card = document.createElement('div');
+  card.className = 'card' + (item.done ? ' done' : '');
+  card.draggable = true;
 
-      const card = document.createElement('div');
-      card.className = 'card' + (item.done ? ' done' : '');
-      card.draggable = true;
+  card.style.setProperty('--frameColor', typeColor);
+  // Rengi daha canlı yap (Opaklık 0.55)
+  card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.55));
 
-      card.style.setProperty('--frameColor', typeFrameColor(item.type));
-      card.style.setProperty('--fillColor', tagColor ? hexToRgba(tagColor, 0.22) : 'rgba(255,255,255,0.04)');
+  const more = document.createElement('button');
+  more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
+  
+  // "Daha Fazla" butonu tıklama olayı
+  more.addEventListener('click', (e)=>{ 
+    e.stopPropagation(); 
+    openModalEdit(origin, item.id); 
+  });
 
-      const more = document.createElement('button');
-      more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
-      more.addEventListener('click', (e)=>{ e.stopPropagation(); openModalEdit(origin, item.id); });
+  const row = document.createElement('div');
+  row.className = 'cardRow';
 
-      const row = document.createElement('div');
-      row.className = 'cardRow';
+  const check = document.createElement('button');
+  check.className = 'checkBtn'; check.type = 'button';
+  check.title = item.done ? 'Geri al' : 'Tamamla';
+  check.textContent = item.done ? '↩' : '✓';
+  
+  // "Check" butonu tıklama olayı
+  check.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    item.done = !item.done;
+    saveDB(db);
+    render();
+  });
 
-      const check = document.createElement('button');
-      check.className = 'checkBtn'; check.type = 'button';
-      check.title = item.done ? 'Geri al' : 'Tamamla';
-      check.textContent = item.done ? '↩' : '✓';
-      check.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        item.done = !item.done;
-        saveDB(db);
-        render();
-      });
+  const body = document.createElement('div');
+  body.className = 'cardBody';
 
-      const body = document.createElement('div');
-      body.className = 'cardBody';
+  // Saat varsa başa ekle (Ay görünümü için kritik)
+  if (item.time){
+    const time = document.createElement('div');
+    time.className = 'timeText'; time.textContent = item.time;
+    body.appendChild(time);
+  }
 
-      const title = document.createElement('div');
-      title.className = 'titleText'; 
-      title.textContent = item.text || '(başlıksız)';
-      
-      // Visual indicator for notes
-      if(item.notes && item.notes.trim().length > 0){
-        const noteIcon = document.createElement('span');
-        noteIcon.className = 'noteIcon';
-        noteIcon.textContent = '📝';
-        title.appendChild(noteIcon);
-      }
+  const title = document.createElement('div');
+  title.className = 'titleText'; 
+  title.textContent = item.text || '(başlıksız)';
 
-      body.appendChild(title);
+  if(item.notes && item.notes.trim().length > 0){
+    const noteIcon = document.createElement('span');
+    noteIcon.className = 'noteIcon';
+    noteIcon.textContent = '📝';
+    title.appendChild(noteIcon);
+  }
 
-      if (item.time){
-        const time = document.createElement('div');
-        time.className = 'timeText'; time.textContent = item.time;
-        body.appendChild(time);
-      }
+  body.appendChild(title);
 
-      row.appendChild(check); row.appendChild(body);
-      card.appendChild(more); card.appendChild(row);
+  row.appendChild(check); row.appendChild(body);
+  card.appendChild(more); card.appendChild(row);
 
-      card.addEventListener('dragstart', (e)=>{
-        dragPayload = { ...origin, itemId: item.id };
-        e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
-        e.dataTransfer.effectAllowed = 'move';
-      });
+  // Sürükle bırak (Drag) olayı
+  card.addEventListener('dragstart', (e)=>{
+    dragPayload = { ...origin, itemId: item.id };
+    e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
+    e.dataTransfer.effectAllowed = 'move';
+  });
 
-      return card;
-    }
+  return card;
+} 
+// --- makeCard FONKSİYONU BİTİŞ ---
 
     function renderInbox(){
       inboxList.innerHTML = '';
@@ -1658,6 +1735,7 @@ body.monthMode .cards {
     function renderPanel(){
       const k = dayKey(selected);
       panelTitle.textContent = fmtDay(selected);
+      // Sıralama ve filtreleme
       const items = (db && db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
 
       taskList.innerHTML = '';
@@ -1668,19 +1746,18 @@ body.monthMode .cards {
         taskList.appendChild(empty);
         return;
       }
+      
+      // Artık basit text yerine makeCard kullanıyoruz
       for (const it of items){
-        const row = document.createElement('div');
-        row.className='row';
-        const txt = document.createElement('div');
-        txt.className='txt';
+        // makeCard fonksiyonu renkli kutuyu oluşturur
+        const card = makeCard(it, { from:'day', dayKey:k });
         
-        let displayTxt = it.text + (it.time ? ` • ${it.time}` : '');
-        if(it.notes) displayTxt += ' 📝';
-
-        txt.textContent = displayTxt;
-        txt.style.color = it.done ? 'var(--muted)' : 'var(--text)';
-        row.appendChild(txt);
-        taskList.appendChild(row);
+        // Sağ panelde kartın padding ayarını biraz rahatlatalım
+        if(mode === 'month') {
+             card.style.padding = '8px';
+             card.style.marginBottom = '6px';
+        }
+        taskList.appendChild(card);
       }
     }
 
