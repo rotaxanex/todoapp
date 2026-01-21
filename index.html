@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15.3 (Scroll & Streak)</title>
+  <title>todoapp</title>
   <link rel="manifest" href="manifest.webmanifest">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -435,6 +435,91 @@ body.monthMode .dow {
   text-align: center;
   margin-bottom: 5px;
 }
+
+    /* --- GÜNCELLENMİŞ AY GÖRÜNÜMÜ AYARLARI (SOLA YASLI & DETAYLI) --- */
+
+/* 1. Takvim Alanını Sola Çek ve Hizala */
+body.monthMode .calendarArea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Ortalamayı kaldır, sola yasla */
+  padding-left: 0;         /* Sol boşluğu sıfırla */
+  padding-top: 10px;
+}
+
+/* Izgara genişliğini ayarla */
+body.monthMode .grid, 
+body.monthMode #dowRow {
+  width: 98%;       /* Panelle çakışmaması için biraz pay bırak */
+  max-width: none;  /* Genişlik sınırını kaldır */
+  margin: 0;        /* Ortalamayı (auto) iptal et */
+}
+
+/* 2. Gün Kutularını Kare Yap (Aynen koruyoruz) */
+body.monthMode .cell.monthCell {
+  height: auto !important;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px; /* Kutunun iç boşluğunu azalt (Daha çok yer kalsın) */
+}
+
+/* 3. Tarih ve (+) Butonunu Küçültüp Yukarı Al */
+body.monthMode .dateRow {
+  margin-bottom: 2px;
+  justify-content: space-between;
+  height: 18px; /* Başlık satırını incelt */
+}
+
+body.monthMode .date {
+  font-size: 10px;       /* Tarihi küçült */
+  font-weight: bold;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+body.monthMode .plusBtn {
+  width: 18px;          /* Butonu iyice ufalttık */
+  height: 18px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;         /* Çerçeveyi kaldır, daha temiz dursun */
+}
+body.monthMode .plusBtn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* 4. SAATLERİ GERİ GETİRME VE DÜZENLEME */
+/* Kart Gövdesini yan yana (Saat - Başlık) dizecek şekilde ayarla */
+body.monthMode .cardBody {
+  flex-direction: row !important; /* Yan yana dizilimi zorla */
+  align-items: center;
+  gap: 4px;
+}
+
+/* Saati görünür yap */
+body.monthMode .timeText {
+  display: block !important; /* Gizlemeyi iptal et */
+  font-size: 9px;
+  font-family: monospace;    /* Sayılar hizalı dursun */
+  color: var(--accent);      /* Mavi renk ile dikkat çeksin */
+  background: rgba(125,211,252,0.1); /* Hafif zemin */
+  padding: 1px 3px;
+  border-radius: 4px;
+  flex-shrink: 0;            /* Saatin sıkışıp küçülmesini engelle */
+}
+
+/* Başlık metni ayarı */
+body.monthMode .titleText {
+  font-size: 10.5px;
+  margin-top: 1px; /* Saat ile görsel hizalama */
+}
+
+/* Kartlar arası boşluğu minimal tut */
+body.monthMode .cards {
+  gap: 2px;
+}
   </style>
 </head>
 
@@ -442,7 +527,7 @@ body.monthMode .dow {
 
   <div id="authOverlay">
     <div class="authBox">
-      <h2>Minimal To-Do</h2>
+      <h2>todoapp</h2>
       <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
       
       <input type="email" id="authEmail" placeholder="E-posta adresi" />
@@ -462,7 +547,7 @@ body.monthMode .dow {
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>Minimal To-Do v15.3 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>todoapp<span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
