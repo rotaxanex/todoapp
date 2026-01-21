@@ -1188,30 +1188,32 @@
 
     // --- HABIT LOGIC UPDATED FOR HISTORY ---
 
-    function toggleHabit(id, isDone) {
+        function toggleHabit(id, isDone) {
       ensureHabitReset();
       const today = todayKey();
       
-      // 1. Update Today's UI State
-      const s = new Set(db.habitState.doneIds || []);
-      isDone ? s.add(id) : s.delete(id);
-      db.habitState.doneIds = [...s];
-
-      // 2. Update Long-term History
+      // 1. habitHistory (Kalıcı Geçmiş) Güncellemesi - ASIL KAYNAK
       db.habitHistory = db.habitHistory || {};
-      db.habitHistory[id] = db.habitHistory[id] || [];
-      const histSet = new Set(db.habitHistory[id]);
+      // Eğer undefined ise boş dizi ata, sonra Set'e çevir
+      const histSet = new Set(db.habitHistory[id] || []);
       
       if(isDone) {
         histSet.add(today);
       } else {
         histSet.delete(today);
       }
-      db.habitHistory[id] = [...histSet];
+      // Set'i tekrar diziye çevirip kaydet
+      db.habitHistory[id] = [...histSet].sort();
+
+      // 2. habitState (Günlük Durum) Güncellemesi (Yedek/Legacy için)
+      const s = new Set(db.habitState.doneIds || []);
+      isDone ? s.add(id) : s.delete(id);
+      db.habitState.doneIds = [...s];
 
       saveDB(db);
       renderHabits();
     }
+
 
     function calculateStreak(habitId) {
       const history = new Set(db.habitHistory[habitId] || []);
