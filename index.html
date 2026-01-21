@@ -810,7 +810,14 @@ body.monthMode .timeText {
   padding: 1px 4px;
   border-radius: 4px;
 }
+/* --- AY GÖRÜNÜMÜ: SAAT FONTUNU İNCELTME --- */
 
+body.monthMode .timeText {
+  font-weight: 400 !important; /* Kalınlığı 'Normal' seviyeye çek */
+  font-family: ui-sans-serif, system-ui, -apple-system !important; /* Monospace yerine düz yazı (Daha ince durur) */
+  letter-spacing: 0.3px; /* Rakamlar birbirine yapışmasın, okunaklı olsun */
+  opacity: 0.9; /* Hafif bir şeffaflık ile baskınlığını azalt */
+}
     
   </style>
 </head>
