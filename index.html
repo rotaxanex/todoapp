@@ -769,6 +769,49 @@ body.monthMode .timeText {
   color: var(--accent);
   /* order: 2; (Gerekirse) */
 }
+
+    /* --- AY GÖRÜNÜMÜ: SAATİ ZORLA EN SAĞA YAPIŞTIRMA --- */
+
+/* 1. Ay görünümünde "..." butonunu tamamen kaldır (Yer açmak için) */
+body.monthMode .moreBtn {
+  display: none !important;
+}
+
+/* 2. Kartın iç satırının genişliğini %100 yap */
+body.monthMode .cardRow {
+  width: 100% !important;
+  padding-right: 0 !important; /* Sağ boşluğu sıfırla */
+}
+
+/* 3. Kartın kendi iç boşluğunu sağdan kıs */
+body.monthMode .card {
+  padding-right: 4px !important; /* Kenara çok yakın olsun */
+}
+
+/* 4. Gövde ayarları */
+body.monthMode .cardBody {
+  flex: 1 !important; /* Kalan tüm alanı kapla */
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 0 !important;
+}
+
+/* 5. Saati en sağa it */
+body.monthMode .timeText {
+  margin-left: auto !important; /* Kendinden önceki her şeyi sola it */
+  margin-right: 0 !important;   /* Sağ tarafta hiç boşluk bırakma */
+  flex-shrink: 0;
+  
+  /* Görünüm */
+  font-size: 9px;
+  background: rgba(0,0,0,0.2) !important;
+  color: var(--accent);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+    
   </style>
 </head>
 
