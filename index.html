@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v16.0 (Final)</title>
+  <title>Minimal To-Do v16.1 (Original Design)</title>
   
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" href="Icon-512.png" />
@@ -24,14 +24,14 @@
     *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
     html, body{ height:100%; margin:0; background:var(--bg); color:var(--text); overflow:hidden; }
     
-    /* AUTH SCREEN */
+    /* GİRİŞ EKRANI */
     #authOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .authBox { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 24px; text-align:center; }
     .authBox input { width:100%; padding:12px; margin-bottom:10px; background:#000; border:1px solid var(--line); color:#fff; border-radius:10px; }
     .authBtn { width:100%; padding:12px; background:var(--accent); color:#000; font-weight:bold; border:0; border-radius:10px; cursor:pointer; margin-top:5px; }
     #authError { color:#fb7185; font-size:12px; margin-bottom:10px; min-height:15px; }
 
-    /* LAYOUT */
+    /* ANA YAPI (PC'DE ORTALAMA) */
     .app-container { height: 100%; display: flex; flex-direction: column; }
     .page-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; position: relative; }
     
@@ -60,7 +60,7 @@
       margin-bottom: 20px; cursor: pointer; display: inline-block;
     }
 
-    /* TASK CARD */
+    /* TASK CARD - ESKİ TASARIM */
     .task-card { 
       background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px; 
       display: flex; align-items: flex-start; gap: 12px; border: 1px solid var(--line); 
@@ -110,13 +110,35 @@
 
     #dialogOverlay { display:none; }
 
-    /* PC VIEW */
+    /* --- PC UYUMLULUĞU (Eski Sevdiğin Stil) --- */
     @media (min-width: 768px) {
       body { background: #050505; }
-      .app-container { max-width: 700px; margin: 0 auto; background: var(--bg); border-left: 1px solid var(--line); border-right: 1px solid var(--line); min-height: 100vh; }
-      .bottom-nav { max-width: 700px; left: 50%; transform: translateX(-50%); border-right: 1px solid var(--line); border-left: 1px solid var(--line); }
-      .fab { right: auto; left: 50%; margin-left: 270px; }
-      .modal-sheet { max-width: 700px; margin: 0 auto; left: 0; right: 0; }
+      .app-container { 
+        max-width: 700px; /* Telefon genişliği gibi sınırlar */
+        margin: 0 auto;   /* Ortalar */
+        background: var(--bg); 
+        border-left: 1px solid var(--line); 
+        border-right: 1px solid var(--line); 
+        min-height: 100vh; 
+      }
+      .bottom-nav { 
+        max-width: 700px; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        border-right: 1px solid var(--line); 
+        border-left: 1px solid var(--line); 
+      }
+      .fab { 
+        right: auto; 
+        left: 50%; 
+        margin-left: 270px; /* Ortadan sağa kaydır */
+      }
+      .modal-sheet { 
+        max-width: 700px; 
+        margin: 0 auto; 
+        left: 0; 
+        right: 0; 
+      }
     }
   </style>
 </head>
@@ -174,9 +196,7 @@
         </select>
       </div>
       <select id="mTag" class="modal-select" style="width:100%; margin-bottom:10px;"></select>
-      
       <textarea id="mNote" class="modal-input" placeholder="Notlar, alt görevler..." rows="3" style="resize:none; margin-bottom:15px; font-family:inherit;"></textarea>
-
       <div style="display:flex; gap:10px;">
         <button id="modalClose" class="btn" style="flex:1;">İptal</button>
         <button id="modalSave" class="btn btn-primary" style="flex:1;">Kaydet</button>
@@ -190,13 +210,11 @@
         <h3 id="habitDetailTitle" style="margin:0;">Alışkanlık</h3>
         <button id="habitDetailClose" class="btn">Kapat</button>
       </div>
-      
       <div class="habitCalHeader">
         <button id="habitPrevMonth" class="arrow-btn" style="font-size:18px;">❮</button>
         <div id="habitMonthTitle" class="habitMonthTitle"></div>
         <button id="habitNextMonth" class="arrow-btn" style="font-size:18px;">❯</button>
       </div>
-
       <div id="habitDetailStats" style="text-align:center; margin-bottom:10px; font-weight:bold; color:var(--accent);"></div>
       <div id="habitGrid" class="habitGrid"></div>
     </div>
@@ -221,7 +239,6 @@
     const btnSignup = document.getElementById('btnSignup');
     const appWrap = document.getElementById('appWrap');
 
-    // Başlangıç
     if(SUPABASE_URL && SUPABASE_KEY) {
       _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       initApp();
@@ -503,6 +520,7 @@
     function changeDay(delta){ selectedDate.setDate(selectedDate.getDate() + delta); renderCurrentPage(); }
     function changeMonth(delta){ selectedDate.setMonth(selectedDate.getMonth() + delta); renderCurrentPage(); }
     function goToToday(){ selectedDate = new Date(); renderCurrentPage(); }
+    
     function calculateStreak(historyArray){
       if(!historyArray || historyArray.length === 0) return 0;
       const sorted = [...historyArray].sort().reverse();
@@ -516,6 +534,7 @@
       }
       return streak;
     }
+    
     function toggleHabit(id){
       const todayK = dayKey(new Date()); const h = db.habits.find(x => x.id === id); if(!h) return;
       if(!h.history) h.history = [];
@@ -560,7 +579,14 @@
       }
     }
 
-    // --- TASKS ---
+    // --- ACTIONS ---
+    window.addTag = function(){ const name = document.getElementById('newTagName').value.trim(); const color = document.getElementById('newTagColor').value; if(name){ db.tags.push({name, color}); saveDB(); renderSettings(); } }
+    window.removeTag = function(name){ customConfirm("Sil", `Tag silinsin mi?`, () => { db.tags = db.tags.filter(t => t.name !== name); saveDB(); renderSettings(); }); }
+    window.deleteHabit = function(id){ customConfirm("Sil", "Alışkanlık silinsin mi?", () => { db.habits = db.habits.filter(h => h.id !== id); saveDB(); }); }
+    window.addNewHabit = function(){ customPrompt("Yeni Alışkanlık", "İsim girin", (val) => { if(val && val.trim()) { db.habits.push({ id: Date.now().toString(), name: val.trim(), history:[] }); saveDB(); } }); }
+    window.deleteTask = function(id, source, key){ customConfirm("Sil", "Görev silinsin mi?", () => { if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==id); else { db.days[key]=db.days[key].filter(x=>x.id!==id); if(db.days[key].length===0) delete db.days[key]; } saveDB(); }); }
+    window.logoutApp = function(){ customConfirm("Çıkış", "Çıkış yapılsın mı?", async () => { await _supabase.auth.signOut(); localStorage.clear(); window.location.reload(); }); }
+
     function createTaskCard(item, source, sourceKey){
       const el = document.createElement('div'); el.className = `task-card ${item.done ? 'done' : ''}`;
       let typeColor = 'var(--frame-gorev)';
@@ -587,24 +613,14 @@
       return el;
     }
 
-    // --- ACTIONS ---
-    window.addTag = function(){ const name = document.getElementById('newTagName').value.trim(); const color = document.getElementById('newTagColor').value; if(name){ db.tags.push({name, color}); saveDB(); renderSettings(); } }
-    window.removeTag = function(name){ customConfirm("Sil", `Tag silinsin mi?`, () => { db.tags = db.tags.filter(t => t.name !== name); saveDB(); renderSettings(); }); }
-    window.deleteHabit = function(id){ customConfirm("Sil", "Alışkanlık silinsin mi?", () => { db.habits = db.habits.filter(h => h.id !== id); saveDB(); }); }
-    window.addNewHabit = function(){ customPrompt("Yeni Alışkanlık", "İsim girin", (val) => { if(val && val.trim()) { db.habits.push({ id: Date.now().toString(), name: val.trim(), history:[] }); saveDB(); } }); }
-    window.deleteTask = function(id, source, key){ customConfirm("Sil", "Görev silinsin mi?", () => { if(source==='inbox') db.inbox=db.inbox.filter(x=>x.id!==id); else { db.days[key]=db.days[key].filter(x=>x.id!==id); if(db.days[key].length===0) delete db.days[key]; } saveDB(); }); }
-    window.logoutApp = function(){ customConfirm("Çıkış", "Çıkış yapılsın mı?", async () => { await _supabase.auth.signOut(); localStorage.clear(); window.location.reload(); }); }
-
-    // --- DIALOGS ---
+    // --- MODAL YÖNETİMİ ---
     const dialogOverlay = document.getElementById('dialogOverlay'); const dialogTitle = document.getElementById('dialogTitle'); const dialogMsg = document.getElementById('dialogMsg'); const dialogInput = document.getElementById('dialogInput'); const dialogOk = document.getElementById('dialogOk'); const dialogCancel = document.getElementById('dialogCancel'); let onDialogOk = null;
     function closeDialog() { dialogOverlay.style.display = 'none'; dialogInput.value = ''; onDialogOk = null; }
     dialogCancel.onclick = closeDialog; dialogOk.onclick = () => { if(onDialogOk) onDialogOk(dialogInput.value); closeDialog(); };
     function customConfirm(title, msg, callback) { dialogTitle.textContent = title; dialogMsg.textContent = msg; dialogMsg.style.display = 'block'; dialogInput.style.display = 'none'; onDialogOk = callback; dialogOverlay.style.display = 'flex'; }
     function customPrompt(title, placeholder, callback) { dialogTitle.textContent = title; dialogMsg.style.display = 'none'; dialogInput.style.display = 'block'; dialogInput.placeholder = placeholder; onDialogOk = callback; dialogOverlay.style.display = 'flex'; dialogInput.focus(); }
 
-    // --- ADD/EDIT MODAL ---
-    const modalOverlay = document.getElementById('modalOverlay'); const modalSave = document.getElementById('modalSave');
-    const fabBtn = document.getElementById('fabBtn');
+    const fabBtn = document.getElementById('fabBtn'); const modalOverlay = document.getElementById('modalOverlay'); const modalSave = document.getElementById('modalSave');
     fabBtn.onclick = () => openModal(); 
     document.getElementById('modalClose').onclick = () => modalOverlay.style.display='none';
 
