@@ -389,7 +389,52 @@ body.monthMode .card:hover {
   background: rgba(255,255,255,0.05) !important;
   border-radius: 4px;
 }
+/* --- KARE VE DÜZENLİ TAKVİM AYARLARI --- */
 
+/* 1. Takvim Alanını Düzenle */
+/* Takvimi kapsayan alanı esnek yapıp içeriği ortalıyoruz */
+body.monthMode .calendarArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Yatayda ortala */
+  padding-top: 10px;
+}
+
+/* 2. Grid (Takvim) Genişliğini Sınırla ve Daralt */
+/* max-width değerini değiştirerek takvimi ne kadar daraltacağını seçebilirsin */
+body.monthMode .grid, 
+body.monthMode #dowRow {
+  width: 100%;
+  max-width: 900px; /* BURAYI KÜÇÜLTÜRSEN TAKVİM DAHA DA DARALIR (Örn: 700px) */
+  margin: 0 auto;   /* Ortala */
+}
+
+/* 3. Gün Kutularını Tam Kare ve Eşit Yap */
+body.monthMode .cell.monthCell {
+  height: auto !important;  /* JS tarafından hesaplanan yüksekliği EZİYORUZ */
+  aspect-ratio: 1 / 1;      /* En-Boy oranını 1'e 1 (Tam Kare) yap */
+  min-height: 0;            /* Esnek yapının bozulmasını engelle */
+  
+  /* İçerik düzeni */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 4. Kare kutuların içindeki tarih kısmını biraz küçültelim ki yer kalsın */
+body.monthMode .dateRow {
+  margin-bottom: 4px;
+}
+body.monthMode .date {
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0.7;
+}
+
+/* 5. Gün isimleri (Pzt, Sal...) hizası */
+body.monthMode .dow {
+  text-align: center;
+  margin-bottom: 5px;
+}
   </style>
 </head>
 
