@@ -734,6 +734,41 @@ body.monthMode .timeText {
   color: var(--accent);
   font-family: monospace;
 }
+    /* --- AY GÖRÜNÜMÜ: SAATİ EN SAĞA YASLAMA --- */
+
+/* 1. Kart Gövdesini Genişlet ve Yay */
+body.monthMode .cardBody {
+  flex: 1; /* Kartın kalan tüm genişliğini kapla */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* İçindekileri iki uca fırlat */
+  min-width: 0; /* İçerik taşmasını engelle */
+}
+
+/* 2. Başlık Ayarları (Sola Yaslı) */
+body.monthMode .titleText {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Sığmazsa üç nokta koy */
+  margin-right: 4px; /* Saat ile arasına güvenli mesafe */
+  /* order: 1; (Gerekirse) */
+}
+
+/* 3. Saat Ayarları (En Sağa Yaslı) */
+body.monthMode .timeText {
+  margin-left: auto !important; /* Kendini zorla en sağa it */
+  flex-shrink: 0; /* Asla sıkışıp küçülme */
+  
+  /* Görünüm */
+  font-size: 9px;
+  font-family: monospace;
+  background: rgba(0,0,0,0.2) !important; /* Hafif koyu zemin */
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--accent);
+  /* order: 2; (Gerekirse) */
+}
   </style>
 </head>
 
