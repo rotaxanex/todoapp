@@ -583,6 +583,107 @@ body.monthMode #taskList {
   flex-direction: column;
   gap: 6px;
 }
+
+    /* --- 1. AY GÖRÜNÜMÜ YUMUŞATMA (ROUNDED) --- */
+body.monthMode .cell.monthCell {
+  border-radius: 16px; /* Kutuları yuvarlat */
+  border: 1px solid var(--line); /* Çerçeveyi belirginleştir */
+  overflow: hidden; /* İçerik taşarsa köşeleri bozmasın */
+  background: var(--card); /* Kart rengini garantiye al */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Hafif gölge ekle */
+}
+
+/* Aktif gün seçiliyken kenarlık rengi */
+body.monthMode .cell.sel {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* --- 2. KARTLARI HAFTALIK GÖRÜNÜME BENZETME --- */
+/* Önceki 'minimal nokta' stilini ezip 'Renkli Kart' stiline dönüyoruz */
+body.monthMode .card {
+  background: var(--fillColor) !important; /* Arka plan rengini aç */
+  border: 1px solid var(--frameColor) !important; /* Çerçeveyi aç */
+  border-radius: 8px !important; /* Kartları da yuvarlat */
+  padding: 4px 6px !important;
+  margin-bottom: 3px !important;
+  opacity: 1 !important; /* Solukluğu kaldır */
+  display: flex !important;
+  align-items: center;
+  min-height: 24px;
+}
+
+/* Tamamlanma kutusunu (CheckBtn) geri getir ve düzelt */
+body.monthMode .checkBtn {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  border-radius: 5px !important;
+  font-size: 9px !important;
+  background: rgba(0,0,0,0.2) !important; /* İçini hafif koyu yap */
+  color: #fff;
+  opacity: 1 !important;
+  margin-right: 6px;
+  display: grid; place-items: center;
+}
+/* Gizlenen saat ve başlığı düzelt */
+body.monthMode .cardBody {
+  gap: 4px;
+  flex-direction: row; /* Yan yana */
+  align-items: center;
+}
+body.monthMode .titleText {
+  font-size: 10.5px;
+  font-weight: 500;
+}
+body.monthMode .timeText {
+  font-size: 9px;
+  background: rgba(0,0,0,0.3) !important;
+  padding: 1px 3px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+
+/* --- 3. SAĞ PANEL FORM DÜZENİ (TAM İSTEDİĞİN GİBİ) --- */
+body.monthMode #addForm {
+  display: grid;
+  /* 3 Sütunlu yapı: Tag(1) - Konum(1) - Ekle(1) */
+  grid-template-columns: 1fr 1fr 0.8fr; 
+  gap: 6px; /* Elemanlar arası boşluğu sıkılaştır */
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+/* 1. Satır: Başlık (Tüm satıra yayıl) */
+body.monthMode #taskInput { grid-column: 1 / -1; }
+
+/* 2. Satır: Saat (Sol) - Tür (Geri kalan 2 sütun) */
+body.monthMode #timeInput { grid-column: 1 / 2; }
+body.monthMode #typeInput { grid-column: 2 / -1; }
+
+/* 3. Satır: Tag - Seçili Güne - Ekle */
+body.monthMode #tagInput   { grid-column: 1 / 2; }
+body.monthMode #whereInput { grid-column: 2 / 3; }
+body.monthMode #addSubmit  { grid-column: 3 / -1; }
+
+/* --- BOYUT AYARLAMALARI (SAYFAYA SIĞDIRMA) --- */
+/* Ay modunda form elemanlarını biraz küçültüyoruz ki taşmasın */
+body.monthMode #addForm input,
+body.monthMode #addForm select,
+body.monthMode #addForm button {
+  height: 30px; /* Standart yükseklik */
+  padding: 0 6px;
+  font-size: 11.5px; /* Yazıları biraz küçült */
+}
+
+/* Ekle butonunu belirginleştir */
+body.monthMode #addSubmit {
+  background: var(--accent);
+  color: #000;
+  font-weight: bold;
+  border: none;
+}
   </style>
 </head>
 
