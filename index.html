@@ -1188,7 +1188,7 @@
 
     // --- HABIT LOGIC UPDATED FOR HISTORY ---
 
-        function toggleHabit(id, isDone) {
+                function toggleHabit(id, isDone) {
       ensureHabitReset();
       const today = todayKey();
       
@@ -1202,6 +1202,19 @@
       } else {
         histSet.delete(today);
       }
+      // Set'i tekrar diziye çevirip kaydet
+      db.habitHistory[id] = [...histSet].sort();
+
+      // 2. habitState (Günlük Durum) Güncellemesi (Yedek/Legacy için)
+      const s = new Set(db.habitState.doneIds || []);
+      isDone ? s.add(id) : s.delete(id);
+      db.habitState.doneIds = [...s];
+
+      saveDB(db);
+      renderHabits();
+    }
+
+
       // Set'i tekrar diziye çevirip kaydet
       db.habitHistory[id] = [...histSet].sort();
 
@@ -1299,13 +1312,24 @@
       }
     }
 
-    function renderHabits(){
+        function renderHabits(){
       ensureHabitReset();
       habitsList.innerHTML = '';
       if(!db) return;
-      const done = new Set(db.habitState?.doneIds || []);
+      
+      const today = todayKey(); // Bugünü al
       const total = (db.habits||[]).length;
-      habitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
+      
+      // Bugün tamamlananları hesaplarken de history'den bakıyoruz
+      let doneCount = 0;
+      if(db.habits) {
+        doneCount = db.habits.filter(h => {
+            const hist = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
+            return hist.includes(today);
+        }).length;
+      }
+
+      habitsSub.textContent = total ? `Bugün: ${doneCount}/${total}` : 'Her gün sıfırlanır';
 
       if (!total){
         const empty = document.createElement('div');
@@ -1316,20 +1340,92 @@
 
       let dragHabitId = null;
       for (const h of db.habits){
-        // 2. FIX: Streak hesapla
+        // Streak hesapla
         const stats = calculateStreak(h.id);
+        
+        // BUG FİX: Checkbox durumu artık doğrudan tarihçeden okunuyor
+        const history = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
+        const isDoneToday = history.includes(today);
 
         const row = document.createElement('div');
         row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
 
         const lab = document.createElement('label');
         const cb = document.createElement('input');
-        cb.type='checkbox'; cb.checked = done.has(h.id);
+        cb.type='checkbox'; 
+        cb.checked = isDoneToday; // Düzeltilen kısım burası
         
         cb.addEventListener('click', (e)=>{
           e.stopPropagation();
           toggleHabit(h.id, cb.checked);
         });
+
+        const name = document.createElement('span'); 
+        name.className = 'name';
+        name.textContent = h.name;
+        
+        name.addEventListener('click', (e)=>{
+          e.preventDefault(); 
+          e.stopPropagation();
+          openHabitDetail(h.id);
+        });
+
+        lab.appendChild(cb); 
+        lab.appendChild(name);
+        
+        if(stats.current > 0) {
+          const streakBadge = document.createElement('span');
+          streakBadge.className = 'habitStreak';
+          streakBadge.textContent = `🔥 ${stats.current}`;
+          lab.appendChild(streakBadge);
+        }
+
+        const del = document.createElement('button');
+        del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+        
+        del.addEventListener('click', ()=>{
+          showConfirm(`"${h.name}" silinsin mi?`, () => {
+            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+            ensureHabitReset();
+            // Silince state ve history'den de temizle
+            if(db.habitState && db.habitState.doneIds) {
+                db.habitState.doneIds = db.habitState.doneIds.filter(id=>id!==h.id);
+            }
+            if(db.habitHistory) delete db.habitHistory[h.id];
+            saveDB(db);
+            renderHabits();
+          });
+        });
+
+        row.appendChild(lab); row.appendChild(del);
+
+        // Drag-drop eventleri aynı kaldı
+        row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
+        row.addEventListener('dragend', ()=>{
+          dragHabitId = null; row.classList.remove('dragging');
+          [...habitsList.querySelectorAll('.habitRow')].forEach(x=>x.classList.remove('dragOver'));
+        });
+        row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
+        row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
+        row.addEventListener('drop', (e)=>{
+          e.preventDefault();
+          row.classList.remove('dragOver');
+          const targetId = row.dataset.habit;
+          if (!dragHabitId || !targetId || dragHabitId === targetId) return;
+          const ids = db.habits.map(x=>x.id);
+          const from = ids.indexOf(dragHabitId);
+          const to = ids.indexOf(targetId);
+          if (from < 0 || to < 0) return;
+          const moved = db.habits.splice(from,1)[0];
+          db.habits.splice(to,0,moved);
+          saveDB(db);
+          renderHabits();
+        });
+
+        habitsList.appendChild(row);
+      }
+    }
+
 
         const name = document.createElement('span'); 
         name.className = 'name';
