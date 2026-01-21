@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15.2 (Notes & Habits)</title>
+  <title>Minimal To-Do v15.3 (Scroll & Streak)</title>
   <link rel="manifest" href="manifest.webmanifest">
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,7 +24,7 @@
     *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     html, body{ height:100%; }
     body{ margin:0; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; /* Giriş yapılana kadar gizli */ }
+    .wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; }
 
     header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; }
     .left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
@@ -92,7 +92,14 @@
       overflow:hidden;
       min-width:0;
     }
-    .cell.weekCell{ min-height:280px; }
+    /* 1. FIX: Haftalık hücreye max-height eklendi. 
+      Ekran boyutuna göre dinamik bir yükseklik belirlendi.
+    */
+    .cell.weekCell{ 
+      min-height: 280px; 
+      max-height: calc(100vh - 380px); /* İçerik taşarsa içeride scroll oluşmasını sağlar */
+    }
+    
     .cell.monthCell{ height: var(--monthCellH); }
     .cell:hover{ border-color:#3a3a44; }
     .cell.out{ opacity:.55; }
@@ -111,13 +118,14 @@
     }
     .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
 
+    /* .cards alanı zaten overflow:auto'ya sahip, parent'a max-height verince scroll çalışacak */
     .cards{ display:flex; flex-direction:column; gap:6px; overflow:auto; min-height:0; padding-right:2px; }
 
     .card{
       border:2px solid var(--frameColor, var(--line));
       border-radius:12px; padding:6px 8px;
       background: var(--fillColor, rgba(255,255,255,0.04));
-      user-select:none; min-width:0; position:relative;
+      user-select:none; min-width:0; position:relative; flex: 0 0 auto; /* Kartların küçülmesini engelle */
     }
     .card[draggable="true"]{ cursor:grab; }
     .card:active{ cursor:grabbing; }
@@ -145,9 +153,9 @@
     body.monthMode .moreBtn{ width:16px; height:16px; top:5px; right:5px; font-size:12px; }
 
     /* Scrollbars */
-    body.monthMode .monthCell .cards{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; }
-    body.monthMode .monthCell .cards::-webkit-scrollbar{ width: 5px; }
-    body.monthMode .monthCell .cards::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius: 999px; }
+    .cards::-webkit-scrollbar{ width: 5px; }
+    .cards::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius: 999px; }
+    .cards { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; }
 
     .moreBtn{
       position:absolute; top:6px; right:6px; width:18px; height:18px;
@@ -230,8 +238,15 @@
     .habitRow.dragging{ opacity:.6; }
     .habitRow.dragOver{ outline:2px dashed rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
     .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; cursor: pointer; flex:1; }
-    .habitRow span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .habitRow span:hover { text-decoration: underline; color: var(--accent); }
+    .habitRow span.name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .habitRow span.name:hover { text-decoration: underline; color: var(--accent); }
+    
+    /* 2. FIX: Alışkanlık listesindeki Streak Rozeti CSS */
+    .habitStreak {
+      font-size: 10px; color: var(--accent); background: rgba(125,211,252,0.1); 
+      padding: 2px 5px; border-radius: 6px; margin-left: auto; margin-right: 8px; flex-shrink: 0;
+    }
+
     .habitRow input[type="checkbox"]{ width:18px; height:18px; cursor: pointer; }
 
     /* Habit Detail Stats */
@@ -296,7 +311,7 @@
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>Minimal To-Do v15.2 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>Minimal To-Do v15.3 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
@@ -489,7 +504,7 @@
     const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
     // ----------------------------------------------------------------------
 
-    const LOCAL_KEY = 'minimal_todo_v15_2_offline';
+    const LOCAL_KEY = 'minimal_todo_v15_3_offline';
     let db = null;
     let currentUser = null;
     let _supabase = null;
@@ -747,7 +762,7 @@
       return {
         id,
         text: (t.text||'').trim(),
-        notes: (t.notes||''), // New: Notes field
+        notes: (t.notes||''), 
         done: !!t.done,
         type,
         tag: (t.tag || ''),
@@ -865,7 +880,7 @@
       if (overlay.style.display !== 'flex') return;
       if (tagSettingsSection.style.display === 'block') return;
       if (habitDetailSection.style.display === 'block') return;
-      if (e.target.tagName === 'TEXTAREA') return; // Don't submit on enter in textarea
+      if (e.target.tagName === 'TEXTAREA') return; 
       if (e.key === 'Enter'){
         e.preventDefault();
         modalSave.click();
@@ -1299,6 +1314,9 @@
 
       let dragHabitId = null;
       for (const h of db.habits){
+        // 2. FIX: Streak hesapla
+        const stats = calculateStreak(h.id);
+
         const row = document.createElement('div');
         row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
 
@@ -1306,27 +1324,35 @@
         const cb = document.createElement('input');
         cb.type='checkbox'; cb.checked = done.has(h.id);
         
-        // Use click event to handle logic to prevent label click triggering twice if handled wrong
         cb.addEventListener('click', (e)=>{
           e.stopPropagation();
           toggleHabit(h.id, cb.checked);
         });
 
         const name = document.createElement('span'); 
+        name.className = 'name';
         name.textContent = h.name;
-        // Click on name opens details
+        
         name.addEventListener('click', (e)=>{
           e.preventDefault(); 
           e.stopPropagation();
           openHabitDetail(h.id);
         });
 
-        lab.appendChild(cb); lab.appendChild(name);
+        lab.appendChild(cb); 
+        lab.appendChild(name);
+        
+        // 2. FIX: Streak Rozetini ekle
+        if(stats.current > 0) {
+          const streakBadge = document.createElement('span');
+          streakBadge.className = 'habitStreak';
+          streakBadge.textContent = `🔥 ${stats.current}`;
+          lab.appendChild(streakBadge);
+        }
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
         
-        // CUSTOM CONFIRM UYGULANDI
         del.addEventListener('click', ()=>{
           showConfirm(`"${h.name}" silinsin mi?`, () => {
             db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
