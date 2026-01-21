@@ -644,45 +644,60 @@ body.monthMode .timeText {
   color: var(--accent);
 }
 
-/* --- 3. SAĞ PANEL FORM DÜZENİ (TAM İSTEDİĞİN GİBİ) --- */
+/* --- AY GÖRÜNÜMÜ: SAĞ PANELİ GENİŞLETME VE SIKIŞTIRMA --- */
+
+/* 1. Sağ Paneli Biraz Genişletelim (280px'den 320px'e) */
+/* Böylece 3 sütun rahat nefes alır */
+body.monthMode .bottom {
+  width: 320px !important;     
+  min-width: 320px !important;
+  padding-left: 8px; /* Soldan biraz boşluk bırak */
+}
+
+/* 2. Form Grid Yapısı (Zorla Sığdır) */
 body.monthMode #addForm {
   display: grid;
-  /* 3 Sütunlu yapı: Tag(1) - Konum(1) - Ekle(1) */
-  grid-template-columns: 1fr 1fr 0.8fr; 
-  gap: 6px; /* Elemanlar arası boşluğu sıkılaştır */
+  /* İlk iki sütun esnek (1fr), son sütun (buton) içeriği kadar (auto).
+     minmax(0, 1fr) komutu, içerik uzun olsa bile kutuyu küçülmeye zorlar.
+  */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 5px; /* Boşlukları azalttık */
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
   margin-bottom: 12px;
 }
 
-/* 1. Satır: Başlık (Tüm satıra yayıl) */
-body.monthMode #taskInput { grid-column: 1 / -1; }
+/* 1. Satır: Başlık */
+body.monthMode #taskInput { 
+  grid-column: 1 / -1; 
+}
 
-/* 2. Satır: Saat (Sol) - Tür (Geri kalan 2 sütun) */
+/* 2. Satır: Saat | Tür */
 body.monthMode #timeInput { grid-column: 1 / 2; }
 body.monthMode #typeInput { grid-column: 2 / -1; }
 
-/* 3. Satır: Tag - Seçili Güne - Ekle */
+/* 3. Satır: Tag | Konum | Ekle Butonu */
 body.monthMode #tagInput   { grid-column: 1 / 2; }
 body.monthMode #whereInput { grid-column: 2 / 3; }
-body.monthMode #addSubmit  { grid-column: 3 / -1; }
+body.monthMode #addSubmit  { grid-column: 3 / 4; }
 
-/* --- BOYUT AYARLAMALARI (SAYFAYA SIĞDIRMA) --- */
-/* Ay modunda form elemanlarını biraz küçültüyoruz ki taşmasın */
+/* 3. İçerikleri Küçült ve Sıkıştır */
 body.monthMode #addForm input,
 body.monthMode #addForm select,
 body.monthMode #addForm button {
-  height: 30px; /* Standart yükseklik */
-  padding: 0 6px;
-  font-size: 11.5px; /* Yazıları biraz küçült */
+  height: 28px !important;   /* Daha ince */
+  font-size: 11px !important; /* Daha küçük yazı */
+  padding: 0 4px !important; /* İç boşluğu al */
+  width: 100%;               /* Hücreyi doldur */
+  min-width: 0;              /* Taşamaya karşı koruma */
 }
 
-/* Ekle butonunu belirginleştir */
+/* Butonu özelleştir */
 body.monthMode #addSubmit {
-  background: var(--accent);
-  color: #000;
-  font-weight: bold;
-  border: none;
+  width: auto !important;    /* Buton sadece yazısı kadar yer kaplasın */
+  padding: 0 10px !important;
+  font-weight: 600;
+  white-space: nowrap;       /* Yazının alt satıra geçmesini engelle */
 }
   </style>
 </head>
