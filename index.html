@@ -699,6 +699,41 @@ body.monthMode #addSubmit {
   font-weight: 600;
   white-space: nowrap;       /* Yazının alt satıra geçmesini engelle */
 }
+    /* --- AY GÖRÜNÜMÜ: SAATİ SAĞA ALMA --- */
+
+body.monthMode .cardBody {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important; /* Başlık ve saati iki uca it */
+  width: 100%;
+  gap: 4px; /* Aralarında en az 4px boşluk olsun */
+}
+
+/* Başlık (İsim) Ayarları */
+body.monthMode .titleText {
+  order: 1; /* Görsel olarak ilk sırada */
+  flex: 1;  /* Kalan tüm boşluğu kapla */
+  text-align: left;
+  white-space: nowrap; /* Alt satıra inmesin */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Sığmazsa üç nokta (...) koy */
+  margin-top: 0 !important; /* Varsa eski marjı sıfırla */
+}
+
+/* Saat Ayarları */
+body.monthMode .timeText {
+  order: 2; /* Görsel olarak ikinci (sağ) sırada */
+  margin-left: auto; /* Kendini en sağa it */
+  flex-shrink: 0; /* Asla sıkışıp küçülmesin */
+  
+  /* Görünüm makyajı */
+  font-size: 9px;
+  background: rgba(0,0,0,0.3) !important;
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: monospace;
+}
   </style>
 </head>
 
