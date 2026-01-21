@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15.4 (Clean)</title>
+  <title>todoapp</title>
   <link rel="manifest" href="manifest.webmanifest">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -366,6 +366,36 @@
       body.monthMode .side{ display:none; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
+    /* --- AY GÖRÜNÜMÜ SON DÜZELTMELER --- */
+
+/* 1. Kart içini iki uca (Sol-Sağ) yasla */
+body.monthMode .cardBody {
+  display: flex !important;
+  justify-content: space-between !important; /* Başlık sola, Saat sağa */
+  align-items: center !important;
+  width: 100%;
+}
+
+/* 2. Başlık Ayarları (Solda) */
+body.monthMode .titleText {
+  text-align: left !important;
+  order: 1 !important;       /* İlk sırada */
+  flex: 1 !important;        /* Aradaki boşluğu kapla */
+  margin-right: 6px;         /* Saat ile araya mesafe koy */
+  color: var(--text) !important;
+}
+
+/* 3. Saat Ayarları (Sağda ve Beyaz) */
+body.monthMode .timeText {
+  order: 2 !important;       /* İkinci sırada */
+  margin-left: 0 !important; /* Flex yapısı zaten sağa itiyor */
+  
+  /* RENK AYARI */
+  color: #ffffff !important; /* Yazı BEYAZ */
+  background: rgba(0,0,0,0.3) !important; /* Arkaya hafif siyah gölge (okunabilirlik için) */
+  opacity: 1 !important;
+  font-weight: 500 !important;
+}
   </style>
 </head>
 
@@ -373,7 +403,7 @@
 
   <div id="authOverlay">
     <div class="authBox">
-      <h2>Minimal To-Do</h2>
+      <h2>todoapp</h2>
       <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
 
       <input type="email" id="authEmail" placeholder="E-posta adresi" />
@@ -393,7 +423,7 @@
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>Minimal To-Do v15.4 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>todoapp <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
