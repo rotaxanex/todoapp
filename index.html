@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>todoapp</title>
+  <title>Minimal To-Do v15.4 (Clean)</title>
   <link rel="manifest" href="manifest.webmanifest">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -72,43 +72,58 @@
       padding-right:4px;
     }
     body.weekMode .calendarArea{ height: calc(100vh - 320px); }
-    body.monthMode .calendarArea{ height: calc(100vh - 140px); }
+    
+    /* MONTH MODE LAYOUT FIXES (SIDE BY SIDE) */
+    body.monthMode .main > div:first-child {
+      display: flex; flex-direction: row; gap: 15px;
+      height: calc(100vh - 90px); overflow: hidden;
+    }
+    body.monthMode .calendarArea {
+      flex: 1; height: 100% !important; 
+      border-right: 1px solid var(--line); padding-right: 15px;
+      display: flex; flex-direction: column; align-items: flex-start; padding-left: 0; padding-top: 10px;
+    }
+    body.monthMode .grid, body.monthMode #dowRow {
+      width: 98%; max-width: none; margin: 0;
+    }
 
     .grid{ display:grid; gap:10px; }
     .month{ grid-template-columns: repeat(7, 1fr); }
     .week{ grid-template-columns: repeat(7, 1fr); }
     .dow{ font-size:12px; color:var(--muted); padding:0 6px; }
     body.weekMode .grid{ gap:8px; }
+    body.monthMode .dow{ text-align: center; margin-bottom: 5px; }
 
     .cell{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:10px;
-      cursor:pointer;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow:hidden;
-      min-width:0;
+      background:var(--card); border:1px solid var(--line); border-radius:16px;
+      padding:10px; cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:hidden; min-width:0;
     }
-    /* 1. FIX: Haftalık hücreye max-height eklendi. 
-      Ekran boyutuna göre dinamik bir yükseklik belirlendi.
-    */
     .cell.weekCell{ 
-      min-height: 280px; 
-      max-height: calc(100vh - 380px); /* İçerik taşarsa içeride scroll oluşmasını sağlar */
+      min-height: 280px; max-height: calc(100vh - 380px); 
     }
     
-    .cell.monthCell{ height: var(--monthCellH); }
+    /* MONTH CELL SQUARE FIX */
+    .cell.monthCell{ 
+      height: auto !important; aspect-ratio: 1 / 1; min-height: 0;
+      overflow-y: auto; display: flex; flex-direction: column;
+      padding: 4px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    body.monthMode .cell.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    body.monthMode .cell.monthCell::-webkit-scrollbar { width: 3px; }
+    body.monthMode .cell.monthCell::-webkit-scrollbar-thumb { background: var(--line); }
+
     .cell:hover{ border-color:#3a3a44; }
     .cell.out{ opacity:.55; }
     .cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
     .cell.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
 
     .dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    body.monthMode .dateRow { margin-bottom: 2px; height: 18px; }
+
     .dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; }
     .date{ font-size:12px; color:var(--muted); }
+    body.monthMode .date { font-size: 10px; font-weight: bold; opacity: 0.6; margin-left: 2px; }
+
     .count{ font-size:12px; color:var(--accent); }
 
     .plusBtn{
@@ -116,41 +131,71 @@
       border-radius:10px; border:1px solid var(--line);
       background:transparent; color:var(--muted); cursor:pointer; flex:0 0 auto;
     }
+    body.monthMode .plusBtn { width: 18px; height: 18px; font-size: 12px; border-radius: 4px; border: none; }
     .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
+    body.monthMode .plusBtn:hover { background: rgba(255,255,255,0.1); }
 
-    /* .cards alanı zaten overflow:auto'ya sahip, parent'a max-height verince scroll çalışacak */
     .cards{ display:flex; flex-direction:column; gap:6px; overflow:auto; min-height:0; padding-right:2px; }
+    body.monthMode .cards { gap: 2px; }
 
+    /* CARD STYLING */
     .card{
       border:2px solid var(--frameColor, var(--line));
       border-radius:12px; padding:6px 8px;
       background: var(--fillColor, rgba(255,255,255,0.04));
-      user-select:none; min-width:0; position:relative; flex: 0 0 auto; /* Kartların küçülmesini engelle */
+      user-select:none; min-width:0; position:relative; flex: 0 0 auto;
     }
-    .card[draggable="true"]{ cursor:grab; }
-    .card:active{ cursor:grabbing; }
+    /* Month Mode Card Overrides (Cleaned up) */
+    body.monthMode .card {
+      background: var(--fillColor) !important;
+      border: 1px solid var(--frameColor) !important;
+      border-radius: 8px !important;
+      padding: 4px 6px !important; padding-right: 4px !important;
+      margin-bottom: 2px !important;
+      opacity: 1 !important;
+      display: flex !important; align-items: center; min-height: 24px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
     .card.done{ opacity:.55; }
+    body.monthMode .card.done { opacity: 0.6; filter: grayscale(0.4); }
 
     .cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
+    body.monthMode .cardRow { width: 100% !important; padding-right: 0 !important; align-items: center; gap: 4px; }
+
     .checkBtn{
       width:18px; height:18px; display:grid; place-items:center;
       border-radius:7px; border:1px solid rgba(0,0,0,.25);
       background:rgba(0,0,0,.10); color:rgba(255,255,255,.85);
       cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px;
     }
-    .cardBody{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; padding-right:22px; }
-    .titleText{ font-size:12.8px; line-height:1.2; color: var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .timeText{ font-size:11px; line-height:1.1; color: rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    
-    .noteIcon { font-size: 10px; margin-left: 4px; opacity: 0.7; }
+    body.monthMode .checkBtn {
+      width: 14px !important; height: 14px !important; min-width: 14px !important;
+      border-radius: 5px !important; font-size: 9px !important;
+      background: rgba(0,0,0,0.2) !important; color: #fff; opacity: 1 !important; margin-right: 6px; margin-top:0;
+    }
 
-    body.monthMode .card{ padding:4px 6px; border-radius:10px; }
-    body.monthMode .cards{ gap:4px; }
-    body.monthMode .checkBtn{ width:14px; height:14px; border-radius:6px; font-size:9px; margin-top:0; }
-    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; gap: 6px; }
-    body.monthMode .titleText{ font-size:11px; flex: 1 1 auto; min-width: 0; }
-    body.monthMode .timeText{ font-size:9.5px; opacity: .85; flex: 0 0 auto; }
-    body.monthMode .moreBtn{ width:16px; height:16px; top:5px; right:5px; font-size:12px; }
+    .cardBody{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; padding-right:22px; }
+    body.monthMode .cardBody {
+      flex: 1 !important; display: flex !important; flex-direction: row !important;
+      align-items: center !important; justify-content: space-between !important;
+      padding-right: 0 !important; gap: 4px;
+    }
+
+    .titleText{ font-size:12.8px; line-height:1.2; color: var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    body.monthMode .titleText {
+      font-size: 10.5px; font-weight: 500; text-align: left;
+      margin-right: 4px; margin-top: 0 !important;
+    }
+
+    .timeText{ font-size:11px; line-height:1.1; color: rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    body.monthMode .timeText {
+      margin-left: auto !important; margin-right: 0 !important; flex-shrink: 0;
+      font-size: 9px; font-weight: 400 !important; font-family: ui-sans-serif, system-ui, -apple-system !important;
+      background: rgba(0,0,0,0.2) !important; padding: 1px 4px; border-radius: 4px;
+      color: var(--accent); letter-spacing: 0.3px; opacity: 0.9;
+    }
+
+    .noteIcon { font-size: 10px; margin-left: 4px; opacity: 0.7; }
 
     /* Scrollbars */
     .cards::-webkit-scrollbar{ width: 5px; }
@@ -164,6 +209,7 @@
       cursor:pointer; display:grid; place-items:center; font-size:14px; line-height:1;
     }
     .moreBtn:hover{ border-color:rgba(255,255,255,.25); }
+    body.monthMode .moreBtn { display: none !important; }
 
     .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
     .panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
@@ -176,17 +222,55 @@
 
     .bottom{ margin-top: 0px; background:transparent; border:0; padding:0; }
     body.weekMode .bottom{ margin-top: -64px; }
+    
+    /* RIGHT PANEL MONTH MODE */
+    body.monthMode .bottom {
+      width: 320px !important; min-width: 320px !important;
+      margin-top: 0; overflow-y: auto; padding-bottom: 20px; padding-left: 8px;
+    }
+    
     .bottomGrid{ display:block; }
     body.weekMode .bottomGrid{ display:grid; grid-template-columns: 1fr 360px; gap:10px; align-items:start; }
 
     .panelLike{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
+    body.monthMode .panelLike { box-shadow: none; border: none; background: transparent; padding: 0; }
+    
     .bottomTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
     .panelLike h2{ margin:0; font-size:14px; }
 
     form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
     .w{ min-width:160px; }
+    
+    /* MONTH MODE FORM GRID (3 COLUMNS) */
+    body.monthMode #addForm {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      gap: 5px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px; margin-bottom: 12px;
+      margin-top: 10px;
+    }
+    body.monthMode #taskInput { grid-column: 1 / -1; }
+    body.monthMode #timeInput { grid-column: 1 / 2; }
+    body.monthMode #typeInput { grid-column: 2 / -1; }
+    body.monthMode #tagInput   { grid-column: 1 / 2; }
+    body.monthMode #whereInput { grid-column: 2 / 3; }
+    body.monthMode #addSubmit  { grid-column: 3 / 4; }
+
+    body.monthMode #addForm input,
+    body.monthMode #addForm select,
+    body.monthMode #addForm button {
+      height: 28px !important; font-size: 11px !important; padding: 0 4px !important;
+      width: 100%; min-width: 0;
+    }
+    body.monthMode #addSubmit {
+      width: auto !important; padding: 0 10px !important; font-weight: 600; white-space: nowrap;
+      background: var(--accent); color: #000; border: none;
+    }
 
     .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    body.monthMode .list { gap: 6px; }
+
     .row{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       border:1px solid var(--line); background:#121216; padding:10px 12px; border-radius:14px;
@@ -240,13 +324,11 @@
     .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; cursor: pointer; flex:1; }
     .habitRow span.name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .habitRow span.name:hover { text-decoration: underline; color: var(--accent); }
-    
-    /* 2. FIX: Alışkanlık listesindeki Streak Rozeti CSS */
+
     .habitStreak {
       font-size: 10px; color: var(--accent); background: rgba(125,211,252,0.1); 
       padding: 2px 5px; border-radius: 6px; margin-left: auto; margin-right: 8px; flex-shrink: 0;
     }
-
     .habitRow input[type="checkbox"]{ width:18px; height:18px; cursor: pointer; }
 
     /* Habit Detail Stats */
@@ -284,541 +366,6 @@
       body.monthMode .side{ display:none; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
-
-    /* --- AY GÖRÜNÜMÜ DÜZENLEMESİ (PANEL SAĞDA) --- */
-
-/* 1. Kapsayıcıyı yan yana (Flex) hale getiriyoruz */
-body.monthMode .main > div:first-child {
-  display: flex;
-  flex-direction: row;
-  gap: 15px;
-  height: calc(100vh - 90px); /* Sayfa yüksekliğine sığdır */
-  overflow: hidden;
-}
-
-/* 2. Takvim alanı kalan tüm boşluğu kaplasın */
-body.monthMode .calendarArea {
-  flex: 1; 
-  height: 100% !important; /* Yüksekliği zorla */
-  border-right: 1px solid var(--line); /* Araya çizgi at */
-  padding-right: 15px;
-}
-
-/* 3. Görev Kutusunu (Seçili Gün Paneli) sağa sabitle */
-body.monthMode .bottom {
-  width: 280px;      /* Genişlik ayarı */
-  min-width: 280px;
-  margin-top: 0;     /* Eski boşluğu sıfırla */
-  overflow-y: auto;  /* İçeriği uzunsa scroll olsun */
-  padding-bottom: 20px;
-}
-
-/* 4. Sağ panelin içindeki kutu görünümünü sadeleştir */
-body.monthMode .panelLike {
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  padding: 0;
-}
-
-/* 5. Ay hücrelerinin yüksekliğini sabitleyip iç scroll verelim */
-/* Böylece çok termin olsa bile hücre uzayıp takvimi bozmaz */
-body.monthMode .cell.monthCell {
-  height: 100%; /* Satıra yayıl */
-  min-height: 0;
-  overflow-y: auto; /* Hücre içinde çok kayıt varsa scroll çıksın */
-  display: flex;
-  flex-direction: column;
-}
-/* Hücre içi scrollbar'ı inceltelim */
-body.monthMode .cell.monthCell::-webkit-scrollbar { width: 3px; }
-body.monthMode .cell.monthCell::-webkit-scrollbar-thumb { background: var(--line); }
-
-    /* --- AY GÖRÜNÜMÜ MİNİMAL KART TASARIMI --- */
-
-/* Kartın dış çerçevesini ve arka planını kaldır */
-body.monthMode .card {
-  background: transparent !important;
-  border: 0;
-  padding: 1px 0;
-  margin-bottom: 1px;
-  border-radius: 0;
-  min-height: auto;
-}
-
-/* Kart içeriğini sıkıştır */
-body.monthMode .cardRow {
-  gap: 6px;
-  align-items: center;
-}
-
-/* Check butonunu minik bir renkli noktaya çevir */
-body.monthMode .checkBtn {
-  width: 6px; 
-  height: 6px;
-  min-width: 6px; /* Ezilmemesi için */
-  border-radius: 50%;
-  padding: 0;
-  font-size: 0; /* İçindeki tiki gizle */
-  background: var(--frameColor); /* Görev türünün rengini al */
-  border: none;
-  opacity: 1;
-}
-/* Tamamlanmışsa rengi soluklaştır */
-body.monthMode .card.done .checkBtn {
-  opacity: 0.3;
-}
-
-/* Başlığı tek satır yap ve küçült */
-body.monthMode .titleText {
-  font-size: 11px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-/* Saati ve 'Daha Fazla' butonunu gizle (Yer kazanmak için) */
-/* Fareyle üzerine gelince detay görünür zaten */
-body.monthMode .timeText { display: none; }
-body.monthMode .moreBtn { display: none; }
-
-/* Kartın üzerine gelince hafif bir zemin rengi ver */
-body.monthMode .card:hover {
-  background: rgba(255,255,255,0.05) !important;
-  border-radius: 4px;
-}
-/* --- KARE VE DÜZENLİ TAKVİM AYARLARI --- */
-
-/* 1. Takvim Alanını Düzenle */
-/* Takvimi kapsayan alanı esnek yapıp içeriği ortalıyoruz */
-body.monthMode .calendarArea {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Yatayda ortala */
-  padding-top: 10px;
-}
-
-/* 2. Grid (Takvim) Genişliğini Sınırla ve Daralt */
-/* max-width değerini değiştirerek takvimi ne kadar daraltacağını seçebilirsin */
-body.monthMode .grid, 
-body.monthMode #dowRow {
-  width: 100%;
-  max-width: 900px; /* BURAYI KÜÇÜLTÜRSEN TAKVİM DAHA DA DARALIR (Örn: 700px) */
-  margin: 0 auto;   /* Ortala */
-}
-
-/* 3. Gün Kutularını Tam Kare ve Eşit Yap */
-body.monthMode .cell.monthCell {
-  height: auto !important;  /* JS tarafından hesaplanan yüksekliği EZİYORUZ */
-  aspect-ratio: 1 / 1;      /* En-Boy oranını 1'e 1 (Tam Kare) yap */
-  min-height: 0;            /* Esnek yapının bozulmasını engelle */
-  
-  /* İçerik düzeni */
-  display: flex;
-  flex-direction: column;
-}
-
-/* 4. Kare kutuların içindeki tarih kısmını biraz küçültelim ki yer kalsın */
-body.monthMode .dateRow {
-  margin-bottom: 4px;
-}
-body.monthMode .date {
-  font-size: 11px;
-  font-weight: bold;
-  opacity: 0.7;
-}
-
-/* 5. Gün isimleri (Pzt, Sal...) hizası */
-body.monthMode .dow {
-  text-align: center;
-  margin-bottom: 5px;
-}
-
-    /* --- GÜNCELLENMİŞ AY GÖRÜNÜMÜ AYARLARI (SOLA YASLI & DETAYLI) --- */
-
-/* 1. Takvim Alanını Sola Çek ve Hizala */
-body.monthMode .calendarArea {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* Ortalamayı kaldır, sola yasla */
-  padding-left: 0;         /* Sol boşluğu sıfırla */
-  padding-top: 10px;
-}
-
-/* Izgara genişliğini ayarla */
-body.monthMode .grid, 
-body.monthMode #dowRow {
-  width: 98%;       /* Panelle çakışmaması için biraz pay bırak */
-  max-width: none;  /* Genişlik sınırını kaldır */
-  margin: 0;        /* Ortalamayı (auto) iptal et */
-}
-
-/* 2. Gün Kutularını Kare Yap (Aynen koruyoruz) */
-body.monthMode .cell.monthCell {
-  height: auto !important;
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 4px; /* Kutunun iç boşluğunu azalt (Daha çok yer kalsın) */
-}
-
-/* 3. Tarih ve (+) Butonunu Küçültüp Yukarı Al */
-body.monthMode .dateRow {
-  margin-bottom: 2px;
-  justify-content: space-between;
-  height: 18px; /* Başlık satırını incelt */
-}
-
-body.monthMode .date {
-  font-size: 10px;       /* Tarihi küçült */
-  font-weight: bold;
-  opacity: 0.6;
-  margin-left: 2px;
-}
-
-body.monthMode .plusBtn {
-  width: 18px;          /* Butonu iyice ufalttık */
-  height: 18px;
-  font-size: 12px;
-  border-radius: 4px;
-  border: none;         /* Çerçeveyi kaldır, daha temiz dursun */
-}
-body.monthMode .plusBtn:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-/* 4. SAATLERİ GERİ GETİRME VE DÜZENLEME */
-/* Kart Gövdesini yan yana (Saat - Başlık) dizecek şekilde ayarla */
-body.monthMode .cardBody {
-  flex-direction: row !important; /* Yan yana dizilimi zorla */
-  align-items: center;
-  gap: 4px;
-}
-
-/* Saati görünür yap */
-body.monthMode .timeText {
-  display: block !important; /* Gizlemeyi iptal et */
-  font-size: 9px;
-  font-family: monospace;    /* Sayılar hizalı dursun */
-  color: var(--accent);      /* Mavi renk ile dikkat çeksin */
-  background: rgba(125,211,252,0.1); /* Hafif zemin */
-  padding: 1px 3px;
-  border-radius: 4px;
-  flex-shrink: 0;            /* Saatin sıkışıp küçülmesini engelle */
-}
-
-/* Başlık metni ayarı */
-body.monthMode .titleText {
-  font-size: 10.5px;
-  margin-top: 1px; /* Saat ile görsel hizalama */
-}
-
-/* Kartlar arası boşluğu minimal tut */
-body.monthMode .cards {
-  gap: 2px;
-}
-
-    /* --- SAĞ PANEL FORM DÜZENİ VE AYIRACI --- */
-
-/* Formu Grid yapısına geçiriyoruz */
-body.monthMode #addForm {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr auto; /* Son satır için oranlar */
-  gap: 8px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line); /* Panelin altına çizgi */
-  margin-bottom: 12px;
-}
-
-/* 1. Satır: Başlık (Tam genişlik) */
-body.monthMode #taskInput {
-  grid-column: 1 / -1;
-}
-
-/* 2. Satır: Saat ve Tür (Yarı yarıya) */
-body.monthMode #timeInput { grid-column: 1 / 2; }
-body.monthMode #typeInput { grid-column: 2 / -1; }
-
-/* 3. Satır: Tag - Konum - Ekle */
-body.monthMode #tagInput   { grid-column: 1 / 2; } /* Sol */
-body.monthMode #whereInput { grid-column: 2 / 3; } /* Orta */
-body.monthMode #addSubmit  { grid-column: 3 / 4; } /* Sağ */
-
-
-/* --- CANLI RENKLER VE KART GÖRÜNÜMÜ --- */
-
-/* Kartların şeffaflığını kaldırıp rengi basıyoruz */
-body.monthMode .card {
-  background: var(--fillColor) !important; /* Rengi zorla */
-  border: 1px solid var(--frameColor) !important; /* Çerçeve rengini geri getir */
-  margin-bottom: 2px;
-  border-radius: 4px;
-  opacity: 1; /* Solukluğu kaldır */
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Biraz derinlik kat */
-}
-
-/* Tamamlananlar hafif soluk kalsın */
-body.monthMode .card.done {
-  opacity: 0.6;
-  filter: grayscale(0.4);
-}
-
-/* SAAT GÖRÜNÜMÜNÜ İYİLEŞTİRME */
-/* Renkli kart üzerinde saatin okunması için koyu zemin */
-body.monthMode .timeText {
-  background: rgba(0, 0, 0, 0.45) !important; /* Koyu yarı saydam zemin */
-  color: #fff !important; /* Beyaz yazı */
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-weight: 600;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
-}
-
-/* Sağ Paneldeki Liste için ayar */
-body.monthMode #taskList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-    /* --- 1. AY GÖRÜNÜMÜ YUMUŞATMA (ROUNDED) --- */
-body.monthMode .cell.monthCell {
-  border-radius: 16px; /* Kutuları yuvarlat */
-  border: 1px solid var(--line); /* Çerçeveyi belirginleştir */
-  overflow: hidden; /* İçerik taşarsa köşeleri bozmasın */
-  background: var(--card); /* Kart rengini garantiye al */
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Hafif gölge ekle */
-}
-
-/* Aktif gün seçiliyken kenarlık rengi */
-body.monthMode .cell.sel {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-/* --- 2. KARTLARI HAFTALIK GÖRÜNÜME BENZETME --- */
-/* Önceki 'minimal nokta' stilini ezip 'Renkli Kart' stiline dönüyoruz */
-body.monthMode .card {
-  background: var(--fillColor) !important; /* Arka plan rengini aç */
-  border: 1px solid var(--frameColor) !important; /* Çerçeveyi aç */
-  border-radius: 8px !important; /* Kartları da yuvarlat */
-  padding: 4px 6px !important;
-  margin-bottom: 3px !important;
-  opacity: 1 !important; /* Solukluğu kaldır */
-  display: flex !important;
-  align-items: center;
-  min-height: 24px;
-}
-
-/* Tamamlanma kutusunu (CheckBtn) geri getir ve düzelt */
-body.monthMode .checkBtn {
-  width: 14px !important;
-  height: 14px !important;
-  min-width: 14px !important;
-  border-radius: 5px !important;
-  font-size: 9px !important;
-  background: rgba(0,0,0,0.2) !important; /* İçini hafif koyu yap */
-  color: #fff;
-  opacity: 1 !important;
-  margin-right: 6px;
-  display: grid; place-items: center;
-}
-/* Gizlenen saat ve başlığı düzelt */
-body.monthMode .cardBody {
-  gap: 4px;
-  flex-direction: row; /* Yan yana */
-  align-items: center;
-}
-body.monthMode .titleText {
-  font-size: 10.5px;
-  font-weight: 500;
-}
-body.monthMode .timeText {
-  font-size: 9px;
-  background: rgba(0,0,0,0.3) !important;
-  padding: 1px 3px;
-  border-radius: 3px;
-  color: var(--accent);
-}
-
-/* --- AY GÖRÜNÜMÜ: SAĞ PANELİ GENİŞLETME VE SIKIŞTIRMA --- */
-
-/* 1. Sağ Paneli Biraz Genişletelim (280px'den 320px'e) */
-/* Böylece 3 sütun rahat nefes alır */
-body.monthMode .bottom {
-  width: 320px !important;     
-  min-width: 320px !important;
-  padding-left: 8px; /* Soldan biraz boşluk bırak */
-}
-
-/* 2. Form Grid Yapısı (Zorla Sığdır) */
-body.monthMode #addForm {
-  display: grid;
-  /* İlk iki sütun esnek (1fr), son sütun (buton) içeriği kadar (auto).
-     minmax(0, 1fr) komutu, içerik uzun olsa bile kutuyu küçülmeye zorlar.
-  */
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 5px; /* Boşlukları azalttık */
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-}
-
-/* 1. Satır: Başlık */
-body.monthMode #taskInput { 
-  grid-column: 1 / -1; 
-}
-
-/* 2. Satır: Saat | Tür */
-body.monthMode #timeInput { grid-column: 1 / 2; }
-body.monthMode #typeInput { grid-column: 2 / -1; }
-
-/* 3. Satır: Tag | Konum | Ekle Butonu */
-body.monthMode #tagInput   { grid-column: 1 / 2; }
-body.monthMode #whereInput { grid-column: 2 / 3; }
-body.monthMode #addSubmit  { grid-column: 3 / 4; }
-
-/* 3. İçerikleri Küçült ve Sıkıştır */
-body.monthMode #addForm input,
-body.monthMode #addForm select,
-body.monthMode #addForm button {
-  height: 28px !important;   /* Daha ince */
-  font-size: 11px !important; /* Daha küçük yazı */
-  padding: 0 4px !important; /* İç boşluğu al */
-  width: 100%;               /* Hücreyi doldur */
-  min-width: 0;              /* Taşamaya karşı koruma */
-}
-
-/* Butonu özelleştir */
-body.monthMode #addSubmit {
-  width: auto !important;    /* Buton sadece yazısı kadar yer kaplasın */
-  padding: 0 10px !important;
-  font-weight: 600;
-  white-space: nowrap;       /* Yazının alt satıra geçmesini engelle */
-}
-    /* --- AY GÖRÜNÜMÜ: SAATİ SAĞA ALMA --- */
-
-body.monthMode .cardBody {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important; /* Başlık ve saati iki uca it */
-  width: 100%;
-  gap: 4px; /* Aralarında en az 4px boşluk olsun */
-}
-
-/* Başlık (İsim) Ayarları */
-body.monthMode .titleText {
-  order: 1; /* Görsel olarak ilk sırada */
-  flex: 1;  /* Kalan tüm boşluğu kapla */
-  text-align: left;
-  white-space: nowrap; /* Alt satıra inmesin */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Sığmazsa üç nokta (...) koy */
-  margin-top: 0 !important; /* Varsa eski marjı sıfırla */
-}
-
-/* Saat Ayarları */
-body.monthMode .timeText {
-  order: 2; /* Görsel olarak ikinci (sağ) sırada */
-  margin-left: auto; /* Kendini en sağa it */
-  flex-shrink: 0; /* Asla sıkışıp küçülmesin */
-  
-  /* Görünüm makyajı */
-  font-size: 9px;
-  background: rgba(0,0,0,0.3) !important;
-  padding: 1px 4px;
-  border-radius: 4px;
-  color: var(--accent);
-  font-family: monospace;
-}
-    /* --- AY GÖRÜNÜMÜ: SAATİ EN SAĞA YASLAMA --- */
-
-/* 1. Kart Gövdesini Genişlet ve Yay */
-body.monthMode .cardBody {
-  flex: 1; /* Kartın kalan tüm genişliğini kapla */
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important; /* İçindekileri iki uca fırlat */
-  min-width: 0; /* İçerik taşmasını engelle */
-}
-
-/* 2. Başlık Ayarları (Sola Yaslı) */
-body.monthMode .titleText {
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* Sığmazsa üç nokta koy */
-  margin-right: 4px; /* Saat ile arasına güvenli mesafe */
-  /* order: 1; (Gerekirse) */
-}
-
-/* 3. Saat Ayarları (En Sağa Yaslı) */
-body.monthMode .timeText {
-  margin-left: auto !important; /* Kendini zorla en sağa it */
-  flex-shrink: 0; /* Asla sıkışıp küçülme */
-  
-  /* Görünüm */
-  font-size: 9px;
-  font-family: monospace;
-  background: rgba(0,0,0,0.2) !important; /* Hafif koyu zemin */
-  padding: 1px 4px;
-  border-radius: 4px;
-  color: var(--accent);
-  /* order: 2; (Gerekirse) */
-}
-
-    /* --- AY GÖRÜNÜMÜ: SAATİ ZORLA EN SAĞA YAPIŞTIRMA --- */
-
-/* 1. Ay görünümünde "..." butonunu tamamen kaldır (Yer açmak için) */
-body.monthMode .moreBtn {
-  display: none !important;
-}
-
-/* 2. Kartın iç satırının genişliğini %100 yap */
-body.monthMode .cardRow {
-  width: 100% !important;
-  padding-right: 0 !important; /* Sağ boşluğu sıfırla */
-}
-
-/* 3. Kartın kendi iç boşluğunu sağdan kıs */
-body.monthMode .card {
-  padding-right: 4px !important; /* Kenara çok yakın olsun */
-}
-
-/* 4. Gövde ayarları */
-body.monthMode .cardBody {
-  flex: 1 !important; /* Kalan tüm alanı kapla */
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  padding-right: 0 !important;
-}
-
-/* 5. Saati en sağa it */
-body.monthMode .timeText {
-  margin-left: auto !important; /* Kendinden önceki her şeyi sola it */
-  margin-right: 0 !important;   /* Sağ tarafta hiç boşluk bırakma */
-  flex-shrink: 0;
-  
-  /* Görünüm */
-  font-size: 9px;
-  background: rgba(0,0,0,0.2) !important;
-  color: var(--accent);
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-/* --- AY GÖRÜNÜMÜ: SAAT FONTUNU İNCELTME --- */
-
-body.monthMode .timeText {
-  font-weight: 400 !important; /* Kalınlığı 'Normal' seviyeye çek */
-  font-family: ui-sans-serif, system-ui, -apple-system !important; /* Monospace yerine düz yazı (Daha ince durur) */
-  letter-spacing: 0.3px; /* Rakamlar birbirine yapışmasın, okunaklı olsun */
-  opacity: 0.9; /* Hafif bir şeffaflık ile baskınlığını azalt */
-}
-    
   </style>
 </head>
 
@@ -826,12 +373,12 @@ body.monthMode .timeText {
 
   <div id="authOverlay">
     <div class="authBox">
-      <h2>todoapp</h2>
+      <h2>Minimal To-Do</h2>
       <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
-      
+
       <input type="email" id="authEmail" placeholder="E-posta adresi" />
       <input type="password" id="authPass" placeholder="Şifre" />
-      
+
       <div class="authError" id="authError"></div>
 
       <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
@@ -846,7 +393,7 @@ body.monthMode .timeText {
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>todoapp<span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>Minimal To-Do v15.4 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
@@ -919,8 +466,7 @@ body.monthMode .timeText {
 
                 <select class="w" id="whereInput" title="Nereye eklensin?">
                   <option value="selected">Seçili güne</option>
-                  <option value="inbox">Inbox (Brain Dump)</option>
-                </select>
+                  <option value="inbox">Inbox</option> </select>
 
                 <button id="addSubmit" class="btn" type="submit">Ekle</button>
               </form>
@@ -978,7 +524,7 @@ body.monthMode .timeText {
         <div class="modalGrid">
           <input id="mText" class="full" type="text" placeholder="Başlık…" maxlength="120" />
           <textarea id="mNotes" class="full" rows="3" placeholder="Notlar..."></textarea>
-          
+
           <input id="mTime" type="time" />
           <select id="mType">
             <option value="termin">Termin</option>
@@ -1013,7 +559,7 @@ body.monthMode .timeText {
             <div class="lbl">En Uzun Seri</div>
           </div>
         </div>
-        
+
         <div style="margin-top:16px; font-size:13px; color:var(--muted);">Son 28 Gün</div>
         <div class="habitCalendar" id="habitCalendarGrid"></div>
       </div>
@@ -1033,13 +579,13 @@ body.monthMode .timeText {
 
   <script>
     // ----------------------------------------------------------------------
-    // SUPABASE AYARLARI (BURAYA KENDİ BİLGİLERİNİ YAPIŞTIR)
+    // SUPABASE AYARLARI
     // ----------------------------------------------------------------------
     const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
     // ----------------------------------------------------------------------
 
-    const LOCAL_KEY = 'minimal_todo_v15_3_offline';
+    const LOCAL_KEY = 'minimal_todo_v15_4_clean';
     let db = null;
     let currentUser = null;
     let _supabase = null;
@@ -1092,7 +638,7 @@ body.monthMode .timeText {
         alert("Lütfen kodun içindeki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurun.");
         return;
       }
-      
+
       const { data: { session } } = await _supabase.auth.getSession();
       if(session) {
         handleSession(session);
@@ -1100,7 +646,6 @@ body.monthMode .timeText {
         showAuth();
       }
 
-      // Auth durum değişikliğini dinle
       _supabase.auth.onAuthStateChange((_event, session) => {
         if(session) handleSession(session);
         else showAuth();
@@ -1118,12 +663,11 @@ body.monthMode .timeText {
       authOverlay.style.display = 'none';
       appWrap.style.display = 'block';
       userEmailDisplay.textContent = currentUser.email;
-      
+
       await loadRemoteDB();
       render();
     }
 
-    // Login
     btnLogin.addEventListener('click', async () => {
       authError.textContent = 'Giriş yapılıyor...';
       const email = authEmail.value;
@@ -1133,7 +677,6 @@ body.monthMode .timeText {
       else authError.textContent = '';
     });
 
-    // Signup
     btnSignup.addEventListener('click', async () => {
       authError.textContent = 'Kayıt olunuyor...';
       const email = authEmail.value;
@@ -1147,7 +690,6 @@ body.monthMode .timeText {
       }
     });
 
-    // Logout
     btnLogout.addEventListener('click', async () => {
       await _supabase.auth.signOut();
     });
@@ -1168,40 +710,30 @@ body.monthMode .timeText {
         ], 
         habits:[], 
         habitState:{ date: todayKey(), doneIds:[] },
-        habitHistory: {} // New: stores history { "habitId": ["2023-01-01", ...] }
+        habitHistory: {} 
       };
     }
 
-    // Veriyi çek
     async function loadRemoteDB() {
       if(!currentUser) return;
-      
-      // Önce yerel yedeği al (varsa)
+
       let localData = null;
       try {
         const raw = localStorage.getItem(LOCAL_KEY);
         if(raw) localData = JSON.parse(raw);
       } catch {}
 
-      // Sunucudan çek
       const { data, error } = await _supabase
         .from('user_data')
         .select('content')
         .eq('id', currentUser.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error("Veri çekme hatası:", error);
-      }
-
       if (data && data.content) {
-        // Sunucuda veri var, onu kullan
         db = data.content;
-        if (!db.habitHistory) db.habitHistory = {}; // Migration support
-        // Yereli güncelle
+        if (!db.habitHistory) db.habitHistory = {}; 
         localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
       } else {
-        // Sunucuda veri yok (yeni kullanıcı)
         if(localData) {
           db = localData;
           if (!db.habitHistory) db.habitHistory = {};
@@ -1213,12 +745,11 @@ body.monthMode .timeText {
       }
     }
 
-    // Veriyi kaydet (Debounce ile)
     let saveTimeout = null;
     function saveDB(newDB) {
       if(!newDB) return;
       db = newDB;
-      
+
       localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
 
       if(saveTimeout) clearTimeout(saveTimeout);
@@ -1237,8 +768,7 @@ body.monthMode .timeText {
     // ----------------------------------------------------------------------
     // STANDART UYGULAMA MANTIĞI
     // ----------------------------------------------------------------------
-    
-    // PWA install
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
     }
@@ -1343,9 +873,8 @@ body.monthMode .timeText {
       const today = todayKey();
       db.habitState = db.habitState || { date: today, doneIds: [] };
       db.habitHistory = db.habitHistory || {};
-      
+
       if (db.habitState.date !== today){
-        // New day reset, simple clear of daily state
         db.habitState = { date: today, doneIds: [] };
         saveDB(db);
       }
@@ -1393,7 +922,7 @@ body.monthMode .timeText {
     const modalTitle = document.getElementById('modalTitle');
     const modalWhere = document.getElementById('modalWhere');
     const mText = document.getElementById('mText');
-    const mNotes = document.getElementById('mNotes'); // New ref
+    const mNotes = document.getElementById('mNotes');
     const mTime = document.getElementById('mTime');
     const mType = document.getElementById('mType');
     const mTag = document.getElementById('mTag');
@@ -1576,7 +1105,7 @@ body.monthMode .timeText {
 
       rebuildTagDropdowns();
       mText.value = it.text || '';
-      mNotes.value = it.notes || ''; // Load notes
+      mNotes.value = it.notes || '';
       mTime.value = it.time || '';
       mType.value = it.type || 'gorev';
       mTag.value = it.tag ? it.tag : '__none__';
@@ -1619,10 +1148,9 @@ body.monthMode .timeText {
       }
     });
 
-    // CUSTOM CONFIRM UYGULANDI
     modalDelete.addEventListener('click', ()=>{
       if (modalContext.mode !== 'edit') return;
-      
+
       showConfirm('Bu kart silinsin mi?', () => {
         deleteItem(modalContext.origin, modalContext.itemId);
         closeModal();
@@ -1639,83 +1167,71 @@ body.monthMode .timeText {
       }
     }
 
-// --- makeCard FONKSİYONU (DAHA SOFT RENKLER) ---
-function makeCard(item, origin){
-  const meta = tagMeta(item.tag);
-  const typeColor = typeFrameColor(item.type); // Tür rengini al
-  
-  // Tag varsa tag rengini, yoksa tür rengini kullan
-  const baseColor = meta?.color ? meta.color : typeColor; 
-  
-  const card = document.createElement('div');
-  card.className = 'card' + (item.done ? ' done' : '');
-  card.draggable = true;
+    // --- makeCard (UPDATED V15.4 CLEAN) ---
+    function makeCard(item, origin){
+      const meta = tagMeta(item.tag);
+      const typeColor = typeFrameColor(item.type);
+      const baseColor = meta?.color ? meta.color : typeColor; 
+      
+      const card = document.createElement('div');
+      card.className = 'card' + (item.done ? ' done' : '');
+      card.draggable = true;
 
-  card.style.setProperty('--frameColor', typeColor);
-  
-  // --- DEĞİŞİKLİK BURADA ---
-  // Önceki kodda burası 0.55 idi (Çok canlı). 
-  // Şimdi 0.22 yapıyoruz (Daha şeffaf, pastel ve göz yormayan).
-  card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.22)); 
+      card.style.setProperty('--frameColor', typeColor);
+      // Opacity lowered to 0.22 (Soft/Pastel)
+      card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.22));
 
-  const more = document.createElement('button');
-  more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
-  
-  more.addEventListener('click', (e)=>{ 
-    e.stopPropagation(); 
-    openModalEdit(origin, item.id); 
-  });
+      const more = document.createElement('button');
+      more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
+      more.addEventListener('click', (e)=>{ e.stopPropagation(); openModalEdit(origin, item.id); });
 
-  const row = document.createElement('div');
-  row.className = 'cardRow';
+      const row = document.createElement('div');
+      row.className = 'cardRow';
 
-  const check = document.createElement('button');
-  check.className = 'checkBtn'; check.type = 'button';
-  check.title = item.done ? 'Geri al' : 'Tamamla';
-  check.textContent = item.done ? '↩' : '✓';
-  
-  check.addEventListener('click', (e)=>{
-    e.stopPropagation();
-    item.done = !item.done;
-    saveDB(db);
-    render();
-  });
+      const check = document.createElement('button');
+      check.className = 'checkBtn'; check.type = 'button';
+      check.title = item.done ? 'Geri al' : 'Tamamla';
+      check.textContent = item.done ? '↩' : '✓';
+      check.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        item.done = !item.done;
+        saveDB(db);
+        render();
+      });
 
-  const body = document.createElement('div');
-  body.className = 'cardBody';
+      const body = document.createElement('div');
+      body.className = 'cardBody';
 
-  if (item.time){
-    const time = document.createElement('div');
-    time.className = 'timeText'; time.textContent = item.time;
-    body.appendChild(time);
-  }
+      if (item.time){
+        const time = document.createElement('div');
+        time.className = 'timeText'; time.textContent = item.time;
+        body.appendChild(time);
+      }
 
-  const title = document.createElement('div');
-  title.className = 'titleText'; 
-  title.textContent = item.text || '(başlıksız)';
+      const title = document.createElement('div');
+      title.className = 'titleText'; 
+      title.textContent = item.text || '(başlıksız)';
 
-  if(item.notes && item.notes.trim().length > 0){
-    const noteIcon = document.createElement('span');
-    noteIcon.className = 'noteIcon';
-    noteIcon.textContent = '📝';
-    title.appendChild(noteIcon);
-  }
+      if(item.notes && item.notes.trim().length > 0){
+        const noteIcon = document.createElement('span');
+        noteIcon.className = 'noteIcon';
+        noteIcon.textContent = '📝';
+        title.appendChild(noteIcon);
+      }
 
-  body.appendChild(title);
+      body.appendChild(title);
 
-  row.appendChild(check); row.appendChild(body);
-  card.appendChild(more); card.appendChild(row);
+      row.appendChild(check); row.appendChild(body);
+      card.appendChild(more); card.appendChild(row);
 
-  card.addEventListener('dragstart', (e)=>{
-    dragPayload = { ...origin, itemId: item.id };
-    e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
-    e.dataTransfer.effectAllowed = 'move';
-  });
+      card.addEventListener('dragstart', (e)=>{
+        dragPayload = { ...origin, itemId: item.id };
+        e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
+        e.dataTransfer.effectAllowed = 'move';
+      });
 
-  return card;
-} 
-
-// --- makeCard FONKSİYONU BİTİŞ ---
+      return card;
+    }
 
     function renderInbox(){
       inboxList.innerHTML = '';
@@ -1735,29 +1251,21 @@ function makeCard(item, origin){
       }
     }
 
-    // --- HABIT LOGIC UPDATED FOR HISTORY ---
-
-                function toggleHabit(id, isDone) {
+    // --- HABITS (UPDATED) ---
+    function toggleHabit(id, isDone) {
       ensureHabitReset();
       const today = todayKey();
-      
-      // 1. habitHistory (Kalıcı Geçmiş) Güncellemesi - ASIL KAYNAK
+
       db.habitHistory = db.habitHistory || {};
-      // Eğer undefined ise boş dizi ata, sonra Set'e çevir
       const histSet = new Set(db.habitHistory[id] || []);
-      
+
       if(isDone) {
         histSet.add(today);
       } else {
         histSet.delete(today);
       }
-   
-
-
-      // Set'i tekrar diziye çevirip kaydet
       db.habitHistory[id] = [...histSet].sort();
 
-      // 2. habitState (Günlük Durum) Güncellemesi (Yedek/Legacy için)
       const s = new Set(db.habitState.doneIds || []);
       isDone ? s.add(id) : s.delete(id);
       db.habitState.doneIds = [...s];
@@ -1766,17 +1274,14 @@ function makeCard(item, origin){
       renderHabits();
     }
 
-
     function calculateStreak(habitId) {
       const history = new Set(db.habitHistory[habitId] || []);
       let currentStreak = 0;
       let checkDate = new Date();
-      
-      // Check today
+
       if(history.has(dayKey(checkDate))) {
         currentStreak++;
       }
-      // Check previous days
       while(true) {
         checkDate.setDate(checkDate.getDate() - 1);
         if(history.has(dayKey(checkDate))) {
@@ -1785,19 +1290,17 @@ function makeCard(item, origin){
           break;
         }
       }
-      
-      // Calculate Max Streak (simple naive approach on sorted array)
+
       const sortedDates = [...history].sort();
       let maxStreak = 0;
       let tempStreak = 0;
       for(let i=0; i<sortedDates.length; i++) {
         if(i === 0) { tempStreak = 1; continue; }
-        
         const curr = new Date(sortedDates[i]);
         const prev = new Date(sortedDates[i-1]);
         const diffTime = Math.abs(curr - prev);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
+
         if(diffDays === 1) {
           tempStreak++;
         } else {
@@ -1806,7 +1309,6 @@ function makeCard(item, origin){
         }
       }
       maxStreak = Math.max(maxStreak, tempStreak);
-
       return { current: currentStreak, max: maxStreak };
     }
 
@@ -1820,19 +1322,16 @@ function makeCard(item, origin){
       habitDetailSection.style.display = 'block';
       overlay.style.display = 'flex';
 
-      // Stats
       const stats = calculateStreak(habitId);
       document.getElementById('currentStreak').textContent = stats.current;
       document.getElementById('maxStreak').textContent = stats.max;
 
-      // Calendar Grid (Last 28 days)
       const gridContainer = document.getElementById('habitCalendarGrid');
       gridContainer.innerHTML = '';
       const history = new Set(db.habitHistory[habitId] || []);
       const today = new Date();
       const daysToShow = 28;
-      
-      // Generate last 28 days backwards, then reverse for display
+
       let dates = [];
       for(let i=0; i<daysToShow; i++) {
         const d = new Date();
@@ -1851,15 +1350,14 @@ function makeCard(item, origin){
       }
     }
 
-        function renderHabits(){
+    function renderHabits(){
       ensureHabitReset();
       habitsList.innerHTML = '';
       if(!db) return;
-      
-      const today = todayKey(); // Bugünü al
+
+      const today = todayKey(); 
       const total = (db.habits||[]).length;
-      
-      // Bugün tamamlananları hesaplarken de history'den bakıyoruz
+
       let doneCount = 0;
       if(db.habits) {
         doneCount = db.habits.filter(h => {
@@ -1879,10 +1377,7 @@ function makeCard(item, origin){
 
       let dragHabitId = null;
       for (const h of db.habits){
-        // Streak hesapla
         const stats = calculateStreak(h.id);
-        
-        // BUG FİX: Checkbox durumu artık doğrudan tarihçeden okunuyor
         const history = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
         const isDoneToday = history.includes(today);
 
@@ -1892,8 +1387,8 @@ function makeCard(item, origin){
         const lab = document.createElement('label');
         const cb = document.createElement('input');
         cb.type='checkbox'; 
-        cb.checked = isDoneToday; // Düzeltilen kısım burası
-        
+        cb.checked = isDoneToday;
+
         cb.addEventListener('click', (e)=>{
           e.stopPropagation();
           toggleHabit(h.id, cb.checked);
@@ -1902,7 +1397,7 @@ function makeCard(item, origin){
         const name = document.createElement('span'); 
         name.className = 'name';
         name.textContent = h.name;
-        
+
         name.addEventListener('click', (e)=>{
           e.preventDefault(); 
           e.stopPropagation();
@@ -1911,7 +1406,7 @@ function makeCard(item, origin){
 
         lab.appendChild(cb); 
         lab.appendChild(name);
-        
+
         if(stats.current > 0) {
           const streakBadge = document.createElement('span');
           streakBadge.className = 'habitStreak';
@@ -1921,15 +1416,12 @@ function makeCard(item, origin){
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-        
+
         del.addEventListener('click', ()=>{
           showConfirm(`"${h.name}" silinsin mi?`, () => {
             db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
             ensureHabitReset();
-            // Silince state ve history'den de temizle
-            if(db.habitState && db.habitState.doneIds) {
-                db.habitState.doneIds = db.habitState.doneIds.filter(id=>id!==h.id);
-            }
+            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
             if(db.habitHistory) delete db.habitHistory[h.id];
             saveDB(db);
             renderHabits();
@@ -1938,7 +1430,6 @@ function makeCard(item, origin){
 
         row.appendChild(lab); row.appendChild(del);
 
-        // Drag-drop eventleri aynı kaldı
         row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
         row.addEventListener('dragend', ()=>{
           dragHabitId = null; row.classList.remove('dragging');
@@ -1965,13 +1456,10 @@ function makeCard(item, origin){
       }
     }
 
-
-        
-
+    // --- renderPanel (UPDATED V15.4 CLEAN) ---
     function renderPanel(){
       const k = dayKey(selected);
       panelTitle.textContent = fmtDay(selected);
-      // Sıralama ve filtreleme
       const items = (db && db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
 
       taskList.innerHTML = '';
@@ -1982,13 +1470,8 @@ function makeCard(item, origin){
         taskList.appendChild(empty);
         return;
       }
-      
-      // Artık basit text yerine makeCard kullanıyoruz
       for (const it of items){
-        // makeCard fonksiyonu renkli kutuyu oluşturur
         const card = makeCard(it, { from:'day', dayKey:k });
-        
-        // Sağ panelde kartın padding ayarını biraz rahatlatalım
         if(mode === 'month') {
              card.style.padding = '8px';
              card.style.marginBottom = '6px';
@@ -1998,14 +1481,7 @@ function makeCard(item, origin){
     }
 
     function adjustMonthCellHeight(totalCells){
-      const rows = Math.max(5, Math.min(6, Math.ceil(totalCells / 7)));
-      const areaH = calendarArea.clientHeight;
-      const dowH = dowRow.getBoundingClientRect().height || 18;
-      const gaps = (rows - 1) * 10 + 10;
-      const topPadding = 14;
-      const cellH = Math.floor((areaH - dowH - gaps - topPadding) / rows);
-      const clamped = Math.max(115, Math.min(185, cellH));
-      document.documentElement.style.setProperty('--monthCellH', clamped + 'px');
+      // (This function is kept for legacy, but CSS override makes it redundant for square cells)
     }
 
     function dockInboxForMode(){
@@ -2084,8 +1560,7 @@ function makeCard(item, origin){
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-        
-        // CUSTOM CONFIRM UYGULANDI
+
         del.addEventListener('click', ()=>{
           showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, () => {
             db.tags = db.tags.filter(x=>x.name!==t.name);
@@ -2131,7 +1606,7 @@ function makeCard(item, origin){
     }
 
     function render(){
-      if(!db) return; // DB henüz yüklenmediyse çizme
+      if(!db) return;
 
       for (const k of Object.keys(db.days||{})){
         db.days[k] = (db.days[k]||[]).map(fixItem);
@@ -2162,7 +1637,6 @@ function makeCard(item, origin){
           const d = addDays(start,i);
           cells.push({ date:d, out: d.getMonth() !== anchor.getMonth() });
         }
-        adjustMonthCellHeight(cells.length);
       }
 
       const selKey = dayKey(selected);
@@ -2304,7 +1778,7 @@ function makeCard(item, origin){
 
       const item = {
         text,
-        notes: '', // Quick add has no notes
+        notes: '', 
         time: timeInput.value || '',
         type: typeInput.value,
         tag: (tagInput.value==='__none__' ? '' : tagInput.value),
@@ -2385,7 +1859,6 @@ function makeCard(item, origin){
     typeFilter.value='__preset__';
     typeInput.value = 'gorev';
 
-    // Başlat
     initApp();
 
     window.addEventListener('resize', ()=>{
