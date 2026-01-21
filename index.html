@@ -1202,17 +1202,7 @@
       } else {
         histSet.delete(today);
       }
-      // Set'i tekrar diziye çevirip kaydet
-      db.habitHistory[id] = [...histSet].sort();
-
-      // 2. habitState (Günlük Durum) Güncellemesi (Yedek/Legacy için)
-      const s = new Set(db.habitState.doneIds || []);
-      isDone ? s.add(id) : s.delete(id);
-      db.habitState.doneIds = [...s];
-
-      saveDB(db);
-      renderHabits();
-    }
+   
 
 
       // Set'i tekrar diziye çevirip kaydet
@@ -1427,68 +1417,7 @@
     }
 
 
-        const name = document.createElement('span'); 
-        name.className = 'name';
-        name.textContent = h.name;
         
-        name.addEventListener('click', (e)=>{
-          e.preventDefault(); 
-          e.stopPropagation();
-          openHabitDetail(h.id);
-        });
-
-        lab.appendChild(cb); 
-        lab.appendChild(name);
-        
-        // 2. FIX: Streak Rozetini ekle
-        if(stats.current > 0) {
-          const streakBadge = document.createElement('span');
-          streakBadge.className = 'habitStreak';
-          streakBadge.textContent = `🔥 ${stats.current}`;
-          lab.appendChild(streakBadge);
-        }
-
-        const del = document.createElement('button');
-        del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-        
-        del.addEventListener('click', ()=>{
-          showConfirm(`"${h.name}" silinsin mi?`, () => {
-            db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
-            ensureHabitReset();
-            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
-            if(db.habitHistory) delete db.habitHistory[h.id];
-            saveDB(db);
-            renderHabits();
-          });
-        });
-
-        row.appendChild(lab); row.appendChild(del);
-
-        row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
-        row.addEventListener('dragend', ()=>{
-          dragHabitId = null; row.classList.remove('dragging');
-          [...habitsList.querySelectorAll('.habitRow')].forEach(x=>x.classList.remove('dragOver'));
-        });
-        row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
-        row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
-        row.addEventListener('drop', (e)=>{
-          e.preventDefault();
-          row.classList.remove('dragOver');
-          const targetId = row.dataset.habit;
-          if (!dragHabitId || !targetId || dragHabitId === targetId) return;
-          const ids = db.habits.map(x=>x.id);
-          const from = ids.indexOf(dragHabitId);
-          const to = ids.indexOf(targetId);
-          if (from < 0 || to < 0) return;
-          const moved = db.habits.splice(from,1)[0];
-          db.habits.splice(to,0,moved);
-          saveDB(db);
-          renderHabits();
-        });
-
-        habitsList.appendChild(row);
-      }
-    }
 
     function renderPanel(){
       const k = dayKey(selected);
