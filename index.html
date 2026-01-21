@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#111111" />
-  <title>Minimal To-Do v15.1 (Custom Confirm)</title>
+  <title>Minimal To-Do v16.0 (Habit Streaks)</title>
   <link rel="manifest" href="manifest.webmanifest">
-  
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -24,7 +24,7 @@
     *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     html, body{ height:100%; }
     body{ margin:0; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; /* Giriş yapılana kadar gizli */ }
+    .wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; }
 
     header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; }
     .left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
@@ -46,26 +46,17 @@
     .title{ font-size:14px; color:var(--muted); }
     .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
-    select, input[type="text"], input[type="search"], input[type="time"], input[type="email"], input[type="password"]{
+    select, input[type="text"], input[type="search"], input[type="time"], input[type="email"], input[type="password"], textarea {
       background:#101014; color:var(--text);
       border:1px solid var(--line); border-radius:12px;
       padding:8px 10px; outline:none; font-size:13px;
     }
-    select:focus, input:focus{ border-color:#3a3a44; }
+    select:focus, input:focus, textarea:focus{ border-color:#3a3a44; }
+    textarea { resize: vertical; font-family: inherit; line-height: 1.4; }
 
-    .main{
-      display:grid;
-      grid-template-columns: 1fr 240px;
-      gap:12px;
-      align-items:start;
-    }
+    .main{ display:grid; grid-template-columns: 1fr 240px; gap:12px; align-items:start; }
 
-    /* Base calendar area */
-    .calendarArea{
-      height: calc(100vh - 210px);
-      overflow:auto;
-      padding-right:4px;
-    }
+    .calendarArea{ height: calc(100vh - 210px); overflow:auto; padding-right:4px; }
     body.weekMode .calendarArea{ height: calc(100vh - 320px); }
     body.monthMode .calendarArea{ height: calc(100vh - 140px); }
 
@@ -76,16 +67,8 @@
     body.weekMode .grid{ gap:8px; }
 
     .cell{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:10px;
-      cursor:pointer;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      overflow:hidden;
-      min-width:0;
+      background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px;
+      cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:hidden; min-width:0;
     }
     .cell.weekCell{ min-height:280px; }
     .cell.monthCell{ height: var(--monthCellH); }
@@ -100,8 +83,7 @@
     .count{ font-size:12px; color:var(--accent); }
 
     .plusBtn{
-      width:26px; height:26px; display:grid; place-items:center;
-      border-radius:10px; border:1px solid var(--line);
+      width:26px; height:26px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--line);
       background:transparent; color:var(--muted); cursor:pointer; flex:0 0 auto;
     }
     .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
@@ -109,10 +91,8 @@
     .cards{ display:flex; flex-direction:column; gap:6px; overflow:auto; min-height:0; padding-right:2px; }
 
     .card{
-      border:2px solid var(--frameColor, var(--line));
-      border-radius:12px; padding:6px 8px;
-      background: var(--fillColor, rgba(255,255,255,0.04));
-      user-select:none; min-width:0; position:relative;
+      border:2px solid var(--frameColor, var(--line)); border-radius:12px; padding:6px 8px;
+      background: var(--fillColor, rgba(255,255,255,0.04)); user-select:none; min-width:0; position:relative;
     }
     .card[draggable="true"]{ cursor:grab; }
     .card:active{ cursor:grabbing; }
@@ -120,19 +100,17 @@
 
     .cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
     .checkBtn{
-      width:18px; height:18px; display:grid; place-items:center;
-      border-radius:7px; border:1px solid rgba(0,0,0,.25);
-      background:rgba(0,0,0,.10); color:rgba(255,255,255,.85);
-      cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px;
+      width:18px; height:18px; display:grid; place-items:center; border-radius:7px; border:1px solid rgba(0,0,0,.25);
+      background:rgba(0,0,0,.10); color:rgba(255,255,255,.85); cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px;
     }
-    .cardBody{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:3px; padding-right:22px; }
+    .cardBody{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; padding-right:22px; }
     .titleText{ font-size:12.8px; line-height:1.2; color: var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .timeText{ font-size:11px; line-height:1.1; color: rgba(255,255,255,.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
+    
     body.monthMode .card{ padding:4px 6px; border-radius:10px; }
     body.monthMode .cards{ gap:4px; }
     body.monthMode .checkBtn{ width:14px; height:14px; border-radius:6px; font-size:9px; margin-top:0; }
-    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; gap: 6px; }
+    body.monthMode .cardBody{ gap:2px; padding-right:20px; flex-direction: row; align-items: center; gap: 6px; flex-wrap: wrap;}
     body.monthMode .titleText{ font-size:11px; flex: 1 1 auto; min-width: 0; }
     body.monthMode .timeText{ font-size:9.5px; opacity: .85; flex: 0 0 auto; }
     body.monthMode .moreBtn{ width:16px; height:16px; top:5px; right:5px; font-size:12px; }
@@ -215,16 +193,36 @@
     }
     .iconBtn:hover{ border-color:#3a3a44; color:var(--text); }
 
+    /* HABIT CSS - UPDATED */
     .habitsList{ display:flex; flex-direction:column; gap:10px; }
     .habitRow{
       display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:8px 10px; border:1px solid var(--line); background:#121216; border-radius:14px;
+      cursor: pointer;
     }
     .habitRow.dragging{ opacity:.6; }
     .habitRow.dragOver{ outline:2px dashed rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
-    .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; }
-    .habitRow span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .habitRow input[type="checkbox"]{ width:18px; height:18px; }
+    .habitLeft{ display:flex; align-items:center; gap:10px; min-width:0; flex:1; }
+    .habitLeft span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
+    .habitRow input[type="checkbox"]{ width:18px; height:18px; cursor: pointer; }
+    
+    .streakBadge{
+      font-size:11px; background:#2a2a2f; padding:2px 6px; border-radius:6px; 
+      color:#fbbf24; margin-right:5px; display:flex; align-items:center; gap:3px;
+      border:1px solid #444; flex-shrink: 0;
+    }
+
+    /* HABIT CALENDAR MODAL STYLES */
+    .habitCalHeader { display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:15px; }
+    .habitMonthTitle { font-size:15px; font-weight:600; color:var(--text); min-width:100px; text-align:center; }
+    .habitGrid { display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; margin-top:10px; }
+    .habitCell {
+      aspect-ratio:1; background:#121216; border:1px solid var(--line); border-radius:8px;
+      display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--muted);
+    }
+    .habitCell.done { background:var(--accent); color:#000; font-weight:bold; border-color:var(--accent); }
+    .habitCell.empty { background:transparent; border:none; }
+    .habitDow { font-size:11px; text-align:center; color:var(--muted); padding-bottom:4px; }
 
     /* AUTH SCREEN CSS */
     #authOverlay {
@@ -256,10 +254,10 @@
     <div class="authBox">
       <h2>Minimal To-Do</h2>
       <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
-      
+
       <input type="email" id="authEmail" placeholder="E-posta adresi" />
       <input type="password" id="authPass" placeholder="Şifre" />
-      
+
       <div class="authError" id="authError"></div>
 
       <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
@@ -274,7 +272,7 @@
   <div class="wrap" id="appWrap">
     <header>
       <div class="left">
-        <h1>Minimal To-Do v15.1 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
+        <h1>Minimal To-Do v16.0 <span style="font-size:11px; color:var(--accent); font-weight:normal;">Habits+</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
           <button id="btnMonth" type="button">Ay</button>
@@ -381,11 +379,10 @@
           <div class="panelHead">
             <div>
               <h2>Habits</h2>
-              <div class="muted" id="habitsSub">Her gün sıfırlanır</div>
+              <div class="muted" id="habitsSub">Geçmiş takibi aktif</div>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <button id="habitAddBtn" class="plusBtn" type="button">+</button>
-              <button id="habitResetBtn" class="btn" type="button">Reset</button>
             </div>
           </div>
           <div class="habitsList" id="habitsList"></div>
@@ -412,6 +409,7 @@
             <option value="gorev">Görev</option>
           </select>
           <select id="mTag"></select>
+          <textarea id="mNote" class="full" placeholder="Notlar, alt görevler..." rows="3"></textarea>
           <div class="full muted">Enter = Kaydet/Ekle</div>
         </div>
 
@@ -441,20 +439,40 @@
     </div>
   </div>
 
+  <div id="habitOverlay" class="overlay" style="z-index:55;">
+    <div class="modal" style="width:min(400px, 95%);">
+      <div class="modalTop" style="margin-bottom:15px;">
+        <h3 id="habitDetailTitle">Alışkanlık Detayı</h3>
+        <button id="habitDetailClose" class="btn" type="button">Kapat</button>
+      </div>
+      
+      <div class="habitCalHeader">
+        <button id="habitPrevMonth" class="btn" type="button">◀</button>
+        <div id="habitMonthTitle" class="habitMonthTitle"></div>
+        <button id="habitNextMonth" class="btn" type="button">▶</button>
+      </div>
+
+      <div id="habitGrid" class="habitGrid"></div>
+      
+      <div style="text-align:center; margin-top:15px; font-size:12px; color:var(--muted);">
+        Takvimde yapılan günleri görüyorsunuz.
+      </div>
+    </div>
+  </div>
+
   <script>
     // ----------------------------------------------------------------------
-    // SUPABASE AYARLARI (BURAYA KENDİ BİLGİLERİNİ YAPIŞTIR)
+    // SUPABASE AYARLARI
     // ----------------------------------------------------------------------
     const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM"; 
     // ----------------------------------------------------------------------
 
-    const LOCAL_KEY = 'minimal_todo_v15_offline';
+    const LOCAL_KEY = 'minimal_todo_v16_offline';
     let db = null;
     let currentUser = null;
     let _supabase = null;
 
-    // Supabase Init
     if(SUPABASE_URL && SUPABASE_KEY) {
       _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } else {
@@ -496,13 +514,12 @@
     const btnLogout = document.getElementById('btnLogout');
     const userEmailDisplay = document.getElementById('userEmailDisplay');
 
-    // Başlangıç: Session kontrol
     async function initApp() {
       if(!_supabase) {
         alert("Lütfen kodun içindeki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurun.");
         return;
       }
-      
+
       const { data: { session } } = await _supabase.auth.getSession();
       if(session) {
         handleSession(session);
@@ -510,7 +527,6 @@
         showAuth();
       }
 
-      // Auth durum değişikliğini dinle
       _supabase.auth.onAuthStateChange((_event, session) => {
         if(session) handleSession(session);
         else showAuth();
@@ -528,12 +544,11 @@
       authOverlay.style.display = 'none';
       appWrap.style.display = 'block';
       userEmailDisplay.textContent = currentUser.email;
-      
+
       await loadRemoteDB();
       render();
     }
 
-    // Login
     btnLogin.addEventListener('click', async () => {
       authError.textContent = 'Giriş yapılıyor...';
       const email = authEmail.value;
@@ -543,7 +558,6 @@
       else authError.textContent = '';
     });
 
-    // Signup
     btnSignup.addEventListener('click', async () => {
       authError.textContent = 'Kayıt olunuyor...';
       const email = authEmail.value;
@@ -557,7 +571,6 @@
       }
     });
 
-    // Logout
     btnLogout.addEventListener('click', async () => {
       await _supabase.auth.signOut();
     });
@@ -577,22 +590,20 @@
           { name:'ev',        color:'#fb7185', order:4 },
         ], 
         habits:[], 
+        // Not: Eski habitState yerine artık habits[].history kullanıyoruz
         habitState:{ date: todayKey(), doneIds:[] } 
       };
     }
 
-    // Veriyi çek
     async function loadRemoteDB() {
       if(!currentUser) return;
-      
-      // Önce yerel yedeği al (varsa)
+
       let localData = null;
       try {
         const raw = localStorage.getItem(LOCAL_KEY);
         if(raw) localData = JSON.parse(raw);
       } catch {}
 
-      // Sunucudan çek
       const { data, error } = await _supabase
         .from('user_data')
         .select('content')
@@ -604,12 +615,15 @@
       }
 
       if (data && data.content) {
-        // Sunucuda veri var, onu kullan
         db = data.content;
-        // Yereli güncelle
+        // Data migration: ensure habits have history array
+        if(db.habits) {
+            db.habits.forEach(h => {
+                if(!h.history) h.history = [];
+            });
+        }
         localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
       } else {
-        // Sunucuda veri yok (yeni kullanıcı)
         if(localData) {
           db = localData;
           saveDB(db); 
@@ -620,12 +634,11 @@
       }
     }
 
-    // Veriyi kaydet (Debounce ile)
     let saveTimeout = null;
     function saveDB(newDB) {
       if(!newDB) return;
       db = newDB;
-      
+
       localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
 
       if(saveTimeout) clearTimeout(saveTimeout);
@@ -644,8 +657,7 @@
     // ----------------------------------------------------------------------
     // STANDART UYGULAMA MANTIĞI
     // ----------------------------------------------------------------------
-    
-    // PWA install
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
     }
@@ -708,6 +720,7 @@
         type,
         tag: (t.tag || ''),
         time: (t.time || ''),
+        note: (t.note || ''),
         created: t.created || Date.now()
       };
     }
@@ -744,16 +757,6 @@
     let selected = new Date();
     let dragPayload = null;
 
-    function ensureHabitReset(){
-      if(!db) return;
-      const today = todayKey();
-      db.habitState = db.habitState || { date: today, doneIds: [] };
-      if (db.habitState.date !== today){
-        db.habitState = { date: today, doneIds: [] };
-        saveDB(db);
-      }
-    }
-
     // UI refs
     const calendarArea = document.getElementById('calendarArea');
     const grid = document.getElementById('grid');
@@ -787,7 +790,6 @@
 
     const habitsList = document.getElementById('habitsList');
     const habitAddBtn = document.getElementById('habitAddBtn');
-    const habitResetBtn = document.getElementById('habitResetBtn');
     const habitsSub = document.getElementById('habitsSub');
 
     // Modal
@@ -799,12 +801,24 @@
     const mTime = document.getElementById('mTime');
     const mType = document.getElementById('mType');
     const mTag = document.getElementById('mTag');
+    const mNote = document.getElementById('mNote'); // Yeni not alanı
     const quickAddSection = document.getElementById('quickAddSection');
     const tagSettingsSection = document.getElementById('tagSettingsSection');
     const tagSettingsBtn = document.getElementById('tagSettingsBtn');
     const tagManager = document.getElementById('tagManager');
     const modalSave = document.getElementById('modalSave');
     const modalDelete = document.getElementById('modalDelete');
+
+    // Habit Modal Refs
+    const habitOverlay = document.getElementById('habitOverlay');
+    const habitDetailClose = document.getElementById('habitDetailClose');
+    const habitDetailTitle = document.getElementById('habitDetailTitle');
+    const habitPrevMonth = document.getElementById('habitPrevMonth');
+    const habitNextMonth = document.getElementById('habitNextMonth');
+    const habitMonthTitle = document.getElementById('habitMonthTitle');
+    const habitGrid = document.getElementById('habitGrid');
+    let currentHabitId = null;
+    let habitViewAnchor = new Date();
 
     let modalContext = { mode:'add', dest:'day', dayKey:null, origin:null, itemId:null };
 
@@ -815,6 +829,8 @@
     overlay.addEventListener('keydown', (e)=>{
       if (overlay.style.display !== 'flex') return;
       if (tagSettingsSection.style.display === 'block') return;
+      // Textarea'da enter alt satıra geçsin, kaydetmesin
+      if (document.activeElement === mNote) return;
       if (e.key === 'Enter'){
         e.preventDefault();
         modalSave.click();
@@ -948,6 +964,7 @@
       mText.value = '';
       mTime.value = '';
       mTag.value = '__none__';
+      mNote.value = '';
 
       const defaultType = (ctx.dest === 'inbox') ? 'gorev' : (mode === 'month') ? 'termin' : 'gorev';
       mType.value = defaultType;
@@ -974,6 +991,7 @@
       mTime.value = it.time || '';
       mType.value = it.type || 'gorev';
       mTag.value = it.tag ? it.tag : '__none__';
+      mNote.value = it.note || '';
 
       modalDelete.style.display = 'inline-block';
       modalSave.textContent = 'Kaydet';
@@ -982,6 +1000,7 @@
 
     modalSave.addEventListener('click', ()=>{
       const text = (mText.value||'').trim();
+      const note = (mNote.value||'').trim();
       if (!text) return;
 
       if (modalContext.mode === 'add'){
@@ -990,6 +1009,7 @@
           time: mTime.value || '',
           type: mType.value,
           tag: (mTag.value==='__none__' ? '' : mTag.value),
+          note,
           done:false,
           created: Date.now()
         });
@@ -1005,16 +1025,16 @@
         it.time = mTime.value || '';
         it.type = mType.value;
         it.tag  = (mTag.value==='__none__' ? '' : mTag.value);
+        it.note = note;
         saveDB(db);
         closeModal();
         render();
       }
     });
 
-    // CUSTOM CONFIRM UYGULANDI
     modalDelete.addEventListener('click', ()=>{
       if (modalContext.mode !== 'edit') return;
-      
+
       showConfirm('Bu kart silinsin mi?', () => {
         deleteItem(modalContext.origin, modalContext.itemId);
         closeModal();
@@ -1073,6 +1093,8 @@
         body.appendChild(time);
       }
 
+      // Notlar ana ekranda gizlendiği için burası temiz
+
       row.appendChild(check); row.appendChild(body);
       card.appendChild(more); card.appendChild(row);
 
@@ -1103,13 +1125,50 @@
       }
     }
 
+    // --- HABITS (WITH STREAK & HISTORY) ---
+    function getStreak(history){
+      if(!history || !history.length) return 0;
+      const sorted = [...history].sort().reverse();
+      const today = todayKey();
+      const yesterday = dayKey(addDays(new Date(), -1));
+      
+      let streak = 0;
+      let checkDate = new Date();
+      
+      // If done today, start counting. If not today, check yesterday.
+      if (sorted.includes(dayKey(checkDate))) {
+        streak = 1;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        checkDate.setDate(checkDate.getDate() - 1);
+        if(!sorted.includes(dayKey(checkDate))) return 0;
+      }
+
+      while(true){
+        const k = dayKey(checkDate);
+        if (sorted.includes(k)){
+          if (k !== todayKey()) streak++; // Avoid double count if logic overlaps
+        } else {
+          break;
+        }
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+      return streak;
+    }
+
     function renderHabits(){
-      ensureHabitReset();
       habitsList.innerHTML = '';
       if(!db) return;
-      const done = new Set(db.habitState?.doneIds || []);
       const total = (db.habits||[]).length;
-      habitsSub.textContent = total ? `Bugün: ${done.size}/${total}` : 'Her gün sıfırlanır';
+      
+      // Ensure history array exists
+      db.habits.forEach(h => { if(!h.history) h.history = []; });
+
+      const today = todayKey();
+      let doneCount = 0;
+      db.habits.forEach(h => { if(h.history.includes(today)) doneCount++; });
+
+      habitsSub.textContent = total ? `Bugün: ${doneCount}/${total}` : 'Geçmiş takibi aktif';
 
       if (!total){
         const empty = document.createElement('div');
@@ -1123,37 +1182,52 @@
         const row = document.createElement('div');
         row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
 
-        const lab = document.createElement('label');
+        const isDone = h.history.includes(today);
+        const streak = getStreak(h.history);
+
+        const left = document.createElement('div');
+        left.className = 'habitLeft';
+        left.addEventListener('click', ()=>openHabitModal(h.id));
+
         const cb = document.createElement('input');
-        cb.type='checkbox'; cb.checked = done.has(h.id);
-        cb.addEventListener('change', ()=>{
-          ensureHabitReset();
-          const s = new Set(db.habitState.doneIds || []);
-          cb.checked ? s.add(h.id) : s.delete(h.id);
-          db.habitState.doneIds = [...s];
+        cb.type='checkbox'; cb.checked = isDone;
+        cb.addEventListener('change', (e)=>{
+          e.stopPropagation(); // prevent row click
+          if(cb.checked){
+            if(!h.history.includes(today)) h.history.push(today);
+          } else {
+            h.history = h.history.filter(d => d !== today);
+          }
           saveDB(db);
           renderHabits();
         });
+        
+        left.appendChild(cb);
 
         const name = document.createElement('span'); name.textContent = h.name;
-        lab.appendChild(cb); lab.appendChild(name);
+        left.appendChild(name);
+
+        if (streak > 0) {
+          const badge = document.createElement('div');
+          badge.className = 'streakBadge';
+          badge.innerHTML = `🔥 ${streak} Gün`;
+          row.appendChild(badge);
+        }
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-        
-        // CUSTOM CONFIRM UYGULANDI
-        del.addEventListener('click', ()=>{
+        del.addEventListener('click', (e)=>{
+          e.stopPropagation();
           showConfirm(`"${h.name}" silinsin mi?`, () => {
             db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
-            ensureHabitReset();
-            db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
             saveDB(db);
             renderHabits();
           });
         });
 
-        row.appendChild(lab); row.appendChild(del);
+        row.appendChild(left); row.appendChild(del);
 
+        // Drag events for habits
         row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
         row.addEventListener('dragend', ()=>{
           dragHabitId = null; row.classList.remove('dragging');
@@ -1180,6 +1254,67 @@
       }
     }
 
+    // --- HABIT CALENDAR MODAL ---
+    habitDetailClose.addEventListener('click', ()=>habitOverlay.style.display='none');
+    habitOverlay.addEventListener('click', (e)=>{ if(e.target===habitOverlay) habitOverlay.style.display='none'; });
+    
+    habitPrevMonth.addEventListener('click', ()=>{
+      habitViewAnchor = new Date(habitViewAnchor.getFullYear(), habitViewAnchor.getMonth()-1, 1);
+      renderHabitCalendar();
+    });
+    habitNextMonth.addEventListener('click', ()=>{
+      habitViewAnchor = new Date(habitViewAnchor.getFullYear(), habitViewAnchor.getMonth()+1, 1);
+      renderHabitCalendar();
+    });
+
+    function openHabitModal(habitId){
+      currentHabitId = habitId;
+      habitViewAnchor = new Date();
+      habitOverlay.style.display = 'flex';
+      renderHabitCalendar();
+    }
+
+    function renderHabitCalendar(){
+      if(!currentHabitId) return;
+      const h = db.habits.find(x=>x.id===currentHabitId);
+      if(!h) return;
+
+      habitDetailTitle.textContent = h.name;
+      habitMonthTitle.textContent = habitViewAnchor.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
+
+      habitGrid.innerHTML = '';
+      
+      // Header for DOW
+      for(const d of DOW) {
+        const div = document.createElement('div');
+        div.className = 'habitDow'; div.textContent = d;
+        habitGrid.appendChild(div);
+      }
+
+      const first = startOfMonth(habitViewAnchor);
+      const last = endOfMonth(habitViewAnchor);
+      const startDay = (first.getDay() + 6) % 7; 
+      const totalDays = last.getDate();
+
+      // Empty cells
+      for(let i=0; i<startDay; i++){
+        const div = document.createElement('div');
+        div.className = 'habitCell empty';
+        habitGrid.appendChild(div);
+      }
+
+      for(let i=1; i<=totalDays; i++){
+        const d = new Date(habitViewAnchor.getFullYear(), habitViewAnchor.getMonth(), i);
+        const k = dayKey(d);
+        const done = h.history.includes(k);
+        
+        const cell = document.createElement('div');
+        cell.className = 'habitCell' + (done ? ' done' : '');
+        cell.textContent = i;
+        habitGrid.appendChild(cell);
+      }
+    }
+
     function renderPanel(){
       const k = dayKey(selected);
       panelTitle.textContent = fmtDay(selected);
@@ -1198,7 +1333,8 @@
         row.className='row';
         const txt = document.createElement('div');
         txt.className='txt';
-        txt.textContent = it.text + (it.time ? ` • ${it.time}` : '');
+        // Note is hidden in simple list view to keep it clean
+        txt.textContent = it.text + (it.time ? ` • ${it.time}` : '') + (it.note ? ' [Not]' : '');
         txt.style.color = it.done ? 'var(--muted)' : 'var(--text)';
         row.appendChild(txt);
         taskList.appendChild(row);
@@ -1292,7 +1428,7 @@
 
         const del = document.createElement('button');
         del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-        
+
         // CUSTOM CONFIRM UYGULANDI
         del.addEventListener('click', ()=>{
           showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, () => {
@@ -1515,6 +1651,7 @@
         time: timeInput.value || '',
         type: typeInput.value,
         tag: (tagInput.value==='__none__' ? '' : tagInput.value),
+        note: '',
         done:false,
         created: Date.now()
       };
