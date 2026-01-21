@@ -1403,7 +1403,7 @@ body.monthMode #taskList {
       }
     }
 
-    // --- makeCard FONKSİYONU BAŞLANGIÇ ---
+// --- makeCard FONKSİYONU (DAHA SOFT RENKLER) ---
 function makeCard(item, origin){
   const meta = tagMeta(item.tag);
   const typeColor = typeFrameColor(item.type); // Tür rengini al
@@ -1416,13 +1416,15 @@ function makeCard(item, origin){
   card.draggable = true;
 
   card.style.setProperty('--frameColor', typeColor);
-  // Rengi daha canlı yap (Opaklık 0.55)
-  card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.55));
+  
+  // --- DEĞİŞİKLİK BURADA ---
+  // Önceki kodda burası 0.55 idi (Çok canlı). 
+  // Şimdi 0.22 yapıyoruz (Daha şeffaf, pastel ve göz yormayan).
+  card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.22)); 
 
   const more = document.createElement('button');
   more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
   
-  // "Daha Fazla" butonu tıklama olayı
   more.addEventListener('click', (e)=>{ 
     e.stopPropagation(); 
     openModalEdit(origin, item.id); 
@@ -1436,7 +1438,6 @@ function makeCard(item, origin){
   check.title = item.done ? 'Geri al' : 'Tamamla';
   check.textContent = item.done ? '↩' : '✓';
   
-  // "Check" butonu tıklama olayı
   check.addEventListener('click', (e)=>{
     e.stopPropagation();
     item.done = !item.done;
@@ -1447,7 +1448,6 @@ function makeCard(item, origin){
   const body = document.createElement('div');
   body.className = 'cardBody';
 
-  // Saat varsa başa ekle (Ay görünümü için kritik)
   if (item.time){
     const time = document.createElement('div');
     time.className = 'timeText'; time.textContent = item.time;
@@ -1470,7 +1470,6 @@ function makeCard(item, origin){
   row.appendChild(check); row.appendChild(body);
   card.appendChild(more); card.appendChild(row);
 
-  // Sürükle bırak (Drag) olayı
   card.addEventListener('dragstart', (e)=>{
     dragPayload = { ...origin, itemId: item.id };
     e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
@@ -1479,6 +1478,7 @@ function makeCard(item, origin){
 
   return card;
 } 
+
 // --- makeCard FONKSİYONU BİTİŞ ---
 
     function renderInbox(){
