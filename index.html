@@ -284,6 +284,112 @@
       body.monthMode .side{ display:none; }
       body.weekMode .bottom{ margin-top: 0px; }
     }
+
+    /* --- AY GÖRÜNÜMÜ DÜZENLEMESİ (PANEL SAĞDA) --- */
+
+/* 1. Kapsayıcıyı yan yana (Flex) hale getiriyoruz */
+body.monthMode .main > div:first-child {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  height: calc(100vh - 90px); /* Sayfa yüksekliğine sığdır */
+  overflow: hidden;
+}
+
+/* 2. Takvim alanı kalan tüm boşluğu kaplasın */
+body.monthMode .calendarArea {
+  flex: 1; 
+  height: 100% !important; /* Yüksekliği zorla */
+  border-right: 1px solid var(--line); /* Araya çizgi at */
+  padding-right: 15px;
+}
+
+/* 3. Görev Kutusunu (Seçili Gün Paneli) sağa sabitle */
+body.monthMode .bottom {
+  width: 280px;      /* Genişlik ayarı */
+  min-width: 280px;
+  margin-top: 0;     /* Eski boşluğu sıfırla */
+  overflow-y: auto;  /* İçeriği uzunsa scroll olsun */
+  padding-bottom: 20px;
+}
+
+/* 4. Sağ panelin içindeki kutu görünümünü sadeleştir */
+body.monthMode .panelLike {
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* 5. Ay hücrelerinin yüksekliğini sabitleyip iç scroll verelim */
+/* Böylece çok termin olsa bile hücre uzayıp takvimi bozmaz */
+body.monthMode .cell.monthCell {
+  height: 100%; /* Satıra yayıl */
+  min-height: 0;
+  overflow-y: auto; /* Hücre içinde çok kayıt varsa scroll çıksın */
+  display: flex;
+  flex-direction: column;
+}
+/* Hücre içi scrollbar'ı inceltelim */
+body.monthMode .cell.monthCell::-webkit-scrollbar { width: 3px; }
+body.monthMode .cell.monthCell::-webkit-scrollbar-thumb { background: var(--line); }
+
+    /* --- AY GÖRÜNÜMÜ MİNİMAL KART TASARIMI --- */
+
+/* Kartın dış çerçevesini ve arka planını kaldır */
+body.monthMode .card {
+  background: transparent !important;
+  border: 0;
+  padding: 1px 0;
+  margin-bottom: 1px;
+  border-radius: 0;
+  min-height: auto;
+}
+
+/* Kart içeriğini sıkıştır */
+body.monthMode .cardRow {
+  gap: 6px;
+  align-items: center;
+}
+
+/* Check butonunu minik bir renkli noktaya çevir */
+body.monthMode .checkBtn {
+  width: 6px; 
+  height: 6px;
+  min-width: 6px; /* Ezilmemesi için */
+  border-radius: 50%;
+  padding: 0;
+  font-size: 0; /* İçindeki tiki gizle */
+  background: var(--frameColor); /* Görev türünün rengini al */
+  border: none;
+  opacity: 1;
+}
+/* Tamamlanmışsa rengi soluklaştır */
+body.monthMode .card.done .checkBtn {
+  opacity: 0.3;
+}
+
+/* Başlığı tek satır yap ve küçült */
+body.monthMode .titleText {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Saati ve 'Daha Fazla' butonunu gizle (Yer kazanmak için) */
+/* Fareyle üzerine gelince detay görünür zaten */
+body.monthMode .timeText { display: none; }
+body.monthMode .moreBtn { display: none; }
+
+/* Kartın üzerine gelince hafif bir zemin rengi ver */
+body.monthMode .card:hover {
+  background: rgba(255,255,255,0.05) !important;
+  border-radius: 4px;
+}
+
   </style>
 </head>
 
