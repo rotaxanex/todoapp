@@ -1,6 +1,6 @@
 {
-  "name": "todoapp",
-  "short_name": "todoapp",
+  "name": "todoapp pc",
+  "short_name": "todoapp pc",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f0f10",
