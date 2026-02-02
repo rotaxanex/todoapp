@@ -228,7 +228,11 @@ body.weekMode .calendarArea{
     .inboxList{ display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:40vh; padding-right:2px; }
 
     .bottom{ margin-top: 0px; background:transparent; border:0; padding:0; }
-    body.weekMode .bottom{ margin-top: -64px; }
+   /* body.weekMode .bottom{ margin-top: -64px; } */
+    /* Week mode: bottom panel boşluk yapmasın */
+body.weekMode .bottom{
+  margin-top: 12px;   /* 0 da olur, görsel tercihe göre */
+}
     
     /* RIGHT PANEL MONTH MODE */
     body.monthMode .bottom {
