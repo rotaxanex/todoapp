@@ -1,52 +1,48 @@
-const CACHE_NAME = 'minimal-todo-v15-cloud'; // Versiyonu değiştirdik
+const CACHE_NAME = 'minimal-todo-v15-cloud';
+
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  // Eğer ikonların varsa buraya ekle:
-  // './icon-192.png',
-  // './icon-512.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// 1. Kurulum (Install) - Dosyaları hafızaya al
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
+// Install: statikleri cache'e al
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
-  self.skipWaiting(); // Yeni SW hemen aktif olsun
+  self.skipWaiting();
 });
 
-// 2. Aktifleştirme (Activate) - Eski versiyonları sil
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW] Eski cache siliniyor:', key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+// Activate: eski cache'leri temizle
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : null))
+      )
+    )
   );
   self.clients.claim();
 });
 
-// 3. Yakalama (Fetch) - İnternet varsa oradan, yoksa hafızadan
-self.addEventListener('fetch', (e) => {
-  // Supabase isteklerini veya dış linkleri cache'lemeye çalışma (Hata verir)
-  if (e.request.url.includes('supabase.co') || e.request.url.includes('unpkg.com')) {
-    return; // Bunları tarayıcı normal yoldan çeksin
-  }
+// Fetch: online-first, hata/offline olursa cache fallback
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = req.url;
 
-  e.respondWith(
-    fetch(e.request)
-      .catch(() => {
-        // İnternet yoksa cache'e bak
-        return caches.match(e.request);
+  // Supabase / CDN isteklerini cache'leme
+  if (url.includes('supabase.co') || url.includes('unpkg.com')) return;
+
+  event.respondWith(
+    fetch(req)
+      .then((res) => {
+        // Network var ama 404/500 ise cache'e dönmeyi dene
+        if (!res || res.status >= 400) return caches.match(req);
+        return res;
       })
+      .catch(() => caches.match(req))
   );
 });
