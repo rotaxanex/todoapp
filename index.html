@@ -73,17 +73,13 @@
     }
 
     /* Base calendar area */
-  .main > div:first-child{
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100dvh - 120px);
-}
-
 .calendarArea{
-  flex: 1 1 auto;
-  height: auto !important;
-  min-height: 0;
-  overflow: auto;
+  height: calc(100vh - 210px);
+  height: calc(100dvh - 210px);
+}
+body.weekMode .calendarArea{
+  height: calc(100vh - 320px);
+  height: calc(100dvh - 320px);
 }
     
     /* MONTH MODE LAYOUT FIXES (SIDE BY SIDE) */
