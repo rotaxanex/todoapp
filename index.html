@@ -8,11 +8,11 @@
   <link rel="icon" type="image/png" href="./icon-512.png">
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#111111">
    <script> if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js");
   });
+}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -73,12 +73,18 @@
     }
 
     /* Base calendar area */
-    .calendarArea{
-      height: calc(100vh - 210px);
-      overflow:auto;
-      padding-right:4px;
-    }
-    body.weekMode .calendarArea{ height: calc(100vh - 320px); }
+  .main > div:first-child{
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 120px);
+}
+
+.calendarArea{
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  overflow: auto;
+}
     
     /* MONTH MODE LAYOUT FIXES (SIDE BY SIDE) */
     body.monthMode .main > div:first-child {
