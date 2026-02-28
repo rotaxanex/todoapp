@@ -1249,9 +1249,7 @@ function makeCard(item, origin){
   card.style.setProperty('--frameColor', typeColor);
   card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.22));
 
-  const more = document.createElement('button');
-  more.className='moreBtn'; more.type='button'; more.textContent='⋯'; more.title='Düzenle';
-  more.addEventListener('click', (e)=>{ e.stopPropagation(); openModalEdit(origin, item.id); });
+ 
 
   const row = document.createElement('div');
   row.className = 'cardRow';
@@ -1293,7 +1291,6 @@ function makeCard(item, origin){
   row.appendChild(check);
   row.appendChild(body);
 
-  card.appendChild(more);
   card.appendChild(row);
 
   card.addEventListener('dragstart', (e)=>{
@@ -1301,7 +1298,13 @@ function makeCard(item, origin){
     e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
     e.dataTransfer.effectAllowed = 'move';
   });
-
+  // Kartın gövdesine tıklayınca düzenle (checkbox hariç)
+card.addEventListener('click', (e) => {
+  // checkbox veya butonlara basıldıysa modal açma
+  if (e.target.closest('.checkBtn') || e.target.tagName === 'INPUT') return;
+  openModalEdit(origin, item.id);
+});
+  
   return card;
 }
 
