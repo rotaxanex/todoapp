@@ -1302,6 +1302,7 @@ function makeCard(item, origin){
 card.addEventListener('click', (e) => {
   // checkbox veya butonlara basıldıysa modal açma
   if (e.target.closest('.checkBtn') || e.target.tagName === 'INPUT') return;
+   e.stopPropagation(); // ✅ kritik: tık cell’e gitmesin, render tetiklenmesin
   openModalEdit(origin, item.id);
 });
   
