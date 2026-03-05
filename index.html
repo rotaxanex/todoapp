@@ -1299,7 +1299,7 @@ function makeCard(item, origin){
     e.dataTransfer.effectAllowed = 'move';
   });
   // Kartın gövdesine tıklayınca düzenle (checkbox hariç)
-card.addEventListener('click', (e) => {
+card.addEventListener('contextmenu', (e) => {
   // checkbox veya butonlara basıldıysa modal açma
   if (e.target.closest('.checkBtn') || e.target.tagName === 'INPUT') return;
    e.stopPropagation(); // ✅ kritik: tık cell’e gitmesin, render tetiklenmesin
