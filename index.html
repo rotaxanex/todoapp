@@ -1394,34 +1394,35 @@ function openHabitDetail(habitId) {
   modalTitle.textContent = h.name;
 
   const colorSlot = document.getElementById('habitColorSlot');
-colorSlot.innerHTML = '';
+  if (colorSlot) {
+    colorSlot.innerHTML = '';
 
-  
-  const colorBox = document.createElement('div');
-colorBox.style.marginTop = '10px';
+    const colorBox = document.createElement('div');
+    colorBox.style.marginTop = '10px';
 
-colorBox.innerHTML = `
-<label style="font-size:12px;color:var(--muted)">Renk</label>
-<input type="color" value="${h.color || '#7dd3fc'}">
-`;
+    colorBox.innerHTML = `
+      <label style="font-size:12px;color:var(--muted)">Renk</label>
+      <input type="color" value="${h.color || '#7dd3fc'}">
+    `;
 
-const input = colorBox.querySelector('input');
+    const input = colorBox.querySelector('input');
+    input.addEventListener('input', () => {
+      h.color = input.value;
+      saveDB(db);
+      renderHabits();
+    });
 
-input.addEventListener('input', ()=>{
-  h.color = input.value;
-  saveDB(db);
-  renderHabits();
-});
-  colorSlot.appendChild(colorBox);
+    colorSlot.appendChild(colorBox);
+  }
+
+  const stats = calculateStreak(habitId);
+  document.getElementById('currentStreak').textContent = stats.current;
+  document.getElementById('maxStreak').textContent = stats.max;
 
   quickAddSection.style.display = 'none';
   tagSettingsSection.style.display = 'none';
   habitDetailSection.style.display = 'block';
   overlay.style.display = 'flex';
-
-  const stats = calculateStreak(habitId);
-  document.getElementById('currentStreak').textContent = stats.current;
-  document.getElementById('maxStreak').textContent = stats.max;
 
   renderHabitCalendar();
 }
