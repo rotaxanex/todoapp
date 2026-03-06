@@ -1525,26 +1525,30 @@ function renderHabits(){
 
   if (!total){
     const empty = document.createElement('div');
-    empty.className='muted'; empty.textContent='Alışkanlık eklemek için +';
+    empty.className='muted';
+    empty.textContent='Alışkanlık eklemek için +';
     habitsList.appendChild(empty);
     return;
   }
 
   let dragHabitId = null;
+
   for (const h of db.habits){
     const stats = calculateStreak(h.id);
     const history = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
     const isDoneToday = history.includes(today);
 
     const row = document.createElement('div');
-    row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
+    row.className='habitRow';
+    row.draggable = true;
+    row.dataset.habit = h.id;
 
     const c = h.color || '#7dd3fc';
-
     row.style.borderLeft = `4px solid ${c}`;
     row.style.background = `linear-gradient(90deg, ${c}15 0%, var(--card) 100%)`;
 
     const lab = document.createElement('label');
+
     const cb = document.createElement('input');
     cb.type='checkbox';
     cb.checked = isDoneToday;
@@ -1574,13 +1578,10 @@ function renderHabits(){
       lab.appendChild(streakBadge);
     }
 
-  
-row.appendChild(colorBtn);
-row.appendChild(colorInput);
-    
-    
     const del = document.createElement('button');
-    del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+    del.className='iconBtn';
+    del.type='button';
+    del.textContent='🗑';
 
     del.addEventListener('click', ()=>{
       showConfirm(`"${h.name}" silinsin mi?`, () => {
@@ -1593,25 +1594,39 @@ row.appendChild(colorInput);
       });
     });
 
-    row.appendChild(lab); 
+    row.appendChild(lab);
     row.appendChild(del);
 
-    row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
+    row.addEventListener('dragstart', ()=>{
+      dragHabitId = h.id;
+      row.classList.add('dragging');
+    });
+
     row.addEventListener('dragend', ()=>{
-      dragHabitId = null; row.classList.remove('dragging');
+      dragHabitId = null;
+      row.classList.remove('dragging');
       [...habitsList.querySelectorAll('.habitRow')].forEach(x=>x.classList.remove('dragOver'));
     });
-    row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
+
+    row.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      row.classList.add('dragOver');
+    });
+
     row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
+
     row.addEventListener('drop', (e)=>{
       e.preventDefault();
       row.classList.remove('dragOver');
+
       const targetId = row.dataset.habit;
       if (!dragHabitId || !targetId || dragHabitId === targetId) return;
+
       const ids = db.habits.map(x=>x.id);
       const from = ids.indexOf(dragHabitId);
       const to = ids.indexOf(targetId);
       if (from < 0 || to < 0) return;
+
       const moved = db.habits.splice(from,1)[0];
       db.habits.splice(to,0,moved);
       saveDB(db);
