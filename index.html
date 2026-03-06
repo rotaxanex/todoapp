@@ -1515,6 +1515,11 @@ function renderHabits(){
     const row = document.createElement('div');
     row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
 
+    const c = h.color || '#7dd3fc';
+
+    row.style.borderLeft = `4px solid ${c}`;
+    row.style.background = `linear-gradient(90deg, ${c}15 0%, var(--card) 100%)`;
+
     const lab = document.createElement('label');
     const cb = document.createElement('input');
     cb.type='checkbox';
@@ -1545,6 +1550,30 @@ function renderHabits(){
       lab.appendChild(streakBadge);
     }
 
+    const colorBtn = document.createElement('button');
+colorBtn.className = 'iconBtn';
+colorBtn.textContent = '🎨';
+
+const colorInput = document.createElement('input');
+colorInput.type = 'color';
+colorInput.value = h.color || '#7dd3fc';
+colorInput.style.display = 'none';
+
+colorBtn.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  colorInput.click();
+});
+
+colorInput.addEventListener('input', ()=>{
+  h.color = colorInput.value;
+  saveDB(db);
+  renderHabits();
+});
+
+row.appendChild(colorBtn);
+row.appendChild(colorInput);
+    
+    
     const del = document.createElement('button');
     del.className='iconBtn'; del.type='button'; del.textContent='🗑';
 
@@ -1559,7 +1588,10 @@ function renderHabits(){
       });
     });
 
-    row.appendChild(lab); row.appendChild(del);
+    row.appendChild(lab); 
+    row.appendChild(colorBtn);
+    row.appendChild(colorInput);
+    row.appendChild(del);
 
     row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
     row.addEventListener('dragend', ()=>{
@@ -2007,7 +2039,11 @@ habitAddBtn.addEventListener('click', ()=>{
   const name = prompt('Yeni alışkanlık:');
   if (!name) return;
   db.habits = db.habits || [];
-  db.habits.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(), name: name.trim() });
+db.habits.push({
+  id: crypto.randomUUID(),
+  name: name.trim(),
+  color: '#7dd3fc'
+});
   saveDB(db);
   renderHabits();
 });
