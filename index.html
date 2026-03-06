@@ -1391,6 +1391,25 @@ function openHabitDetail(habitId) {
   habitViewDate = new Date();
 
   modalTitle.textContent = h.name;
+  habitDetailSection.innerHTML = '';   // ← bunu ekle
+  
+  const colorBox = document.createElement('div');
+colorBox.style.marginTop = '10px';
+
+colorBox.innerHTML = `
+<label style="font-size:12px;color:var(--muted)">Renk</label>
+<input type="color" value="${h.color || '#7dd3fc'}">
+`;
+
+const input = colorBox.querySelector('input');
+
+input.addEventListener('input', ()=>{
+  h.color = input.value;
+  saveDB(db);
+  renderHabits();
+});
+
+habitDetailSection.appendChild(colorBox);
   quickAddSection.style.display = 'none';
   tagSettingsSection.style.display = 'none';
   habitDetailSection.style.display = 'block';
@@ -1550,26 +1569,7 @@ function renderHabits(){
       lab.appendChild(streakBadge);
     }
 
-    const colorBtn = document.createElement('button');
-colorBtn.className = 'iconBtn';
-colorBtn.textContent = '🎨';
-
-const colorInput = document.createElement('input');
-colorInput.type = 'color';
-colorInput.value = h.color || '#7dd3fc';
-colorInput.style.display = 'none';
-
-colorBtn.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  colorInput.click();
-});
-
-colorInput.addEventListener('input', ()=>{
-  h.color = colorInput.value;
-  saveDB(db);
-  renderHabits();
-});
-
+  
 row.appendChild(colorBtn);
 row.appendChild(colorInput);
     
@@ -1589,8 +1589,6 @@ row.appendChild(colorInput);
     });
 
     row.appendChild(lab); 
-    row.appendChild(colorBtn);
-    row.appendChild(colorInput);
     row.appendChild(del);
 
     row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
