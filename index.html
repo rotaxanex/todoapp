@@ -595,6 +595,7 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
       </div>
 
       <div id="habitDetailSection" style="display:none;">
+        <div id="habitColorSlot"></div>
         <div class="habitStats">
           <div class="streakStat">
             <div class="val" id="currentStreak">0</div>
@@ -1391,7 +1392,10 @@ function openHabitDetail(habitId) {
   habitViewDate = new Date();
 
   modalTitle.textContent = h.name;
-  habitDetailSection.innerHTML = '';   // ← bunu ekle
+
+  const colorSlot = document.getElementById('habitColorSlot');
+colorSlot.innerHTML = '';
+
   
   const colorBox = document.createElement('div');
 colorBox.style.marginTop = '10px';
@@ -1408,8 +1412,8 @@ input.addEventListener('input', ()=>{
   saveDB(db);
   renderHabits();
 });
+  colorSlot.appendChild(colorBox);
 
-habitDetailSection.appendChild(colorBox);
   quickAddSection.style.display = 'none';
   tagSettingsSection.style.display = 'none';
   habitDetailSection.style.display = 'block';
