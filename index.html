@@ -195,23 +195,27 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
 .rtCell.ghost .txt{ opacity:.55; }
 .rtCell.ghost{ background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 12px); }
-.rtCell.selected{ box-shadow: inset 0 0 0 2px rgba(125,211,252,.55); }
-.rtCell.anchorCell{ box-shadow: inset 0 0 0 2px var(--accent); }
-.rtCell.done .txt{ opacity:.45; text-decoration:line-through; }
-.rtCell .tick{ position:absolute; top:2px; right:4px; font-size:9px; color:#34d399; }
-.rtCell .hlink{ position:absolute; top:3px; left:4px; width:5px; height:5px; border-radius:999px; background:var(--accent); opacity:.85; }
-.rtCell.nowRow{
-  outline:none;
-}
-
-.rtCell.nowRow::after{
+.rtCell.selected::before{
   content:"";
   position:absolute;
   inset:0;
-  border-top:1px solid rgba(251,113,133,.65);
-  border-bottom:1px solid rgba(251,113,133,.65);
+  border:1px solid rgba(125,211,252,.55);
+  box-sizing:border-box;
   pointer-events:none;
-  z-index:2;
+  z-index:4;
+}
+
+.rtCell.anchorCell::before{
+  border:2px solid var(--accent);
+}
+.rtCell.done .txt{ opacity:.45; text-decoration:line-through; }
+.rtCell .tick{ position:absolute; top:2px; right:4px; font-size:9px; color:#34d399; }
+.rtCell .hlink{ position:absolute; top:3px; left:4px; width:5px; height:5px; border-radius:999px; background:var(--accent); opacity:.85; }
+.rtNowMarker{
+  border:1px solid rgba(251,113,133,.75);
+  box-sizing:border-box;
+  pointer-events:none;
+  z-index:5;
 }
 .rtCell input.editor{
   position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:0;
@@ -1106,7 +1110,7 @@ function renderRoutine(){
           el.classList.add('done');
           const tk=document.createElement('div'); tk.className='tick'; tk.textContent='✓'; el.appendChild(tk);
         }
-        if(dateK===todayK && new Date().getHours()===hour) el.classList.add('nowRow');
+        
       }
 
       if(sel && r>=sel.r1 && r<=sel.r2 && dw>=sel.c1 && dw<=sel.c2){
@@ -1136,7 +1140,32 @@ function renderRoutine(){
       rtGridEl.appendChild(el);
     }
   }
+  if(rtView==='week'){
+  const now=new Date();
+  const nowHour=now.getHours();
+  const todayDow=(now.getDay()+6)%7;
 
+  const shownStart=dayKey(weekStart);
+  const shownEnd=dayKey(addDays(weekStart,6));
+  const nowDate=dayKey(now);
+
+  if(
+    nowDate>=shownStart &&
+    nowDate<=shownEnd &&
+    nowHour>=H.start &&
+    nowHour<H.end
+  ){
+    const marker=document.createElement('div');
+    marker.className='rtNowMarker';
+
+    const row=nowHour-H.start;
+
+    marker.style.gridArea=
+      `${row+2} / ${todayDow+2} / span 1 / span 1`;
+
+    rtGridEl.appendChild(marker);
+  }
+}
   rtHint.textContent = rtView==='week'
     ? (ghost
         ? 'Şu an şablonu görüyorsun (taralı). İlk değişiklikte bu haftaya özel kopya oluşur, şablonun bozulmaz.'
