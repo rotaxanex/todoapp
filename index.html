@@ -10,9 +10,8 @@
   <link rel="apple-touch-icon" href="./icon-512.png" />
   <link rel="manifest" href="./manifest.webmanifest">
 
-  <link rel="stylesheet" href="./style.css" />
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
 :root{
   --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
@@ -22,7 +21,7 @@
   --frame-hedef:#60a5fa;
   --frame-gorev:#34d399;
 
-  --monthCellH: 120px; /* JS hesaplayacak */
+  --monthCellH: 120px;
 }
 
 *{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
@@ -40,7 +39,7 @@ h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
 .btn:active{ transform: translateY(1px); }
 .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
 .btn.danger:hover{ border-color:rgba(251,113,133,.6); }
-.btn.primary{ background: var(--accent); color: #000; border-color:var(--accent); font-weight: 600; }
+.btn.primary{ background: var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
 
 .seg{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 .seg button{ border:0; background:transparent; color:var(--muted); padding:8px 12px; cursor:pointer; }
@@ -51,7 +50,8 @@ h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
 .title{ font-size:14px; color:var(--muted); }
 .filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
-select, input[type="text"], input[type="search"], input[type="time"], input[type="email"], input[type="password"]{
+select, input[type="text"], input[type="search"], input[type="time"], input[type="date"],
+input[type="number"], input[type="email"], input[type="password"]{
   background:#101014; color:var(--text);
   border:1px solid var(--line); border-radius:12px;
   padding:8px 10px; outline:none; font-size:13px;
@@ -59,50 +59,24 @@ select, input[type="text"], input[type="search"], input[type="time"], input[type
 textarea{
   background:#101014; color:var(--text);
   border:1px solid var(--line); border-radius:12px;
-  padding:10px; outline:none; font-size:13px; resize: vertical; min-height: 80px;
+  padding:10px; outline:none; font-size:13px; resize:vertical; min-height:80px;
 }
 select:focus, input:focus, textarea:focus{ border-color:#3a3a44; }
 
-.main{
-  display:grid;
-  grid-template-columns: 1fr 240px;
-  gap:12px;
-  align-items:start;
-}
+.main{ display:grid; grid-template-columns: 1fr 240px; gap:12px; align-items:start; }
+.main > div:first-child{ display:flex; flex-direction:column; min-height:0; }
 
-/* ======================================================
-   ✅ TEK LAYOUT SİSTEMİ (YAMA YOK)
-   ====================================================== */
-
-/* Sol kolon: Calendar + Bottom */
-.main > div:first-child{
-  display:flex;
-  flex-direction:column;
-  min-height:0;
-}
-
-/* CalendarArea: üstte esner */
 #calendarArea{
-  flex: 1 1 auto;
-  display:flex;
-  flex-direction:column;
-  min-height:0;
+  flex:1 1 auto; display:flex; flex-direction:column; min-height:0;
+  padding-bottom:12px; border-bottom:1px solid var(--line); margin-bottom:12px;
 }
 
-/* Calendar ile bottom net ayrım */
-#calendarArea{
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 12px;
-}
-
-/* Grid base */
 .grid{ display:grid; gap:10px; }
 .month{ grid-template-columns: repeat(7, 1fr); }
 .week{ grid-template-columns: repeat(7, 1fr); }
 
 .dow{ font-size:12px; color:var(--muted); padding:0 6px; }
-#dowRow.grid{ margin-bottom: 6px; }
+#dowRow.grid{ margin-bottom:6px; }
 
 .cell{
   background:var(--card); border:1px solid var(--line); border-radius:16px;
@@ -114,57 +88,27 @@ select:focus, input:focus, textarea:focus{ border-color:#3a3a44; }
 .cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
 .cell.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
 
-/* WEEK: 1 satır, hücre uzamasın */
-body.weekMode #grid.week{
-  flex: 1 1 auto;
-  min-height: 260 px;
-  grid-auto-rows: minmax(260px, 1fr);
-}
-body.weekMode #grid.week .cell{
-  min-height:260 px;
-  height:100%;
-}
-body.weekMode #grid.week .cards{
-  flex:1 1 auto;
-  min-height:0;
-  overflow:auto;
-}
+/* WEEK */
+body.weekMode #grid.week{ flex:1 1 auto; grid-auto-rows: minmax(260px, 1fr); }
+body.weekMode #grid.week .cell{ min-height:260px; height:100%; }
+body.weekMode #grid.week .cards{ flex:1 1 auto; min-height:0; overflow:auto; }
 
-/* MONTH: ekrana sığdır (scroll yok) */
-body.monthMode .main{
-  grid-template-columns: 1fr;
-}
+/* MONTH */
+body.monthMode .main{ grid-template-columns: 1fr; }
 body.monthMode .side{ display:none; }
 body.monthMode #bottomInboxSlot{ display:none; }
-
 body.monthMode .main > div:first-child{
-  display:flex;
-  flex-direction:row;
-  gap:15px;
-  height: calc(100dvh - 90px);
-  min-height:0;
-  overflow:hidden;
+  display:flex; flex-direction:row; gap:15px;
+  height: calc(100dvh - 90px); min-height:0; overflow:hidden;
 }
 body.monthMode #calendarArea{
-  flex: 1 1 auto;
-  overflow:hidden;
-  padding-bottom: 0;
-  border-bottom: 0;
-  margin-bottom: 0;
-  border-right: 1px solid var(--line);
-  padding-right: 15px;
+  flex:1 1 auto; overflow:hidden;
+  padding-bottom:0; border-bottom:0; margin-bottom:0;
+  border-right:1px solid var(--line); padding-right:15px;
 }
-body.monthMode #grid.month{
-  flex: 1 1 auto;
-  min-height:0;
-}
-body.monthMode .cell.monthCell{
-  height: var(--monthCellH) !important;
-  overflow:hidden;
-  padding: 4px;
-}
+body.monthMode #grid.month{ flex:1 1 auto; min-height:0; }
+body.monthMode .cell.monthCell{ height: var(--monthCellH) !important; overflow:hidden; padding:4px; }
 
-/* date row */
 .dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; }
 .date{ font-size:12px; color:var(--muted); }
@@ -177,20 +121,13 @@ body.monthMode .cell.monthCell{
 }
 .plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
 
-body.monthMode .date{ font-size: 10px; font-weight: bold; opacity: .65; }
+body.monthMode .date{ font-size:10px; font-weight:bold; opacity:.65; }
 body.monthMode .plusBtn{ width:18px; height:18px; border:none; border-radius:6px; }
 body.monthMode .plusBtn:hover{ background: rgba(255,255,255,.08); }
 
-/* cards */
-.cards{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  min-height:0;
-}
+.cards{ display:flex; flex-direction:column; gap:6px; min-height:0; }
 body.monthMode .cards{ gap:2px; overflow:hidden; }
 
-/* Card */
 .card{
   border:2px solid var(--frameColor, var(--line));
   border-radius:12px; padding:6px 8px;
@@ -198,7 +135,6 @@ body.monthMode .cards{ gap:2px; overflow:hidden; }
   user-select:none; min-width:0; position:relative;
 }
 .card.done{ opacity:.55; }
-
 .cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
 
 .checkBtn{
@@ -207,56 +143,90 @@ body.monthMode .cards{ gap:2px; overflow:hidden; }
   background:rgba(0,0,0,.10); color:rgba(255,255,255,.85);
   cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px;
 }
-
-.cardBody{
-  flex:1 1 auto; min-width:0;
-  display:flex; align-items:center; justify-content:space-between;
-  gap:6px;
-}
+.cardBody{ flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .titleText{
-  font-size:12.8px; line-height:1.2; color: var(--text);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  flex: 1 1 auto;
+  font-size:12.8px; line-height:1.2; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1 1 auto;
 }
-.timeText{
-  font-size:11px; color: rgba(255,255,255,.8);
-  white-space:nowrap; flex:0 0 auto;
-}
-
+.timeText{ font-size:11px; color:rgba(255,255,255,.8); white-space:nowrap; flex:0 0 auto; }
 .noteIcon{ font-size:10px; margin-left:6px; opacity:.75; }
 
-.moreBtn{
-  position:absolute; top:6px; right:6px; width:18px; height:18px;
-  border-radius:8px; border:1px solid rgba(255,255,255,.15);
-  background:rgba(0,0,0,.12); color:rgba(255,255,255,.85);
-  cursor:pointer; display:grid; place-items:center; font-size:14px; line-height:1;
-}
-.moreBtn:hover{ border-color:rgba(255,255,255,.25); }
-body.monthMode .moreBtn{ display:none; }
-
-/* Month card compact */
-body.monthMode .card{
-  border-width:1px;
-  border-radius:8px;
-  padding:4px 6px;
-  min-height:24px;
-}
-body.monthMode .checkBtn{
-  width:14px; height:14px; border-radius:5px; font-size:9px; margin-top:0;
-}
+body.monthMode .card{ border-width:1px; border-radius:8px; padding:4px 6px; min-height:24px; }
+body.monthMode .checkBtn{ width:14px; height:14px; border-radius:5px; font-size:9px; margin-top:0; }
 body.monthMode .titleText{ font-size:10.5px; }
 body.monthMode .timeText{
-  font-size:9px;
-  background: rgba(0,0,0,0.30);
-  padding: 1px 4px;
-  border-radius: 4px;
-  color:#fff;
-  opacity:1;
+  font-size:9px; background:rgba(0,0,0,.30); padding:1px 4px; border-radius:4px; color:#fff; opacity:1;
 }
 
-/* Side panel */
+/* ============ PLAN (Stundenplan) ============ */
+#planWrap{ display:none; flex:1 1 auto; min-height:0; }
+body.planMode #planWrap{ display:block; }
+
+.planScrollX{ overflow-x:auto; }
+.planInner{ min-width:720px; }
+
+.planRow{ display:grid; grid-template-columns:56px repeat(7, minmax(0,1fr)); gap:6px; }
+.planHeadRow{ margin-bottom:6px; }
+
+.planDayHead{
+  text-align:center; padding:6px 4px; border-radius:12px;
+  border:1px solid transparent; cursor:pointer;
+}
+.planDayHead:hover{ background:#16161a; }
+.planDayHead.sel{ border-color:rgba(125,211,252,.35); background:#1f1f24; }
+.pdName{ font-size:11px; color:var(--muted); }
+.pdNum{ font-size:15px; font-weight:650; }
+.planDayHead.today .pdNum{ color:var(--accent); }
+
+.planAllDay{ margin-bottom:6px; }
+.planGutterLbl{ font-size:10px; color:var(--muted); display:grid; place-items:center; text-align:center; }
+.planAllDayCell{
+  min-height:36px; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:4px; display:flex; flex-direction:column; gap:4px;
+}
+.planAllDayCell.dragOver{ outline:2px dashed rgba(125,211,252,.45); }
+
+.planScroll{ overflow-y:auto; max-height:calc(100dvh - 320px); padding-top:8px; }
+.planGutter{ position:relative; }
+.hourLbl{ position:absolute; right:6px; transform:translateY(-50%); font-size:10px; color:var(--muted); }
+
+.planCol{
+  position:relative; background-color:var(--card);
+  border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  background-image:
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-repeat:repeat-y;
+}
+.planCol.sel{ border-color:rgba(125,211,252,.35); }
+.planCol.dragOver{ outline:2px dashed rgba(125,211,252,.45); }
+.nowLine{ position:absolute; left:0; right:0; height:2px; background:#fb7185; z-index:3; pointer-events:none; }
+.nowLine::before{
+  content:''; position:absolute; left:-3px; top:-3px; width:8px; height:8px;
+  border-radius:999px; background:#fb7185;
+}
+
+.planCard{ position:absolute; overflow:hidden; }
+.planCard .cardBody{ flex-direction:column; align-items:flex-start; gap:1px; }
+.planCard .timeText{ font-size:9.5px; opacity:.8; }
+.planResize{ position:absolute; left:0; right:0; bottom:0; height:8px; cursor:ns-resize; touch-action:none; }
+
+.schedCard{
+  z-index:0; left:2px; right:2px;
+  border:1px dashed var(--frameColor); background:var(--fillColor);
+  border-radius:10px; padding:4px 6px; cursor:default; user-select:none;
+}
+.planCard:not(.schedCard){ z-index:1; }
+.schedTitle{ font-size:11px; font-weight:650; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.schedMeta{ font-size:9px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kindChip{
+  font-size:8.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+  background:rgba(0,0,0,.30); padding:1px 4px; border-radius:4px; margin-right:5px;
+}
+
+/* Side */
 .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
-.panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
+.panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
 .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .panelHead h2{ margin:0; font-size:14px; }
 .muted{ color:var(--muted); font-size:12px; }
@@ -264,62 +234,46 @@ body.monthMode .timeText{
 .inbox.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
 .inboxList{ display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:40vh; padding-right:2px; }
 
-/* Bottom */
 .bottom{ background:transparent; border:0; padding:0; }
 .bottomGrid{ display:block; }
 body.weekMode .bottomGrid{ display:grid; grid-template-columns: 1fr 360px; gap:10px; align-items:start; }
 
-.panelLike{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow: var(--shadow); }
+.panelLike{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
 body.monthMode .panelLike{ box-shadow:none; border:none; background:transparent; padding:0; }
 
 .bottomTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 .panelLike h2{ margin:0; font-size:14px; }
 
 form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.w{ min-width:160px; }
+.w{ min-width:150px; }
 
-/* Month form grid */
 body.monthMode #addForm{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 5px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 12px; margin-bottom: 12px;
-  margin-top: 10px;
+  display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap:5px;
+  border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:12px; margin-top:10px;
 }
-body.monthMode #taskInput { grid-column: 1 / -1; }
-body.monthMode #timeInput { grid-column: 1 / 2; }
-body.monthMode #typeInput { grid-column: 2 / -1; }
-body.monthMode #tagInput   { grid-column: 1 / 2; }
-body.monthMode #whereInput { grid-column: 2 / 3; }
-body.monthMode #addSubmit  { grid-column: 3 / 4; }
-
+body.monthMode #taskInput{ grid-column:1 / -1; }
+body.monthMode #timeInput{ grid-column:1 / 2; }
+body.monthMode #typeInput{ grid-column:2 / -1; }
+body.monthMode #tagInput{ grid-column:1 / 2; }
+body.monthMode #whereInput{ grid-column:2 / 3; }
+body.monthMode #addSubmit{ grid-column:3 / 4; }
 body.monthMode #addForm input,
 body.monthMode #addForm select,
-body.monthMode #addForm button{
-  height: 28px; font-size: 11px; padding: 0 6px;
-  width: 100%; min-width: 0;
-}
-body.monthMode #addSubmit{
-  width:auto; padding:0 10px; font-weight:600;
-  background:var(--accent); color:#000; border:none;
-}
+body.monthMode #addForm button{ height:28px; font-size:11px; padding:0 6px; width:100%; min-width:0; }
+body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; background:var(--accent); color:#000; border:none; }
 
 .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
 
 /* Modal */
-.overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
-  align-items:center; justify-content:center; padding:16px; z-index:50;
-}
+.overlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:50; }
 .modal{
   width:min(760px, 100%); background:var(--card); border:1px solid var(--line);
-  border-radius:18px; padding:12px; box-shadow: var(--shadow); max-height: 86vh; overflow:auto;
+  border-radius:18px; padding:12px; box-shadow:var(--shadow); max-height:86vh; overflow:auto;
 }
 .modalTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .modalTop h3{ margin:0; font-size:14px; }
-.modalGrid{ display:grid; grid-template-columns: 1fr 170px 170px 1fr; gap:8px; margin-top:10px; }
-.modalGrid .full{ grid-column: 1 / -1; }
+.modalGrid{ display:grid; grid-template-columns: 1fr 130px 130px 1fr; gap:8px; margin-top:10px; }
+.modalGrid .full{ grid-column:1 / -1; }
 .modalActions{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
 
 /* Tag settings */
@@ -340,6 +294,25 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
 }
 .iconBtn:hover{ border-color:#3a3a44; color:var(--text); }
 
+/* Schedule settings */
+.schedForm{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; margin-top:10px; }
+.schedForm .full{ grid-column:1 / -1; }
+.schedForm .half{ grid-column: span 2; }
+.schedFormActions{ grid-column:1 / -1; display:flex; gap:8px; justify-content:flex-end; }
+.fieldLbl{ font-size:10px; color:var(--muted); display:block; margin-bottom:3px; }
+.schedForm input, .schedForm select{ width:100%; }
+
+.schedList{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.schedDayGroup h4{ margin:0 0 6px; font-size:12px; color:var(--muted); font-weight:600; }
+.schedRow{
+  display:grid; grid-template-columns:auto 1fr auto auto; gap:8px; align-items:center;
+  border:1px solid var(--line); background:#121216; padding:7px 10px; border-radius:12px;
+}
+.schedRow .sName{ font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.schedRow .sMeta{ font-size:10.5px; color:var(--muted); }
+.schedRow .swatch{ width:4px; height:26px; border-radius:3px; }
+.planCfgRow{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+
 /* Habits */
 .habitsList{ display:flex; flex-direction:column; gap:10px; }
 .habitRow{
@@ -350,15 +323,14 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
 .habitRow.dragOver{ outline:2px dashed rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
 .habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer; flex:1; }
 .habitRow span.name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.habitRow span.name:hover{ text-decoration: underline; color: var(--accent); }
+.habitRow span.name:hover{ text-decoration:underline; color:var(--accent); }
 .habitStreak{
-  font-size: 10px; color: var(--accent); background: rgba(125,211,252,0.1);
-  padding: 2px 5px; border-radius: 6px; margin-left: auto; margin-right: 8px; flex-shrink: 0;
+  font-size:10px; color:var(--accent); background:rgba(125,211,252,.1);
+  padding:2px 5px; border-radius:6px; margin-left:auto; margin-right:8px; flex-shrink:0;
 }
 .habitRow input[type="checkbox"]{ width:18px; height:18px; cursor:pointer; }
 
-/* Habit detail */
-.habitStats{ display:flex; gap:10px; margin-top:12px; justify-content: space-around; }
+.habitStats{ display:flex; gap:10px; margin-top:12px; justify-content:space-around; }
 .streakStat{ text-align:center; background:#1f1f24; border-radius:12px; padding:10px; flex:1; border:1px solid var(--line); }
 .streakStat .val{ font-size:20px; font-weight:bold; color:var(--accent); }
 .streakStat .lbl{ font-size:11px; color:var(--muted); }
@@ -370,47 +342,49 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
   width:28px; height:28px; border-radius:8px; cursor:pointer; display:grid; place-items:center;
 }
 .habitNavBtn:hover{ color:var(--text); border-color:var(--text); }
-
 .habitCalendarWrapper{ border:1px solid var(--line); border-radius:12px; background:#121216; padding:10px; }
-.habitDowRow{ display:grid; grid-template-columns: repeat(7, 1fr); margin-bottom:6px; }
+.habitDowRow{ display:grid; grid-template-columns: repeat(7,1fr); margin-bottom:6px; }
 .hDowCell{ text-align:center; font-size:10px; color:var(--muted); font-weight:600; }
-
-.habitCalendar{ display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; }
-.hDay{
-  aspect-ratio:1; display:grid; place-items:center; font-size:11px;
-  border-radius:6px; color:var(--muted); cursor:pointer; border:1px solid transparent;
-}
-.hDay:hover{ background: rgba(255,255,255,0.05); }
+.habitCalendar{ display:grid; grid-template-columns: repeat(7,1fr); gap:4px; }
+.hDay{ aspect-ratio:1; display:grid; place-items:center; font-size:11px; border-radius:6px; color:var(--muted); cursor:pointer; border:1px solid transparent; }
+.hDay:hover{ background:rgba(255,255,255,.05); }
 .hDay.empty{ pointer-events:none; }
-.hDay.done{
-  background: rgba(52,211,153,0.2); color:#34d399;
-  border: 1px solid rgba(52,211,153,0.3); font-weight:bold;
-}
-.hDay.today{ border-color: var(--accent); color:var(--text); font-weight:bold; }
+.hDay.done{ background:rgba(52,211,153,.2); color:#34d399; border:1px solid rgba(52,211,153,.3); font-weight:bold; }
+.hDay.today{ border-color:var(--accent); color:var(--text); font-weight:bold; }
 
-/* AUTH */
-#authOverlay{
-  position: fixed; inset:0; background:var(--bg); z-index:999;
-  display:flex; align-items:center; justify-content:center; padding:20px;
+/* Context menu */
+#ctxMenu{
+  position:fixed; z-index:70; display:none; min-width:210px;
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); padding:6px; flex-direction:column; gap:2px;
 }
+#ctxMenu button{
+  background:transparent; border:0; color:var(--text); text-align:left;
+  padding:8px 10px; border-radius:10px; cursor:pointer; font-size:13px;
+}
+#ctxMenu button:hover{ background:#1f1f24; }
+#ctxMenu button.danger{ color:#fb7185; }
+#ctxMenu .ctxHead{ font-size:11px; color:var(--muted); padding:6px 10px 8px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+
+/* Auth */
+#authOverlay{ position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; padding:20px; }
 .authBox{
   width:100%; max-width:360px; background:var(--card); border:1px solid var(--line);
-  border-radius:20px; padding:24px; box-shadow: var(--shadow);
-  display:flex; flex-direction:column; gap:12px;
+  border-radius:20px; padding:24px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;
 }
 .authBox h2{ text-align:center; margin-bottom:8px; font-size:20px; }
 .authError{ color:#fb7185; font-size:13px; text-align:center; min-height:18px; }
 
-/* Responsive */
 @media (max-width: 900px){
   .main{ grid-template-columns: 1fr; }
   .side{ position:static; }
   body.weekMode .bottomGrid{ grid-template-columns: 1fr; }
   body.monthMode .side{ display:none; }
+  .modalGrid{ grid-template-columns: 1fr 1fr; }
+  .schedForm{ grid-template-columns: 1fr 1fr; }
+  .schedForm .half{ grid-column: span 1; }
 }
-
-
-</style>
+  </style>
 </head>
 
 <body>
@@ -419,17 +393,13 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
     <div class="authBox">
       <h2>todoapp</h2>
       <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
-
       <input type="email" id="authEmail" placeholder="E-posta adresi" />
       <input type="password" id="authPass" placeholder="Şifre" />
-
       <div class="authError" id="authError"></div>
-
       <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
       <button id="btnSignup" class="btn" type="button">Kayıt Ol</button>
-
       <div style="margin-top:10px; font-size:11px; color:var(--muted); line-height:1.4;">
-        Kayıt olduğunuzda verileriniz Supabase veritabanında şifreli olarak saklanır ve her yerden erişilebilir olur.
+        Kayıt olduğunuzda verileriniz Supabase veritabanında saklanır ve her cihazdan erişilebilir olur.
       </div>
     </div>
   </div>
@@ -440,6 +410,7 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
         <h1>todoapp <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
         <div class="seg" role="tablist" aria-label="Görünüm">
           <button id="btnWeek" class="active" type="button">Hafta</button>
+          <button id="btnPlan" type="button">Plan</button>
           <button id="btnMonth" type="button">Ay</button>
         </div>
       </div>
@@ -447,6 +418,7 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
         <button id="btnLogout" class="btn danger" type="button" style="font-size:12px;">Çıkış</button>
+        <button id="schedSettingsBtn" class="btn" type="button">Stundenplan</button>
         <button id="tagSettingsBtn" class="btn" type="button">Tag Ayarları</button>
         <button id="btnInstall" class="btn" type="button" style="display:none;">Yükle</button>
       </div>
@@ -462,12 +434,16 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
       <div class="filters">
         <div class="title" id="rangeTitle"></div>
 
+        <label id="schedToggleWrap" style="display:none; align-items:center; gap:6px; font-size:12px; color:var(--muted);">
+          <input type="checkbox" id="schedToggle" checked /> Dersler
+        </label>
+
         <select id="tagFilter" title="Tag filtresi">
           <option value="__all__">Tag: Hepsi</option>
         </select>
 
         <select id="typeFilter" title="Tür filtresi">
-          <option value="__preset__">Tür: Görünüme göre (preset)</option>
+          <option value="__preset__">Tür: Görünüme göre</option>
           <option value="__all__">Tür: Hepsi</option>
           <option value="termin">Sadece termin</option>
           <option value="hedef">Sadece hedef</option>
@@ -483,6 +459,7 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
         <div id="calendarArea" class="calendarArea">
           <div class="grid" id="dowRow"></div>
           <div class="grid week" id="grid"></div>
+          <div id="planWrap"></div>
         </div>
 
         <section class="bottom" id="bottom">
@@ -506,13 +483,11 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
                   <option value="hedef">Hedef</option>
                   <option value="gorev">Görev</option>
                 </select>
-                <select class="w" id="tagInput" title="Tag (dropdown)"></select>
-
+                <select class="w" id="tagInput" title="Tag"></select>
                 <select class="w" id="whereInput" title="Nereye eklensin?">
                   <option value="selected">Seçili güne</option>
                   <option value="inbox">Inbox</option>
                 </select>
-
                 <button id="addSubmit" class="btn" type="submit">Ekle</button>
               </form>
 
@@ -565,35 +540,128 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
         <button id="modalClose" class="btn" type="button">Kapat</button>
       </div>
 
+      <!-- Kart ekle/düzenle -->
       <div id="quickAddSection">
         <div class="muted" id="modalWhere"></div>
         <div class="modalGrid">
           <input id="mText" class="full" type="text" placeholder="Başlık…" maxlength="120" />
           <textarea id="mNotes" class="full" rows="3" placeholder="Notlar..."></textarea>
-
-          <input id="mTime" type="time" />
+          <input id="mTime" type="time" title="Başlangıç saati" />
+          <input id="mDur" type="number" min="5" step="5" placeholder="Süre (dk)" title="Süre (dakika)" />
           <select id="mType">
             <option value="termin">Termin</option>
             <option value="hedef">Hedef</option>
             <option value="gorev">Görev</option>
           </select>
           <select id="mTag"></select>
-          <div class="full muted">Enter = Kaydet/Ekle</div>
+          <div class="full muted">Enter = Kaydet / Ekle</div>
         </div>
-
         <div class="modalActions">
           <button id="modalDelete" class="btn danger" type="button" style="display:none;">Sil</button>
           <div style="display:flex; gap:8px; margin-left:auto;">
-            <button id="modalSave" class="btn" type="button">Ekle</button>
+            <button id="modalSave" class="btn primary" type="button">Ekle</button>
           </div>
         </div>
       </div>
 
+      <!-- Tag ayarları -->
       <div id="tagSettingsSection" style="display:none;">
-        <div class="muted">Tag sıralamasını drag-drop ile değiştir.</div>
+        <div class="muted">Tag sıralamasını sürükle-bırak ile değiştir.</div>
         <div class="tagManager" id="tagManager"></div>
       </div>
 
+      <!-- Stundenplan -->
+      <div id="schedSettingsSection" style="display:none;">
+        <div class="muted">Haftalık tekrar eden dersler. Bir kez gir, tüm sömestr boyunca görün.</div>
+
+        <div class="schedForm" id="schedForm">
+          <div class="full">
+            <label class="fieldLbl">Ders adı</label>
+            <input id="sTitle" type="text" placeholder="Werkstoffkunde VL" maxlength="80" />
+          </div>
+
+          <div>
+            <label class="fieldLbl">Gün</label>
+            <select id="sDow">
+              <option value="0">Pazartesi</option><option value="1">Salı</option>
+              <option value="2">Çarşamba</option><option value="3">Perşembe</option>
+              <option value="4">Cuma</option><option value="5">Cumartesi</option>
+              <option value="6">Pazar</option>
+            </select>
+          </div>
+          <div>
+            <label class="fieldLbl">Başlangıç</label>
+            <input id="sStart" type="time" value="08:00" />
+          </div>
+          <div>
+            <label class="fieldLbl">Bitiş</label>
+            <input id="sEnd" type="time" value="09:30" />
+          </div>
+          <div>
+            <label class="fieldLbl">Turnus</label>
+            <select id="sTurnus">
+              <option value="all">Her hafta</option>
+              <option value="odd">Tek KW</option>
+              <option value="even">Çift KW</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="fieldLbl">Tür</label>
+            <select id="sKind">
+              <option value="vl">VL</option><option value="ue">ÜB</option>
+              <option value="lab">Labor</option><option value="tut">Tutorium</option>
+              <option value="etc">Diğer</option>
+            </select>
+          </div>
+          <div>
+            <label class="fieldLbl">Yer / Raum</label>
+            <input id="sRoom" type="text" placeholder="MA 004" maxlength="40" />
+          </div>
+          <div>
+            <label class="fieldLbl">Hoca</label>
+            <input id="sLect" type="text" placeholder="Prof. X" maxlength="40" />
+          </div>
+          <div>
+            <label class="fieldLbl">Renk</label>
+            <input id="sColor" type="color" value="#7dd3fc" style="width:100%;" />
+          </div>
+
+          <div class="half">
+            <label class="fieldLbl">Sömestr başlangıcı</label>
+            <input id="sFrom" type="date" />
+          </div>
+          <div class="half">
+            <label class="fieldLbl">Sömestr bitişi</label>
+            <input id="sTo" type="date" />
+          </div>
+
+          <div class="schedFormActions">
+            <button id="sCancel" class="btn" type="button" style="display:none;">Vazgeç</button>
+            <button id="sSave" class="btn primary" type="button">Dersi ekle</button>
+          </div>
+        </div>
+
+        <div class="planCfgRow">
+          <div>
+            <label class="fieldLbl">Tablo başlangıcı</label>
+            <input id="cfgStart" type="number" min="0" max="23" style="width:90px;" />
+          </div>
+          <div>
+            <label class="fieldLbl">Tablo bitişi</label>
+            <input id="cfgEnd" type="number" min="1" max="24" style="width:90px;" />
+          </div>
+          <div>
+            <label class="fieldLbl">Yoğunluk (px/dk)</label>
+            <input id="cfgPx" type="number" min="0.3" max="2" step="0.1" style="width:90px;" />
+          </div>
+          <button id="cfgSave" class="btn" type="button">Uygula</button>
+        </div>
+
+        <div class="schedList" id="schedList"></div>
+      </div>
+
+      <!-- Habit detay -->
       <div id="habitDetailSection" style="display:none;">
         <div id="habitColorSlot"></div>
         <div class="habitStats">
@@ -608,9 +676,9 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
         </div>
 
         <div class="habitCalendarControls">
-          <button id="hbPrev" class="habitNavBtn">◀</button>
+          <button id="hbPrev" class="habitNavBtn" type="button">◀</button>
           <div id="hbMonthTitle" class="habitMonthTitle"></div>
-          <button id="hbNext" class="habitNavBtn">▶</button>
+          <button id="hbNext" class="habitNavBtn" type="button">▶</button>
         </div>
 
         <div class="habitCalendarWrapper">
@@ -629,334 +697,283 @@ input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px sol
     </div>
   </div>
 
-  <!-- Confirm Overlay -->
+  <!-- Confirm -->
   <div id="confirmOverlay" class="overlay" style="z-index:60;">
     <div class="modal" style="width:300px; max-width:90%;">
       <h3 style="margin-top:0; text-align:center;">Emin misin?</h3>
       <div id="confirmMsg" style="text-align:center; color:var(--muted); margin-bottom:16px;">Bu işlem geri alınamaz.</div>
       <div style="display:flex; gap:10px; justify-content:center;">
         <button id="confirmNo" class="btn" type="button">İptal</button>
-        <button id="confirmYes" class="btn danger" type="button">Evet, Sil</button>
+        <button id="confirmYes" class="btn danger" type="button">Evet</button>
       </div>
     </div>
   </div>
 
-  <script src="./app.js"></script>
-  <script> 
+  <div id="ctxMenu"></div>
 
-// ----------------------------------------------------------------------
-// SUPABASE AYARLARI
-// ----------------------------------------------------------------------
+<script>
+/* ====================================================================
+   SUPABASE
+==================================================================== */
 const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM";
-// ----------------------------------------------------------------------
 
-const LOCAL_KEY = 'minimal_todo_v15_4_clean';
+const LOCAL_KEY = 'minimal_todo_v16_plan';
 let db = null;
 let currentUser = null;
 let _supabase = null;
 
-// Supabase Init
-if(SUPABASE_URL && SUPABASE_KEY) {
+if (SUPABASE_URL && SUPABASE_KEY) {
   _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } else {
   console.warn("Supabase bilgileri girilmemiş!");
 }
 
-// ----------------------------------------------------------------------
-// PWA / SERVICE WORKER (tek yerde)
-// ----------------------------------------------------------------------
+/* ====================================================================
+   PWA
+==================================================================== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
-
 let deferredPrompt = null;
 const btnInstall = document.getElementById('btnInstall');
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  btnInstall.style.display = 'inline-block';
+  e.preventDefault(); deferredPrompt = e; btnInstall.style.display = 'inline-block';
 });
 btnInstall.addEventListener('click', async () => {
   if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  btnInstall.style.display = 'none';
+  deferredPrompt.prompt(); await deferredPrompt.userChoice;
+  deferredPrompt = null; btnInstall.style.display = 'none';
 });
 
-// ----------------------------------------------------------------------
-// Custom Confirm Logic
-// ----------------------------------------------------------------------
+/* ====================================================================
+   CONFIRM
+==================================================================== */
 const confirmOverlay = document.getElementById('confirmOverlay');
 const confirmMsg = document.getElementById('confirmMsg');
 const confirmYes = document.getElementById('confirmYes');
-const confirmNo = document.getElementById('confirmNo');
+const confirmNo  = document.getElementById('confirmNo');
 let onConfirmYes = null;
 
-function showConfirm(text, callback) {
+function showConfirm(text, callback){
   confirmMsg.textContent = text;
   onConfirmYes = callback;
   confirmOverlay.style.display = 'flex';
 }
-
-confirmYes.addEventListener('click', () => {
-  if(onConfirmYes) onConfirmYes();
-  confirmOverlay.style.display = 'none';
-  onConfirmYes = null;
+confirmYes.addEventListener('click', ()=>{
+  if (onConfirmYes) onConfirmYes();
+  confirmOverlay.style.display = 'none'; onConfirmYes = null;
+});
+confirmNo.addEventListener('click', ()=>{
+  confirmOverlay.style.display = 'none'; onConfirmYes = null;
 });
 
-confirmNo.addEventListener('click', () => {
-  confirmOverlay.style.display = 'none';
-  onConfirmYes = null;
-});
-
-// ----------------------------------------------------------------------
-// Auth Elementleri
-// ----------------------------------------------------------------------
+/* ====================================================================
+   AUTH
+==================================================================== */
 const authOverlay = document.getElementById('authOverlay');
 const authEmail = document.getElementById('authEmail');
-const authPass = document.getElementById('authPass');
+const authPass  = document.getElementById('authPass');
 const authError = document.getElementById('authError');
-const btnLogin = document.getElementById('btnLogin');
+const btnLogin  = document.getElementById('btnLogin');
 const btnSignup = document.getElementById('btnSignup');
-const appWrap = document.getElementById('appWrap');
+const appWrap   = document.getElementById('appWrap');
 const btnLogout = document.getElementById('btnLogout');
 const userEmailDisplay = document.getElementById('userEmailDisplay');
 
-// Başlangıç: Session kontrol
-async function initApp() {
-  if(!_supabase) {
-    alert("Lütfen kodun içindeki SUPABASE_URL ve SUPABASE_KEY alanlarını doldurun.");
-    return;
-  }
-
+async function initApp(){
+  if (!_supabase){ alert("SUPABASE_URL ve SUPABASE_KEY alanlarını doldur."); return; }
   const { data: { session } } = await _supabase.auth.getSession();
-  if(session) {
-    handleSession(session);
-  } else {
-    showAuth();
-  }
+  if (session) handleSession(session); else showAuth();
 
-  _supabase.auth.onAuthStateChange((_event, session) => {
-    if(session) handleSession(session);
-    else showAuth();
+  _supabase.auth.onAuthStateChange((_e, session) => {
+    if (session) handleSession(session); else showAuth();
   });
 }
-
-function showAuth() {
+function showAuth(){
   authOverlay.style.display = 'flex';
   appWrap.style.display = 'none';
   currentUser = null;
 }
-
-async function handleSession(session) {
+async function handleSession(session){
   currentUser = session.user;
   authOverlay.style.display = 'none';
   appWrap.style.display = 'block';
   userEmailDisplay.textContent = currentUser.email;
-
   await loadRemoteDB();
   render();
 }
-
-btnLogin.addEventListener('click', async () => {
+btnLogin.addEventListener('click', async ()=>{
   authError.textContent = 'Giriş yapılıyor...';
-  const email = authEmail.value;
-  const password = authPass.value;
-  const { error } = await _supabase.auth.signInWithPassword({ email, password });
-  if(error) authError.textContent = error.message;
-  else authError.textContent = '';
+  const { error } = await _supabase.auth.signInWithPassword({ email: authEmail.value, password: authPass.value });
+  authError.textContent = error ? error.message : '';
 });
-
-btnSignup.addEventListener('click', async () => {
+btnSignup.addEventListener('click', async ()=>{
   authError.textContent = 'Kayıt olunuyor...';
-  const email = authEmail.value;
-  const password = authPass.value;
-  const { error } = await _supabase.auth.signUp({ email, password });
-  if(error) {
-    authError.textContent = error.message;
-  } else {
-    alert("Kayıt başarılı! Lütfen giriş yapın (Eğer e-posta onayı açıksa onaylayın).");
-    authError.textContent = 'Kayıt başarılı.';
-  }
+  const { error } = await _supabase.auth.signUp({ email: authEmail.value, password: authPass.value });
+  if (error) authError.textContent = error.message;
+  else { alert("Kayıt başarılı! Giriş yapabilirsin (e-posta onayı açıksa önce onayla)."); authError.textContent = ''; }
 });
+btnLogout.addEventListener('click', async ()=>{ await _supabase.auth.signOut(); });
 
-btnLogout.addEventListener('click', async () => {
-  await _supabase.auth.signOut();
-});
-
-// ----------------------------------------------------------------------
-// VERİTABANI
-// ----------------------------------------------------------------------
-function getEmptyDB() {
+/* ====================================================================
+   DB
+==================================================================== */
+function getEmptyDB(){
   return {
     days:{},
     inbox:[],
-    tags: [
+    tags:[
       { name:'akademik',  color:'#7dd3fc', order:1 },
       { name:'praktikum', color:'#34d399', order:2 },
       { name:'finans',    color:'#fbbf24', order:3 },
       { name:'ev',        color:'#fb7185', order:4 },
     ],
-    habits:[],
-    habitState:{ date: todayKey(), doneIds:[] },
-    habitHistory: {}
+    habits:[], habitState:{ date: todayKey(), doneIds:[] }, habitHistory:{},
+    schedule:[],
+    planCfg:{ start:7, end:23, px:0.9 }
   };
 }
+function migrate(d){
+  d.days ||= {}; d.inbox ||= []; d.tags ||= []; d.habits ||= [];
+  d.habitHistory ||= {}; d.habitState ||= { date: todayKey(), doneIds:[] };
+  d.schedule ||= [];
+  d.planCfg = Object.assign({ start:7, end:23, px:0.9 }, d.planCfg || {});
+  return d;
+}
 
-async function loadRemoteDB() {
-  if(!currentUser) return;
-
+async function loadRemoteDB(){
+  if (!currentUser) return;
   let localData = null;
-  try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if(raw) localData = JSON.parse(raw);
-  } catch {}
+  try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) localData = JSON.parse(raw); } catch {}
 
-  const { data } = await _supabase
-    .from('user_data')
-    .select('content')
-    .eq('id', currentUser.id)
-    .single();
+  const { data } = await _supabase.from('user_data').select('content').eq('id', currentUser.id).single();
 
-  if (data && data.content) {
-    db = data.content;
-    if (!db.habitHistory) db.habitHistory = {};
+  if (data && data.content){
+    db = migrate(data.content);
     localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+  } else if (localData){
+    db = migrate(localData); saveDB(db);
   } else {
-    if(localData) {
-      db = localData;
-      if (!db.habitHistory) db.habitHistory = {};
-      saveDB(db);
-    } else {
-      db = getEmptyDB();
-      saveDB(db);
-    }
+    db = getEmptyDB(); saveDB(db);
   }
 }
 
 let saveTimeout = null;
-function saveDB(newDB) {
-  if(!newDB) return;
+function saveDB(newDB){
+  if (!newDB) return;
   db = newDB;
-
   localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-
-  if(saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(async () => {
-    if(!currentUser) return;
-    await _supabase
-      .from('user_data')
-      .upsert({
-        id: currentUser.id,
-        content: db,
-        updated_at: new Date()
-      });
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async ()=>{
+    if (!currentUser) return;
+    await _supabase.from('user_data').upsert({ id: currentUser.id, content: db, updated_at: new Date() });
   }, 1000);
 }
 
-// ----------------------------------------------------------------------
-// UTIL
-// ----------------------------------------------------------------------
+/* ====================================================================
+   UTIL
+==================================================================== */
 function dayKey(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const da = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${da}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function todayKey(){ return dayKey(new Date()); }
-
 function startOfWeek(date){
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const day = (d.getDay() + 6) % 7;
-  d.setDate(d.getDate() - day);
+  d.setDate(d.getDate() - ((d.getDay()+6)%7));
   return d;
 }
 function addDays(date, n){
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  d.setDate(d.getDate()+n);
-  return d;
+  d.setDate(d.getDate()+n); return d;
 }
 function startOfMonth(date){ return new Date(date.getFullYear(), date.getMonth(), 1); }
 function endOfMonth(date){ return new Date(date.getFullYear(), date.getMonth()+1, 0); }
 
 function fmtRange(a,b){
-  const opts = { day:'2-digit', month:'short', year:'numeric' };
-  return `${a.toLocaleDateString('tr-TR', opts)} – ${b.toLocaleDateString('tr-TR', opts)}`;
+  const o = { day:'2-digit', month:'short', year:'numeric' };
+  return `${a.toLocaleDateString('tr-TR',o)} – ${b.toLocaleDateString('tr-TR',o)}`;
 }
-function fmtDay(d){
-  return d.toLocaleDateString('tr-TR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+function fmtDay(d){ return d.toLocaleDateString('tr-TR',{ weekday:'long', day:'2-digit', month:'long', year:'numeric' }); }
+
+function isoWeek(date){
+  const t = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  t.setDate(t.getDate() + 3 - ((t.getDay()+6)%7));
+  const w1 = new Date(t.getFullYear(), 0, 4);
+  return 1 + Math.round(((t - w1)/86400000 - 3 + ((w1.getDay()+6)%7))/7);
 }
 
-function normalizeTagName(s){
-  return (s||'').trim().toLowerCase().replace(/\s+/g,'-');
+function minutesOf(t){
+  if (!t || !/^\d{1,2}:\d{2}$/.test(t)) return null;
+  const [h,m] = t.split(':').map(Number); return h*60+m;
 }
+function minToTime(min){
+  min = Math.max(0, Math.min(24*60-1, Math.round(min)));
+  return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+}
+const SNAP = 15;
+function snapMin(m){ return Math.round(m/SNAP)*SNAP; }
+
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
+
+function normalizeTagName(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,'-'); }
 
 function fixItem(t){
-  const id = t.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random());
   const type = (['gorev','termin','hedef'].includes(t.type) ? t.type : 'gorev');
   return {
-    id,
+    id: t.id || uid(),
     text: (t.text||'').trim(),
     notes: (t.notes||''),
     done: !!t.done,
     type,
-    tag: (t.tag || ''),
-    time: (t.time || ''),
+    tag: (t.tag||''),
+    time: (t.time||''),
+    dur: (Number(t.dur) > 0 ? Number(t.dur) : 60),
     created: t.created || Date.now()
   };
 }
 
-function getCssVar(name){
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
+function getCssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 function typeFrameColor(type){
-  if (type === 'termin') return getCssVar('--frame-termin');
-  if (type === 'hedef') return getCssVar('--frame-hedef');
+  if (type==='termin') return getCssVar('--frame-termin');
+  if (type==='hedef')  return getCssVar('--frame-hedef');
   return getCssVar('--frame-gorev');
 }
-
 function hexToRgba(hex, alpha){
   if (!hex) return `rgba(255,255,255,${alpha})`;
   const h = hex.replace('#','').trim();
-  const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
-  const r = parseInt(full.slice(0,2),16);
-  const g = parseInt(full.slice(2,4),16);
-  const b = parseInt(full.slice(4,6),16);
+  const full = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+  const r = parseInt(full.slice(0,2),16), g = parseInt(full.slice(2,4),16), b = parseInt(full.slice(4,6),16);
+  if ([r,g,b].some(isNaN)) return `rgba(255,255,255,${alpha})`;
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function typeRank(type){
-  if (type === 'termin') return 0;
-  if (type === 'hedef') return 1;
-  return 2;
-}
+function typeRank(t){ return t==='termin'?0 : t==='hedef'?1 : 2; }
 function timeKey(t){ return t.time ? t.time : '99:99'; }
 
 const DOW = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
+const DOW_LONG = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+const KIND_LBL = { vl:'VL', ue:'ÜB', lab:'LAB', tut:'TUT', etc:'' };
+
 let mode = 'week';
 let anchor = new Date();
 let selected = new Date();
 let dragPayload = null;
 
-function ensureHabitReset(){
-  if(!db) return;
-  const today = todayKey();
-  db.habitState = db.habitState || { date: today, doneIds: [] };
-  db.habitHistory = db.habitHistory || {};
-  if (db.habitState.date !== today){
-    db.habitState = { date: today, doneIds: [] };
-    saveDB(db);
-  }
-}
-
-// UI refs
+/* ====================================================================
+   DOM refs
+==================================================================== */
 const calendarArea = document.getElementById('calendarArea');
 const grid = document.getElementById('grid');
 const dowRow = document.getElementById('dowRow');
+const planWrap = document.getElementById('planWrap');
 const rangeTitle = document.getElementById('rangeTitle');
+
 const btnWeek = document.getElementById('btnWeek');
+const btnPlan = document.getElementById('btnPlan');
 const btnMonth = document.getElementById('btnMonth');
 
 const panelTitle = document.getElementById('panelTitle');
@@ -974,6 +991,8 @@ const clearDone = document.getElementById('clearDone');
 const tagFilter = document.getElementById('tagFilter');
 const typeFilter = document.getElementById('typeFilter');
 const search = document.getElementById('search');
+const schedToggle = document.getElementById('schedToggle');
+const schedToggleWrap = document.getElementById('schedToggleWrap');
 
 const inbox = document.getElementById('inbox');
 const inboxList = document.getElementById('inboxList');
@@ -987,7 +1006,6 @@ const habitAddBtn = document.getElementById('habitAddBtn');
 const habitResetBtn = document.getElementById('habitResetBtn');
 const habitsSub = document.getElementById('habitsSub');
 
-// Modal
 const overlay = document.getElementById('overlay');
 const modalClose = document.getElementById('modalClose');
 const modalTitle = document.getElementById('modalTitle');
@@ -995,59 +1013,62 @@ const modalWhere = document.getElementById('modalWhere');
 const mText = document.getElementById('mText');
 const mNotes = document.getElementById('mNotes');
 const mTime = document.getElementById('mTime');
+const mDur = document.getElementById('mDur');
 const mType = document.getElementById('mType');
 const mTag = document.getElementById('mTag');
-const quickAddSection = document.getElementById('quickAddSection');
-const tagSettingsSection = document.getElementById('tagSettingsSection');
-const habitDetailSection = document.getElementById('habitDetailSection');
-const tagSettingsBtn = document.getElementById('tagSettingsBtn');
-const tagManager = document.getElementById('tagManager');
 const modalSave = document.getElementById('modalSave');
 const modalDelete = document.getElementById('modalDelete');
 
+const quickAddSection = document.getElementById('quickAddSection');
+const tagSettingsSection = document.getElementById('tagSettingsSection');
+const schedSettingsSection = document.getElementById('schedSettingsSection');
+const habitDetailSection = document.getElementById('habitDetailSection');
+const tagSettingsBtn = document.getElementById('tagSettingsBtn');
+const schedSettingsBtn = document.getElementById('schedSettingsBtn');
+const tagManager = document.getElementById('tagManager');
+const ctxMenu = document.getElementById('ctxMenu');
+
 let modalContext = { mode:'add', dest:'day', dayKey:null, origin:null, itemId:null };
 
+/* ====================================================================
+   MODAL temel
+==================================================================== */
+function showSection(name){
+  quickAddSection.style.display     = (name==='quick') ? 'block' : 'none';
+  tagSettingsSection.style.display  = (name==='tags')  ? 'block' : 'none';
+  schedSettingsSection.style.display= (name==='sched') ? 'block' : 'none';
+  habitDetailSection.style.display  = (name==='habit') ? 'block' : 'none';
+  overlay.style.display = 'flex';
+}
 function closeModal(){ overlay.style.display = 'none'; }
 modalClose.addEventListener('click', closeModal);
-overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closeModal(); });
-
-overlay.addEventListener('keydown', (e)=>{
+overlay.addEventListener('click', e=>{ if (e.target===overlay) closeModal(); });
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Escape'){ closeModal(); hideCtx(); }
+});
+overlay.addEventListener('keydown', e=>{
   if (overlay.style.display !== 'flex') return;
-  if (tagSettingsSection.style.display === 'block') return;
-  if (habitDetailSection.style.display === 'block') return;
+  if (quickAddSection.style.display !== 'block') return;
   if (e.target.tagName === 'TEXTAREA') return;
-  if (e.key === 'Enter'){
-    e.preventDefault();
-    modalSave.click();
-  }
+  if (e.key === 'Enter'){ e.preventDefault(); modalSave.click(); }
 });
 
-tagSettingsBtn.addEventListener('click', ()=>{
-  modalTitle.textContent = 'Tag Ayarları';
-  quickAddSection.style.display = 'none';
-  habitDetailSection.style.display = 'none';
-  tagSettingsSection.style.display = 'block';
-  overlay.style.display = 'flex';
-  renderTagManager();
-});
-
+/* ====================================================================
+   Tag helpers + filters
+==================================================================== */
 function tagMeta(name){ return (db && db.tags) ? db.tags.find(x=>x.name===name) : null; }
-function tagOrder(name){
-  if (!name) return 9999;
-  const m = tagMeta(name);
-  return m ? (m.order ?? 9999) : 9999;
-}
+function tagOrder(name){ if(!name) return 9999; const m = tagMeta(name); return m ? (m.order ?? 9999) : 9999; }
+
 function itemSort(a,b){
   const ra = typeRank(a.type), rb = typeRank(b.type);
-  if (ra !== rb) return ra - rb;
+  if (ra !== rb) return ra-rb;
   const ta = timeKey(a), tb = timeKey(b);
   if (ta < tb) return -1;
   if (ta > tb) return 1;
   const oa = tagOrder(a.tag), ob = tagOrder(b.tag);
-  if (oa !== ob) return oa - ob;
-  return (a.created||0) - (b.created||0);
+  if (oa !== ob) return oa-ob;
+  return (a.created||0)-(b.created||0);
 }
-
 function presetTypesForMode(){
   if (mode === 'month') return new Set(['termin','hedef']);
   return new Set(['termin','hedef','gorev']);
@@ -1058,127 +1079,121 @@ function passesFilters(item){
   const tf = tagFilter.value;
   if (tf && tf !== '__all__' && item.tag !== tf) return false;
   const tpf = typeFilter.value;
-  if (tpf === '__preset__'){
-    if (!presetTypesForMode().has(item.type)) return false;
-  } else if (tpf !== '__all__' && item.type !== tpf) return false;
+  if (tpf === '__preset__'){ if (!presetTypesForMode().has(item.type)) return false; }
+  else if (tpf !== '__all__' && item.type !== tpf) return false;
   return true;
 }
 
 function rebuildTagDropdowns(){
-  if(!db) return;
+  if (!db) return;
   db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
 
-  tagInput.innerHTML = '';
-  const opt0 = document.createElement('option');
-  opt0.value='__none__'; opt0.textContent='Tag: yok';
-  tagInput.appendChild(opt0);
-  for (const t of db.tags){
-    const o = document.createElement('option');
-    o.value=t.name; o.textContent=t.name;
-    tagInput.appendChild(o);
-  }
-
-  mTag.innerHTML = '';
-  const m0 = document.createElement('option');
-  m0.value='__none__'; m0.textContent='Tag: yok';
-  mTag.appendChild(m0);
-  for (const t of db.tags){
-    const o = document.createElement('option');
-    o.value=t.name; o.textContent=t.name;
-    mTag.appendChild(o);
-  }
+  const fill = (sel, noneLabel) => {
+    sel.innerHTML = '';
+    const o0 = document.createElement('option');
+    o0.value='__none__'; o0.textContent = noneLabel;
+    sel.appendChild(o0);
+    for (const t of db.tags){
+      const o = document.createElement('option'); o.value=t.name; o.textContent=t.name; sel.appendChild(o);
+    }
+  };
+  const keepTag = tagInput.value, keepMTag = mTag.value;
+  fill(tagInput, 'Tag: yok'); fill(mTag, 'Tag: yok');
+  if ([...tagInput.options].some(o=>o.value===keepTag)) tagInput.value = keepTag;
+  if ([...mTag.options].some(o=>o.value===keepMTag)) mTag.value = keepMTag;
 
   const current = tagFilter.value || '__all__';
   tagFilter.innerHTML = '';
-  const all = document.createElement('option');
-  all.value='__all__'; all.textContent='Tag: Hepsi';
+  const all = document.createElement('option'); all.value='__all__'; all.textContent='Tag: Hepsi';
   tagFilter.appendChild(all);
   for (const t of db.tags){
-    const o = document.createElement('option');
-    o.value=t.name; o.textContent = `Tag: ${t.name}`;
+    const o = document.createElement('option'); o.value=t.name; o.textContent = `Tag: ${t.name}`;
     tagFilter.appendChild(o);
   }
   tagFilter.value = db.tags.some(x=>x.name===current) ? current : '__all__';
 }
 
+/* ====================================================================
+   Item CRUD
+==================================================================== */
 function addItemTo(dest, dayK, item){
   item = fixItem(item);
-  if (dest === 'inbox'){
-    db.inbox = db.inbox || [];
-    db.inbox.push(item);
-  } else {
-    db.days[dayK] = db.days[dayK] || [];
-    db.days[dayK].push(item);
-  }
+  if (dest === 'inbox'){ db.inbox = db.inbox||[]; db.inbox.push(item); }
+  else { db.days[dayK] = db.days[dayK]||[]; db.days[dayK].push(item); }
   saveDB(db);
+  return item;
 }
-
 function findItem(origin, itemId){
   if (!origin || !itemId) return null;
-  if (origin.from === 'inbox'){
-    return (db.inbox||[]).find(x=>x.id===itemId) || null;
-  }
-  if (origin.from === 'day'){
-    return (db.days[origin.dayKey]||[]).find(x=>x.id===itemId) || null;
-  }
+  if (origin.from === 'inbox') return (db.inbox||[]).find(x=>x.id===itemId) || null;
+  if (origin.from === 'day')   return (db.days[origin.dayKey]||[]).find(x=>x.id===itemId) || null;
   return null;
 }
-
 function deleteItem(origin, itemId){
   if (origin.from === 'inbox'){
     db.inbox = (db.inbox||[]).filter(x=>x.id!==itemId);
-  } else if (origin.from === 'day'){
+  } else {
     const k = origin.dayKey;
-    const arr = db.days[k] || [];
-    const kept = arr.filter(x=>x.id!==itemId);
+    const kept = (db.days[k]||[]).filter(x=>x.id!==itemId);
     if (kept.length) db.days[k]=kept; else delete db.days[k];
   }
-  saveDB(db);
-  render();
+  saveDB(db); render();
+}
+function moveItem(payload, toKey){
+  let moved = null;
+  if (payload.from === 'inbox'){
+    const i = (db.inbox||[]).findIndex(x=>x.id===payload.itemId);
+    if (i < 0) return null;
+    [moved] = db.inbox.splice(i,1);
+  } else {
+    const arr = db.days[payload.dayKey] || [];
+    const i = arr.findIndex(x=>x.id===payload.itemId);
+    if (i < 0) return null;
+    [moved] = arr.splice(i,1);
+    if (!arr.length) delete db.days[payload.dayKey];
+  }
+  db.days[toKey] = db.days[toKey] || [];
+  db.days[toKey].push(moved);
+  return moved;
+}
+function readPayload(e){
+  let p = dragPayload;
+  try { const t = e.dataTransfer.getData('text/plain'); if (t) p = JSON.parse(t); } catch {}
+  return p;
 }
 
+/* ====================================================================
+   Kart modali
+==================================================================== */
 function openModalAdd(ctx){
   modalContext = { mode:'add', dest:ctx.dest, dayKey:ctx.dayKey, origin:null, itemId:null };
-  modalTitle.textContent = (ctx.dest === 'inbox') ? 'Inbox’a ekle' : 'Güne ekle';
-  modalWhere.textContent = (ctx.dest === 'inbox') ? 'Hedef: Brain Dump' : `Hedef gün: ${ctx.dayKey}`;
-
-  quickAddSection.style.display = 'block';
-  tagSettingsSection.style.display = 'none';
-  habitDetailSection.style.display = 'none';
-  overlay.style.display = 'flex';
+  modalTitle.textContent = (ctx.dest==='inbox') ? 'Inbox’a ekle' : 'Güne ekle';
+  modalWhere.textContent = (ctx.dest==='inbox') ? 'Hedef: Brain Dump' : `Hedef gün: ${ctx.dayKey}`;
+  showSection('quick');
 
   rebuildTagDropdowns();
-  mText.value = '';
-  mNotes.value = '';
-  mTime.value = '';
+  mText.value = ''; mNotes.value = '';
+  mTime.value = ctx.time || '';
+  mDur.value = ctx.dur || 60;
   mTag.value = '__none__';
-
-  const defaultType = (ctx.dest === 'inbox') ? 'gorev' : (mode === 'month') ? 'termin' : 'gorev';
-  mType.value = defaultType;
+  mType.value = (ctx.dest==='inbox') ? 'gorev' : (mode==='month' ? 'termin' : 'gorev');
 
   modalDelete.style.display = 'none';
   modalSave.textContent = 'Ekle';
   setTimeout(()=>mText.focus(), 0);
 }
-
 function openModalEdit(origin, itemId){
   const it = findItem(origin, itemId);
   if (!it) return;
-
   modalContext = { mode:'edit', dest:null, dayKey:null, origin, itemId };
   modalTitle.textContent = 'Düzenle';
-  modalWhere.textContent = origin.from === 'inbox' ? 'Konum: Brain Dump' : `Konum: ${origin.dayKey}`;
-
-  quickAddSection.style.display = 'block';
-  tagSettingsSection.style.display = 'none';
-  habitDetailSection.style.display = 'none';
-  overlay.style.display = 'flex';
+  modalWhere.textContent = origin.from==='inbox' ? 'Konum: Brain Dump' : `Konum: ${origin.dayKey}`;
+  showSection('quick');
 
   rebuildTagDropdowns();
-  mText.value = it.text || '';
-  mNotes.value = it.notes || '';
-  mTime.value = it.time || '';
-  mType.value = it.type || 'gorev';
+  mText.value = it.text||''; mNotes.value = it.notes||'';
+  mTime.value = it.time||''; mDur.value = it.dur||60;
+  mType.value = it.type||'gorev';
   mTag.value = it.tag ? it.tag : '__none__';
 
   modalDelete.style.display = 'inline-block';
@@ -1189,55 +1204,33 @@ function openModalEdit(origin, itemId){
 modalSave.addEventListener('click', ()=>{
   const text = (mText.value||'').trim();
   if (!text) return;
+  const payload = {
+    text, notes: mNotes.value||'', time: mTime.value||'',
+    dur: Number(mDur.value) || 60,
+    type: mType.value, tag: (mTag.value==='__none__' ? '' : mTag.value)
+  };
 
   if (modalContext.mode === 'add'){
-    addItemTo(modalContext.dest, modalContext.dayKey, {
-      text,
-      notes: mNotes.value || '',
-      time: mTime.value || '',
-      type: mType.value,
-      tag: (mTag.value==='__none__' ? '' : mTag.value),
-      done:false,
-      created: Date.now()
-    });
-    closeModal();
-    render();
-    return;
+    addItemTo(modalContext.dest, modalContext.dayKey, { ...payload, done:false, created:Date.now() });
+    closeModal(); render(); return;
   }
-
-  if (modalContext.mode === 'edit'){
-    const it = findItem(modalContext.origin, modalContext.itemId);
-    if (!it) { closeModal(); return; }
-    it.text = text;
-    it.notes = mNotes.value || '';
-    it.time = mTime.value || '';
-    it.type = mType.value;
-    it.tag  = (mTag.value==='__none__' ? '' : mTag.value);
-    saveDB(db);
-    closeModal();
-    render();
-  }
+  const it = findItem(modalContext.origin, modalContext.itemId);
+  if (!it){ closeModal(); return; }
+  Object.assign(it, payload);
+  saveDB(db); closeModal(); render();
 });
 
 modalDelete.addEventListener('click', ()=>{
   if (modalContext.mode !== 'edit') return;
-  showConfirm('Bu kart silinsin mi?', () => {
+  showConfirm('Bu kart silinsin mi?', ()=>{
     deleteItem(modalContext.origin, modalContext.itemId);
     closeModal();
   });
 });
 
-function renderDOW(){
-  dowRow.innerHTML = '';
-  dowRow.className = 'grid ' + (mode==='month' ? 'month' : 'week');
-  for (const name of DOW){
-    const el = document.createElement('div');
-    el.className='dow'; el.textContent=name;
-    dowRow.appendChild(el);
-  }
-}
-
-// ✅ makeCard: title önce, time sonra (month hizası için daha temiz)
+/* ====================================================================
+   Kart üretimi
+==================================================================== */
 function makeCard(item, origin){
   const meta = tagMeta(item.tag);
   const typeColor = typeFrameColor(item.type);
@@ -1246,498 +1239,774 @@ function makeCard(item, origin){
   const card = document.createElement('div');
   card.className = 'card' + (item.done ? ' done' : '');
   card.draggable = true;
-
   card.style.setProperty('--frameColor', typeColor);
   card.style.setProperty('--fillColor', hexToRgba(baseColor, 0.22));
 
- 
-
-  const row = document.createElement('div');
-  row.className = 'cardRow';
+  const row = document.createElement('div'); row.className='cardRow';
 
   const check = document.createElement('button');
-  check.className = 'checkBtn'; check.type = 'button';
+  check.className='checkBtn'; check.type='button';
   check.title = item.done ? 'Geri al' : 'Tamamla';
   check.textContent = item.done ? '↩' : '✓';
-  check.addEventListener('click', (e)=>{
+  check.addEventListener('click', e=>{
     e.stopPropagation();
-    item.done = !item.done;
-    saveDB(db);
-    render();
+    const real = findItem(origin, item.id) || item;
+    real.done = !real.done;
+    saveDB(db); render();
   });
 
-  const body = document.createElement('div');
-  body.className = 'cardBody';
+  const body = document.createElement('div'); body.className='cardBody';
 
   const title = document.createElement('div');
-  title.className = 'titleText';
+  title.className='titleText';
   title.textContent = item.text || '(başlıksız)';
-
-  if(item.notes && item.notes.trim().length > 0){
-    const noteIcon = document.createElement('span');
-    noteIcon.className = 'noteIcon';
-    noteIcon.textContent = '📝';
-    title.appendChild(noteIcon);
+  if (item.notes && item.notes.trim()){
+    const n = document.createElement('span'); n.className='noteIcon'; n.textContent='📝';
+    title.appendChild(n);
   }
-
   body.appendChild(title);
 
   if (item.time){
-    const time = document.createElement('div');
-    time.className = 'timeText';
-    time.textContent = item.time;
+    const time = document.createElement('div'); time.className='timeText';
+    time.textContent = (mode === 'plan')
+      ? `${item.time}–${minToTime(minutesOf(item.time) + (item.dur||60))}`
+      : item.time;
     body.appendChild(time);
   }
 
-  row.appendChild(check);
-  row.appendChild(body);
-
+  row.appendChild(check); row.appendChild(body);
   card.appendChild(row);
 
-  card.addEventListener('dragstart', (e)=>{
-    dragPayload = { ...origin, itemId: item.id };
+  card.addEventListener('dragstart', e=>{
+    dragPayload = { ...origin, itemId:item.id, grab: e.offsetY || 0 };
     e.dataTransfer.setData('text/plain', JSON.stringify(dragPayload));
     e.dataTransfer.effectAllowed = 'move';
   });
-  // Kartın gövdesine tıklayınca düzenle (checkbox hariç)
-card.addEventListener('contextmenu', (e) => {
-  // checkbox veya butonlara basıldıysa modal açma
-  if (e.target.closest('.checkBtn') || e.target.tagName === 'INPUT') return;
-   e.preventDefault(); // tarayıcı sağ tık menüsünü kapatır
-   e.stopPropagation(); // ✅ kritik: tık cell’e gitmesin, render tetiklenmesin
-  openModalEdit(origin, item.id);
-});
-  
+  card.addEventListener('contextmenu', e=>{
+    if (e.target.closest('.checkBtn')) return;
+    e.preventDefault(); e.stopPropagation();
+    openModalEdit(origin, item.id);
+  });
+
   return card;
 }
 
+/* ====================================================================
+   STUNDENPLAN — model
+==================================================================== */
+function planCfg(){
+  const c = (db && db.planCfg) || {};
+  return { start: c.start ?? 7, end: c.end ?? 23, px: c.px ?? 0.9 };
+}
+function scheduleFor(date){
+  if (!db || !schedToggle.checked) return [];
+  const k = dayKey(date), dow = (date.getDay()+6)%7;
+  return (db.schedule||[]).filter(s=>{
+    if (s.dow !== dow) return false;
+    if (s.from && k < s.from) return false;
+    if (s.to   && k > s.to)   return false;
+    if ((s.skip||[]).includes(k)) return false;
+    if (s.turnus === 'odd'  && isoWeek(date) % 2 === 0) return false;
+    if (s.turnus === 'even' && isoWeek(date) % 2 !== 0) return false;
+    return true;
+  });
+}
+function assignLanes(entries){
+  entries.sort((a,b)=> a.s-b.s || a.e-b.e);
+  let cluster = [], clusterEnd = -Infinity;
+  const flush = ()=>{
+    if (!cluster.length) return;
+    const laneEnds = [];
+    for (const it of cluster){
+      let li = laneEnds.findIndex(end => end <= it.s);
+      if (li === -1){ li = laneEnds.length; laneEnds.push(0); }
+      laneEnds[li] = it.e; it.lane = li;
+    }
+    cluster.forEach(it => it.lanes = laneEnds.length);
+    cluster = []; clusterEnd = -Infinity;
+  };
+  for (const it of entries){
+    if (it.s >= clusterEnd) flush();
+    cluster.push(it); clusterEnd = Math.max(clusterEnd, it.e);
+  }
+  flush();
+  return entries;
+}
+
+/* ====================================================================
+   Context menu (ders kartı)
+==================================================================== */
+function hideCtx(){ ctxMenu.style.display = 'none'; }
+document.addEventListener('click', hideCtx);
+window.addEventListener('scroll', hideCtx, true);
+
+function openSchedMenu(e, s, k){
+  ctxMenu.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'ctxHead';
+  head.textContent = `${s.title} · ${s.start}–${s.end}`;
+  ctxMenu.appendChild(head);
+
+  const mk = (label, fn, danger)=>{
+    const b = document.createElement('button');
+    b.type='button'; b.textContent = label;
+    if (danger) b.className = 'danger';
+    b.addEventListener('click', ev=>{ ev.stopPropagation(); hideCtx(); fn(); });
+    ctxMenu.appendChild(b);
+  };
+
+  mk('Dersi düzenle (tüm sömestr)', ()=> openSchedSettings(s.id));
+  mk('Bu haftayı iptal et', ()=>{
+    s.skip = s.skip || [];
+    if (!s.skip.includes(k)) s.skip.push(k);
+    saveDB(db); render();
+  });
+  mk('Bu haftayı göreve çevir', ()=>{
+    s.skip = s.skip || [];
+    if (!s.skip.includes(k)) s.skip.push(k);
+    const dur = Math.max(15, (minutesOf(s.end) - minutesOf(s.start)) || 60);
+    addItemTo('day', k, {
+      text: s.title, time: s.start, dur, type:'termin',
+      notes: [s.room && ('Yer: '+s.room), s.lecturer].filter(Boolean).join(' · '),
+      done:false, created:Date.now()
+    });
+    render();
+  });
+  mk('Dersi tamamen sil', ()=>{
+    showConfirm(`"${s.title}" dersi silinsin mi?`, ()=>{
+      db.schedule = db.schedule.filter(x=>x.id!==s.id);
+      saveDB(db); render();
+    });
+  }, true);
+
+  ctxMenu.style.display = 'flex';
+  const w = 230, h = ctxMenu.offsetHeight || 200;
+  ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - w - 8) + 'px';
+  ctxMenu.style.top  = Math.min(e.clientY, window.innerHeight - h - 8) + 'px';
+}
+
+function makeSchedCard(s, k){
+  const el = document.createElement('div');
+  el.className = 'planCard schedCard';
+  const c = s.color || '#7dd3fc';
+  el.style.setProperty('--fillColor', hexToRgba(c, .16));
+  el.style.setProperty('--frameColor', hexToRgba(c, .5));
+
+  const chip = KIND_LBL[s.kind] ? `<span class="kindChip">${KIND_LBL[s.kind]}</span>` : '';
+  el.innerHTML =
+    `<div class="schedTitle">${chip}${esc(s.title)}</div>` +
+    `<div class="schedMeta">${s.start}–${s.end}${s.room ? ' · '+esc(s.room) : ''}</div>` +
+    (s.lecturer ? `<div class="schedMeta">${esc(s.lecturer)}</div>` : '');
+
+  el.addEventListener('contextmenu', e=>{ e.preventDefault(); e.stopPropagation(); openSchedMenu(e, s, k); });
+  el.addEventListener('click', e=> e.stopPropagation());
+  return el;
+}
+
+/* ====================================================================
+   STUNDENPLAN — render
+==================================================================== */
+function renderPlan(){
+  const cfg = planCfg();
+  const dayStart = cfg.start*60, dayEnd = cfg.end*60;
+  const bodyH = (dayEnd-dayStart) * cfg.px;
+  const hourH = 60 * cfg.px;
+  const todayK = todayKey(), selK = dayKey(selected);
+
+  const weekStart = startOfWeek(anchor);
+  rangeTitle.textContent = `${fmtRange(weekStart, addDays(weekStart,6))} · KW ${isoWeek(weekStart)}`;
+
+  planWrap.innerHTML = '';
+  const scrollX = document.createElement('div'); scrollX.className='planScrollX';
+  const innerBox = document.createElement('div'); innerBox.className='planInner';
+
+  const days = [];
+  for (let i=0;i<7;i++){ const d = addDays(weekStart,i); days.push({ d, k: dayKey(d), i }); }
+
+  /* --- başlıklar --- */
+  const head = document.createElement('div');
+  head.className = 'planRow planHeadRow';
+  head.appendChild(document.createElement('div'));
+  for (const {d,k,i} of days){
+    const h = document.createElement('div');
+    h.className = 'planDayHead' + (k===todayK?' today':'') + (k===selK?' sel':'');
+    h.innerHTML = `<div class="pdName">${DOW[i]}</div><div class="pdNum">${String(d.getDate()).padStart(2,'0')}</div>`;
+    h.addEventListener('click', ()=>{ selected = d; render(); });
+    head.appendChild(h);
+  }
+  innerBox.appendChild(head);
+
+  /* --- saatsiz kartlar --- */
+  const ad = document.createElement('div');
+  ad.className = 'planRow planAllDay';
+  const adLbl = document.createElement('div');
+  adLbl.className='planGutterLbl'; adLbl.textContent='saatsiz';
+  ad.appendChild(adLbl);
+
+  for (const {d,k} of days){
+    const box = document.createElement('div');
+    box.className = 'planAllDayCell';
+    const items = (db.days[k]||[]).filter(x=>!x.time).filter(passesFilters).sort(itemSort);
+    for (const it of items) box.appendChild(makeCard(it, { from:'day', dayKey:k }));
+
+    box.addEventListener('dragover', e=>{ e.preventDefault(); box.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+    box.addEventListener('dragleave', ()=> box.classList.remove('dragOver'));
+    box.addEventListener('drop', e=>{
+      e.preventDefault(); box.classList.remove('dragOver');
+      const p = readPayload(e); if (!p?.itemId) return;
+      const moved = moveItem(p, k); if (!moved) return;
+      moved.time = '';
+      saveDB(db); dragPayload = null; selected = d; render();
+    });
+    ad.appendChild(box);
+  }
+  innerBox.appendChild(ad);
+
+  /* --- saat gövdesi --- */
+  const scroll = document.createElement('div'); scroll.className='planScroll';
+  const body = document.createElement('div'); body.className='planRow';
+
+  const gut = document.createElement('div');
+  gut.className='planGutter'; gut.style.height = bodyH+'px';
+  for (let h=cfg.start; h<=cfg.end; h++){
+    const lb = document.createElement('div');
+    lb.className='hourLbl';
+    lb.style.top = ((h-cfg.start)*hourH)+'px';
+    lb.textContent = String(h).padStart(2,'0')+':00';
+    gut.appendChild(lb);
+  }
+  body.appendChild(gut);
+
+  for (const {d,k} of days){
+    const col = document.createElement('div');
+    col.className = 'planCol' + (k===selK ? ' sel' : '');
+    col.style.height = bodyH+'px';
+    col.style.backgroundSize = `100% ${hourH}px, 100% ${hourH/2}px`;
+
+    /* ders + görev aynı lane havuzunda → hiç üst üste binmez */
+    const entries = [];
+    for (const s of scheduleFor(d)){
+      const sm = minutesOf(s.start), em = minutesOf(s.end);
+      if (sm==null || em==null || em<=sm) continue;
+      entries.push({ kind:'sched', s:sm, e:em, data:s });
+    }
+    for (const it of (db.days[k]||[])){
+      if (!it.time || !passesFilters(it)) continue;
+      const sm = minutesOf(it.time); if (sm==null) continue;
+      entries.push({ kind:'task', s:sm, e: sm + (it.dur||60), data:it });
+    }
+    assignLanes(entries);
+
+    for (const en of entries){
+      const top = (Math.max(en.s, dayStart) - dayStart) * cfg.px;
+      const hgt = Math.max(20, (Math.min(en.e, dayEnd) - Math.max(en.s, dayStart)) * cfg.px - 2);
+      if (en.e <= dayStart || en.s >= dayEnd) continue;
+
+      const el = (en.kind === 'sched')
+        ? makeSchedCard(en.data, k)
+        : makeCard(en.data, { from:'day', dayKey:k });
+
+      if (en.kind === 'task') el.classList.add('planCard');
+      el.style.top = top+'px';
+      el.style.height = hgt+'px';
+      el.style.left  = `calc(${(en.lane/en.lanes)*100}% + 2px)`;
+      el.style.width = `calc(${100/en.lanes}% - 4px)`;
+      el.style.right = 'auto';
+
+      if (en.kind === 'task'){
+        const it = en.data;
+        const rz = document.createElement('div');
+        rz.className = 'planResize';
+        rz.addEventListener('pointerdown', ev=>{
+          ev.preventDefault(); ev.stopPropagation();
+          el.draggable = false;
+          rz.setPointerCapture(ev.pointerId);
+          const y0 = ev.clientY, d0 = it.dur||60;
+          let nd = d0;
+          const mv = e2=>{
+            nd = Math.max(SNAP, snapMin(d0 + (e2.clientY - y0)/cfg.px));
+            el.style.height = Math.max(20, nd*cfg.px-2)+'px';
+          };
+          const up = ()=>{
+            rz.removeEventListener('pointermove', mv);
+            rz.removeEventListener('pointerup', up);
+            el.draggable = true;
+            const real = findItem({from:'day', dayKey:k}, it.id);
+            if (real){ real.dur = nd; saveDB(db); render(); }
+          };
+          rz.addEventListener('pointermove', mv);
+          rz.addEventListener('pointerup', up);
+        });
+        el.appendChild(rz);
+      }
+      col.appendChild(el);
+    }
+
+    /* şimdi çizgisi */
+    if (k === todayK){
+      const now = new Date();
+      const nm = now.getHours()*60 + now.getMinutes();
+      if (nm >= dayStart && nm <= dayEnd){
+        const line = document.createElement('div');
+        line.className = 'nowLine';
+        line.style.top = ((nm-dayStart)*cfg.px)+'px';
+        col.appendChild(line);
+      }
+    }
+
+    /* boş yere tık = o saate kart ekle */
+    col.addEventListener('click', e=>{
+      if (e.target !== col) return;
+      const r = col.getBoundingClientRect();
+      const min = dayStart + snapMin((e.clientY - r.top)/cfg.px);
+      selected = d;
+      openModalAdd({ dest:'day', dayKey:k, time: minToTime(min), dur:60 });
+    });
+
+    col.addEventListener('dragover', e=>{ e.preventDefault(); col.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+    col.addEventListener('dragleave', ()=> col.classList.remove('dragOver'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault(); col.classList.remove('dragOver');
+      const p = readPayload(e); if (!p?.itemId) return;
+      const r = col.getBoundingClientRect();
+      const min = dayStart + snapMin((e.clientY - r.top - (p.grab||0))/cfg.px);
+      const moved = moveItem(p, k); if (!moved) return;
+      moved.time = minToTime(min);
+      saveDB(db); dragPayload = null; selected = d; render();
+    });
+
+    body.appendChild(col);
+  }
+
+  scroll.appendChild(body);
+  innerBox.appendChild(scroll);
+  scrollX.appendChild(innerBox);
+  planWrap.appendChild(scrollX);
+
+  /* bugüne/ilk derse kaydır */
+  requestAnimationFrame(()=>{
+    const first = Math.min(
+      ...days.flatMap(({d,k}) => [
+        ...scheduleFor(d).map(s=>minutesOf(s.start)),
+        ...(db.days[k]||[]).filter(x=>x.time).map(x=>minutesOf(x.time))
+      ]).filter(v=>v!=null)
+    );
+    if (isFinite(first)) scroll.scrollTop = Math.max(0, (first - dayStart)*cfg.px - 20);
+  });
+}
+
+/* ====================================================================
+   Stundenplan ayarları
+==================================================================== */
+let editingSchedId = null;
+const sTitle=document.getElementById('sTitle'), sDow=document.getElementById('sDow'),
+      sStart=document.getElementById('sStart'), sEnd=document.getElementById('sEnd'),
+      sTurnus=document.getElementById('sTurnus'), sKind=document.getElementById('sKind'),
+      sRoom=document.getElementById('sRoom'), sLect=document.getElementById('sLect'),
+      sColor=document.getElementById('sColor'), sFrom=document.getElementById('sFrom'),
+      sTo=document.getElementById('sTo'), sSave=document.getElementById('sSave'),
+      sCancel=document.getElementById('sCancel'), schedList=document.getElementById('schedList');
+const cfgStart=document.getElementById('cfgStart'), cfgEnd=document.getElementById('cfgEnd'),
+      cfgPx=document.getElementById('cfgPx'), cfgSave=document.getElementById('cfgSave');
+
+function resetSchedForm(){
+  editingSchedId = null;
+  sTitle.value=''; sRoom.value=''; sLect.value='';
+  sStart.value='08:00'; sEnd.value='09:30';
+  sTurnus.value='all'; sKind.value='vl'; sColor.value='#7dd3fc';
+  sSave.textContent = 'Dersi ekle';
+  sCancel.style.display = 'none';
+  /* son kullanılan sömestr aralığını hatırla */
+  const last = (db.schedule||[]).slice(-1)[0];
+  if (last){ sFrom.value = last.from||''; sTo.value = last.to||''; }
+}
+function fillSchedForm(s){
+  editingSchedId = s.id;
+  sTitle.value = s.title||''; sDow.value = String(s.dow??0);
+  sStart.value = s.start||'08:00'; sEnd.value = s.end||'09:30';
+  sTurnus.value = s.turnus||'all'; sKind.value = s.kind||'vl';
+  sRoom.value = s.room||''; sLect.value = s.lecturer||'';
+  sColor.value = s.color||'#7dd3fc';
+  sFrom.value = s.from||''; sTo.value = s.to||'';
+  sSave.textContent = 'Güncelle';
+  sCancel.style.display = 'inline-block';
+}
+function openSchedSettings(editId){
+  modalTitle.textContent = 'Stundenplan';
+  showSection('sched');
+  const cfg = planCfg();
+  cfgStart.value = cfg.start; cfgEnd.value = cfg.end; cfgPx.value = cfg.px;
+  resetSchedForm();
+  if (editId){
+    const s = (db.schedule||[]).find(x=>x.id===editId);
+    if (s) fillSchedForm(s);
+  }
+  renderSchedList();
+}
+schedSettingsBtn.addEventListener('click', ()=> openSchedSettings());
+sCancel.addEventListener('click', ()=>{ resetSchedForm(); renderSchedList(); });
+
+sSave.addEventListener('click', ()=>{
+  const title = (sTitle.value||'').trim();
+  if (!title){ sTitle.focus(); return; }
+  const st = minutesOf(sStart.value), en = minutesOf(sEnd.value);
+  if (st==null || en==null || en<=st){ alert('Bitiş saati başlangıçtan sonra olmalı.'); return; }
+
+  const payload = {
+    title, dow: Number(sDow.value), start: sStart.value, end: sEnd.value,
+    room: (sRoom.value||'').trim(), lecturer: (sLect.value||'').trim(),
+    kind: sKind.value, color: sColor.value, turnus: sTurnus.value,
+    from: sFrom.value||'', to: sTo.value||''
+  };
+
+  db.schedule = db.schedule || [];
+  if (editingSchedId){
+    const s = db.schedule.find(x=>x.id===editingSchedId);
+    if (s) Object.assign(s, payload);
+  } else {
+    db.schedule.push({ id: uid(), skip:[], ...payload });
+  }
+  saveDB(db);
+  resetSchedForm(); renderSchedList(); render();
+});
+
+cfgSave.addEventListener('click', ()=>{
+  const st = Math.max(0, Math.min(23, Number(cfgStart.value)||7));
+  const en = Math.max(st+1, Math.min(24, Number(cfgEnd.value)||23));
+  const px = Math.max(0.3, Math.min(2, Number(cfgPx.value)||0.9));
+  db.planCfg = { start:st, end:en, px };
+  saveDB(db);
+  cfgStart.value=st; cfgEnd.value=en; cfgPx.value=px;
+  render();
+});
+
+function renderSchedList(){
+  schedList.innerHTML = '';
+  const all = (db.schedule||[]).slice().sort((a,b)=> a.dow-b.dow || (a.start<b.start?-1:1));
+  if (!all.length){
+    const e = document.createElement('div');
+    e.className='muted'; e.textContent='Henüz ders yok. Yukarıdaki formdan ekle.';
+    schedList.appendChild(e); return;
+  }
+
+  for (let dw=0; dw<7; dw++){
+    const group = all.filter(s=>s.dow===dw);
+    if (!group.length) continue;
+
+    const box = document.createElement('div'); box.className='schedDayGroup';
+    const h = document.createElement('h4'); h.textContent = DOW_LONG[dw];
+    box.appendChild(h);
+
+    for (const s of group){
+      const row = document.createElement('div'); row.className='schedRow';
+
+      const sw = document.createElement('div');
+      sw.className='swatch'; sw.style.background = s.color||'#7dd3fc';
+
+      const txt = document.createElement('div');
+      const turnusLbl = s.turnus==='odd' ? ' · tek KW' : s.turnus==='even' ? ' · çift KW' : '';
+      const skipLbl = (s.skip||[]).length ? ` · ${s.skip.length} iptal` : '';
+      txt.innerHTML =
+        `<div class="sName">${KIND_LBL[s.kind] ? `<span class="kindChip">${KIND_LBL[s.kind]}</span>` : ''}${esc(s.title)}</div>` +
+        `<div class="sMeta">${s.start}–${s.end}${s.room ? ' · '+esc(s.room) : ''}${turnusLbl}${skipLbl}</div>`;
+
+      const edit = document.createElement('button');
+      edit.className='iconBtn'; edit.type='button'; edit.textContent='✎';
+      edit.title = 'Düzenle';
+      edit.addEventListener('click', ()=>{ fillSchedForm(s); sTitle.focus(); });
+
+      const del = document.createElement('button');
+      del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+      del.addEventListener('click', ()=>{
+        showConfirm(`"${s.title}" silinsin mi?`, ()=>{
+          db.schedule = db.schedule.filter(x=>x.id!==s.id);
+          saveDB(db);
+          if (editingSchedId===s.id) resetSchedForm();
+          renderSchedList(); render();
+        });
+      });
+
+      row.appendChild(sw); row.appendChild(txt); row.appendChild(edit); row.appendChild(del);
+
+      if ((s.skip||[]).length){
+        const undo = document.createElement('button');
+        undo.className='btn'; undo.type='button'; undo.textContent='İptalleri geri al';
+        undo.style.cssText='grid-column:1 / -1; font-size:11px; padding:5px 8px;';
+        undo.addEventListener('click', ()=>{ s.skip = []; saveDB(db); renderSchedList(); render(); });
+        row.appendChild(undo);
+      }
+
+      box.appendChild(row);
+    }
+    schedList.appendChild(box);
+  }
+}
+
+/* ====================================================================
+   Inbox
+==================================================================== */
 function renderInbox(){
   inboxList.innerHTML = '';
-  if(!db) return;
-
-  const items = (db.inbox||[]).map(fixItem).filter(passesFilters).sort(itemSort);
+  if (!db) return;
+  const items = (db.inbox||[]).filter(passesFilters).sort(itemSort);
   const openCount = items.filter(x=>!x.done).length;
   inboxCount.textContent = items.length ? `Açık: ${openCount} • Toplam: ${items.length}` : 'Boş';
 
   if (!items.length){
-    const empty = document.createElement('div');
-    empty.className='muted'; empty.textContent='Inbox boş. + ile hızlı ekle.';
-    inboxList.appendChild(empty);
-    return;
+    const e = document.createElement('div');
+    e.className='muted'; e.textContent='Inbox boş. + ile hızlı ekle.';
+    inboxList.appendChild(e); return;
   }
-  for (const it of items){
-    inboxList.appendChild(makeCard(it, {from:'inbox'}));
-  }
+  for (const it of items) inboxList.appendChild(makeCard(it, { from:'inbox' }));
 }
 
-// ----------------------------------------------------------------------
-// HABITS
-// ----------------------------------------------------------------------
-function toggleHabit(id, isDone) {
+/* ====================================================================
+   Habits
+==================================================================== */
+function ensureHabitReset(){
+  if (!db) return;
+  const today = todayKey();
+  db.habitState = db.habitState || { date: today, doneIds:[] };
+  db.habitHistory = db.habitHistory || {};
+  if (db.habitState.date !== today){
+    db.habitState = { date: today, doneIds:[] };
+    saveDB(db);
+  }
+}
+function toggleHabit(id, isDone){
   ensureHabitReset();
   const today = todayKey();
-
-  db.habitHistory = db.habitHistory || {};
-  const histSet = new Set(db.habitHistory[id] || []);
-
-  if(isDone) histSet.add(today);
-  else histSet.delete(today);
-
-  db.habitHistory[id] = [...histSet].sort();
+  const hist = new Set(db.habitHistory[id] || []);
+  isDone ? hist.add(today) : hist.delete(today);
+  db.habitHistory[id] = [...hist].sort();
 
   const s = new Set(db.habitState.doneIds || []);
   isDone ? s.add(id) : s.delete(id);
   db.habitState.doneIds = [...s];
 
-  saveDB(db);
-  renderHabits();
+  saveDB(db); renderHabits();
 }
-
-function calculateStreak(habitId) {
+function calculateStreak(habitId){
   const history = new Set(db.habitHistory[habitId] || []);
-  let currentStreak = 0;
-  let checkDate = new Date();
-
-  if(history.has(dayKey(checkDate))) currentStreak++;
-  while(true) {
-    checkDate.setDate(checkDate.getDate() - 1);
-    if(history.has(dayKey(checkDate))) currentStreak++;
-    else break;
+  let current = 0;
+  const chk = new Date();
+  if (history.has(dayKey(chk))) current++;
+  while (true){
+    chk.setDate(chk.getDate()-1);
+    if (history.has(dayKey(chk))) current++; else break;
   }
-
-  const sortedDates = [...history].sort();
-  let maxStreak = 0;
-  let tempStreak = 0;
-  for(let i=0; i<sortedDates.length; i++) {
-    if(i === 0) { tempStreak = 1; continue; }
-    const curr = new Date(sortedDates[i]);
-    const prev = new Date(sortedDates[i-1]);
-    const diffDays = Math.ceil(Math.abs(curr - prev) / (1000 * 60 * 60 * 24));
-    if(diffDays === 1) tempStreak++;
-    else { maxStreak = Math.max(maxStreak, tempStreak); tempStreak = 1; }
+  const sorted = [...history].sort();
+  let max = 0, temp = 0;
+  for (let i=0;i<sorted.length;i++){
+    if (i===0){ temp=1; continue; }
+    const diff = Math.round((new Date(sorted[i]) - new Date(sorted[i-1]))/86400000);
+    if (diff===1) temp++; else { max = Math.max(max,temp); temp=1; }
   }
-  maxStreak = Math.max(maxStreak, tempStreak);
-  return { current: currentStreak, max: maxStreak };
+  max = Math.max(max, temp);
+  return { current, max };
 }
 
-// Habit detail calendar
 let habitViewDate = new Date();
 let viewingHabitId = null;
 
-function openHabitDetail(habitId) {
-  const h = db.habits.find(x => x.id === habitId);
-  if(!h) return;
-
+function openHabitDetail(habitId){
+  const h = db.habits.find(x=>x.id===habitId);
+  if (!h) return;
   viewingHabitId = habitId;
   habitViewDate = new Date();
-
   modalTitle.textContent = h.name;
 
-  const colorSlot = document.getElementById('habitColorSlot');
-  if (colorSlot) {
-    colorSlot.innerHTML = '';
+  const slot = document.getElementById('habitColorSlot');
+  slot.innerHTML = '';
+  const box = document.createElement('div'); box.style.marginTop='10px';
+  box.innerHTML = `<label class="fieldLbl">Renk</label><input type="color" value="${h.color||'#7dd3fc'}">`;
+  const inp = box.querySelector('input');
+  inp.addEventListener('input', ()=>{ h.color = inp.value; saveDB(db); renderHabits(); });
+  slot.appendChild(box);
 
-    const colorBox = document.createElement('div');
-    colorBox.style.marginTop = '10px';
+  const st = calculateStreak(habitId);
+  document.getElementById('currentStreak').textContent = st.current;
+  document.getElementById('maxStreak').textContent = st.max;
 
-    colorBox.innerHTML = `
-      <label style="font-size:12px;color:var(--muted)">Renk</label>
-      <input type="color" value="${h.color || '#7dd3fc'}">
-    `;
-
-    const input = colorBox.querySelector('input');
-    input.addEventListener('input', () => {
-      h.color = input.value;
-      saveDB(db);
-      renderHabits();
-    });
-
-    colorSlot.appendChild(colorBox);
-  }
-
-  const stats = calculateStreak(habitId);
-  document.getElementById('currentStreak').textContent = stats.current;
-  document.getElementById('maxStreak').textContent = stats.max;
-
-  quickAddSection.style.display = 'none';
-  tagSettingsSection.style.display = 'none';
-  habitDetailSection.style.display = 'block';
-  overlay.style.display = 'flex';
-
+  showSection('habit');
   renderHabitCalendar();
 }
+function renderHabitCalendar(){
+  if (!viewingHabitId) return;
+  const g = document.getElementById('habitCalendarGrid');
+  const t = document.getElementById('hbMonthTitle');
+  g.innerHTML = '';
+  t.textContent = habitViewDate.toLocaleDateString('tr-TR',{ month:'long', year:'numeric' });
 
-function renderHabitCalendar() {
-  if(!viewingHabitId) return;
-
-  const gridContainer = document.getElementById('habitCalendarGrid');
-  const titleEl = document.getElementById('hbMonthTitle');
-
-  gridContainer.innerHTML = '';
-  titleEl.textContent = habitViewDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-
-  const year = habitViewDate.getFullYear();
-  const month = habitViewDate.getMonth();
-
-  const firstDayObj = new Date(year, month, 1);
-  const startDayIndex = (firstDayObj.getDay() + 6) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+  const y = habitViewDate.getFullYear(), m = habitViewDate.getMonth();
+  const startIdx = (new Date(y,m,1).getDay()+6)%7;
+  const daysIn = new Date(y,m+1,0).getDate();
   const history = new Set(db.habitHistory[viewingHabitId] || []);
   const todayK = todayKey();
 
-  for(let i=0; i<startDayIndex; i++) {
-    const el = document.createElement('div');
-    el.className = 'hDay empty';
-    gridContainer.appendChild(el);
+  for (let i=0;i<startIdx;i++){
+    const e = document.createElement('div'); e.className='hDay empty'; g.appendChild(e);
   }
-
-  for(let d=1; d<=daysInMonth; d++) {
-    const dateObj = new Date(year, month, d);
-    const k = dayKey(dateObj);
-
-    const isDone = history.has(k);
-    const isToday = (k === todayK);
-
+  for (let d=1; d<=daysIn; d++){
+    const k = dayKey(new Date(y,m,d));
     const el = document.createElement('div');
-    el.className = 'hDay' + (isDone ? ' done' : '') + (isToday ? ' today' : '');
-    el.textContent = d;
-    el.title = k;
-
-    el.addEventListener('click', () => {
-      const currentDone = history.has(k);
-      toggleHabitDate(viewingHabitId, k, !currentDone);
-    });
-
-    gridContainer.appendChild(el);
+    el.className = 'hDay' + (history.has(k)?' done':'') + (k===todayK?' today':'');
+    el.textContent = d; el.title = k;
+    el.addEventListener('click', ()=> toggleHabitDate(viewingHabitId, k, !history.has(k)));
+    g.appendChild(el);
   }
 }
+function toggleHabitDate(habitId, dateStr, isDone){
+  db.habitHistory = db.habitHistory || {};
+  const hist = new Set(db.habitHistory[habitId] || []);
+  isDone ? hist.add(dateStr) : hist.delete(dateStr);
+  db.habitHistory[habitId] = [...hist].sort();
 
-function toggleHabitDate(habitId, dateStr, isDone) {
-  if(!db.habitHistory) db.habitHistory = {};
-  const histSet = new Set(db.habitHistory[habitId] || []);
-  if(isDone) histSet.add(dateStr);
-  else histSet.delete(dateStr);
-  db.habitHistory[habitId] = [...histSet].sort();
-
-  if(dateStr === todayKey()) {
+  if (dateStr === todayKey()){
     ensureHabitReset();
     const s = new Set(db.habitState.doneIds || []);
     isDone ? s.add(habitId) : s.delete(habitId);
     db.habitState.doneIds = [...s];
   }
-
   saveDB(db);
-
   renderHabitCalendar();
-  const stats = calculateStreak(habitId);
-  document.getElementById('currentStreak').textContent = stats.current;
-  document.getElementById('maxStreak').textContent = stats.max;
+  const st = calculateStreak(habitId);
+  document.getElementById('currentStreak').textContent = st.current;
+  document.getElementById('maxStreak').textContent = st.max;
   renderHabits();
 }
-
-document.getElementById('hbPrev').addEventListener('click', () => {
-  habitViewDate = new Date(habitViewDate.getFullYear(), habitViewDate.getMonth() - 1, 1);
-  renderHabitCalendar();
+document.getElementById('hbPrev').addEventListener('click', ()=>{
+  habitViewDate = new Date(habitViewDate.getFullYear(), habitViewDate.getMonth()-1, 1); renderHabitCalendar();
 });
-document.getElementById('hbNext').addEventListener('click', () => {
-  habitViewDate = new Date(habitViewDate.getFullYear(), habitViewDate.getMonth() + 1, 1);
-  renderHabitCalendar();
+document.getElementById('hbNext').addEventListener('click', ()=>{
+  habitViewDate = new Date(habitViewDate.getFullYear(), habitViewDate.getMonth()+1, 1); renderHabitCalendar();
 });
 
 function renderHabits(){
   ensureHabitReset();
   habitsList.innerHTML = '';
-  if(!db) return;
+  if (!db) return;
 
   const today = todayKey();
   const total = (db.habits||[]).length;
-
-  let doneCount = 0;
-  if(db.habits) {
-    doneCount = db.habits.filter(h => {
-      const hist = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
-      return hist.includes(today);
-    }).length;
-  }
-
+  const doneCount = (db.habits||[]).filter(h => (db.habitHistory[h.id]||[]).includes(today)).length;
   habitsSub.textContent = total ? `Bugün: ${doneCount}/${total}` : 'Her gün sıfırlanır';
 
   if (!total){
-    const empty = document.createElement('div');
-    empty.className='muted';
-    empty.textContent='Alışkanlık eklemek için +';
-    habitsList.appendChild(empty);
-    return;
+    const e = document.createElement('div');
+    e.className='muted'; e.textContent='Alışkanlık eklemek için +';
+    habitsList.appendChild(e); return;
   }
 
   let dragHabitId = null;
-
   for (const h of db.habits){
     const stats = calculateStreak(h.id);
-    const history = db.habitHistory && db.habitHistory[h.id] ? db.habitHistory[h.id] : [];
-    const isDoneToday = history.includes(today);
+    const isDoneToday = (db.habitHistory[h.id]||[]).includes(today);
 
     const row = document.createElement('div');
-    row.className='habitRow';
-    row.draggable = true;
-    row.dataset.habit = h.id;
-
+    row.className='habitRow'; row.draggable = true; row.dataset.habit = h.id;
     const c = h.color || '#7dd3fc';
     row.style.borderLeft = `4px solid ${c}`;
-    row.style.background = `linear-gradient(90deg, ${c}15 0%, var(--card) 100%)`;
+    row.style.background = `linear-gradient(90deg, ${hexToRgba(c,.08)} 0%, var(--card) 100%)`;
 
     const lab = document.createElement('label');
-
     const cb = document.createElement('input');
-    cb.type='checkbox';
-    cb.checked = isDoneToday;
-
-    cb.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      toggleHabit(h.id, cb.checked);
-    });
+    cb.type='checkbox'; cb.checked = isDoneToday;
+    cb.addEventListener('click', e=>{ e.stopPropagation(); toggleHabit(h.id, cb.checked); });
 
     const name = document.createElement('span');
-    name.className = 'name';
-    name.textContent = h.name;
+    name.className='name'; name.textContent = h.name;
+    name.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); openHabitDetail(h.id); });
 
-    name.addEventListener('click', (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      openHabitDetail(h.id);
-    });
-
-    lab.appendChild(cb);
-    lab.appendChild(name);
-
-    if(stats.current > 0) {
-      const streakBadge = document.createElement('span');
-      streakBadge.className = 'habitStreak';
-      streakBadge.textContent = `🔥 ${stats.current}`;
-      lab.appendChild(streakBadge);
+    lab.appendChild(cb); lab.appendChild(name);
+    if (stats.current > 0){
+      const b = document.createElement('span'); b.className='habitStreak'; b.textContent = `🔥 ${stats.current}`;
+      lab.appendChild(b);
     }
 
     const del = document.createElement('button');
-    del.className='iconBtn';
-    del.type='button';
-    del.textContent='🗑';
-
+    del.className='iconBtn'; del.type='button'; del.textContent='🗑';
     del.addEventListener('click', ()=>{
-      showConfirm(`"${h.name}" silinsin mi?`, () => {
-        db.habits = (db.habits||[]).filter(x=>x.id!==h.id);
+      showConfirm(`"${h.name}" silinsin mi?`, ()=>{
+        db.habits = db.habits.filter(x=>x.id!==h.id);
         ensureHabitReset();
         db.habitState.doneIds = (db.habitState.doneIds||[]).filter(id=>id!==h.id);
-        if(db.habitHistory) delete db.habitHistory[h.id];
-        saveDB(db);
-        renderHabits();
+        delete db.habitHistory[h.id];
+        saveDB(db); renderHabits();
       });
     });
 
-    row.appendChild(lab);
-    row.appendChild(del);
+    row.appendChild(lab); row.appendChild(del);
 
-    row.addEventListener('dragstart', ()=>{
-      dragHabitId = h.id;
-      row.classList.add('dragging');
-    });
-
+    row.addEventListener('dragstart', ()=>{ dragHabitId = h.id; row.classList.add('dragging'); });
     row.addEventListener('dragend', ()=>{
-      dragHabitId = null;
-      row.classList.remove('dragging');
-      [...habitsList.querySelectorAll('.habitRow')].forEach(x=>x.classList.remove('dragOver'));
+      dragHabitId = null; row.classList.remove('dragging');
+      habitsList.querySelectorAll('.habitRow').forEach(x=>x.classList.remove('dragOver'));
     });
-
-    row.addEventListener('dragover', (e)=>{
-      e.preventDefault();
-      row.classList.add('dragOver');
-    });
-
-    row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
-
-    row.addEventListener('drop', (e)=>{
-      e.preventDefault();
-      row.classList.remove('dragOver');
-
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('dragOver'); });
+    row.addEventListener('dragleave', ()=> row.classList.remove('dragOver'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault(); row.classList.remove('dragOver');
       const targetId = row.dataset.habit;
-      if (!dragHabitId || !targetId || dragHabitId === targetId) return;
-
+      if (!dragHabitId || dragHabitId === targetId) return;
       const ids = db.habits.map(x=>x.id);
-      const from = ids.indexOf(dragHabitId);
-      const to = ids.indexOf(targetId);
-      if (from < 0 || to < 0) return;
-
+      const from = ids.indexOf(dragHabitId), to = ids.indexOf(targetId);
+      if (from<0 || to<0) return;
       const moved = db.habits.splice(from,1)[0];
       db.habits.splice(to,0,moved);
-      saveDB(db);
-      renderHabits();
+      saveDB(db); renderHabits();
     });
 
     habitsList.appendChild(row);
   }
 }
 
-// ----------------------------------------------------------------------
-// Panel
-// ----------------------------------------------------------------------
+/* ====================================================================
+   Alt panel
+==================================================================== */
 function renderPanel(){
   const k = dayKey(selected);
   panelTitle.textContent = fmtDay(selected);
-  const items = (db && db.days[k]||[]).map(fixItem).filter(passesFilters).sort(itemSort);
+  const items = ((db && db.days[k]) || []).filter(passesFilters).sort(itemSort);
 
   taskList.innerHTML = '';
   if (!items.length){
-    const empty = document.createElement('div');
-    empty.className='muted'; empty.style.padding='10px 2px';
-    empty.textContent='Bu gün için (filtreye göre) kart yok.';
-    taskList.appendChild(empty);
-    return;
+    const e = document.createElement('div');
+    e.className='muted'; e.style.padding='10px 2px';
+    e.textContent = 'Bu gün için (filtreye göre) kart yok.';
+    taskList.appendChild(e); return;
   }
-  for (const it of items){
-    taskList.appendChild(makeCard(it, { from:'day', dayKey:k }));
-  }
+  for (const it of items) taskList.appendChild(makeCard(it, { from:'day', dayKey:k }));
 }
 
-// ----------------------------------------------------------------------
-// Month cell height: ekrana sığdırma (kritik)
-// ----------------------------------------------------------------------
-function adjustMonthCellHeight(totalCells){
-  if (mode !== 'month') return;
-
-  const rows = Math.ceil(totalCells / 7); // 5 veya 6
-  const cal = document.getElementById('calendarArea');
-  if (!cal) return;
-
-  const calH = cal.clientHeight || 0;
-  const dowH = 24;
-  const gridGap = 10; // CSS .grid gap:10px
-  const totalGaps = (rows - 1) * gridGap;
-
-  const cellH = Math.floor((calH - dowH - totalGaps) / rows);
-  const clamped = Math.max(78, cellH); // çok küçülmesin
-
-  document.documentElement.style.setProperty('--monthCellH', clamped + 'px');
-}
-
-// ----------------------------------------------------------------------
-// Layout docking (inbox week bottom slot)
-// ----------------------------------------------------------------------
-function dockInboxForMode(){
-  const side = document.querySelector('.side');
-  if (mode === 'week'){
-    document.body.classList.add('weekMode');
-    document.body.classList.remove('monthMode');
-    const inboxOpt = whereInput.querySelector('option[value="inbox"]');
-    if (inboxOpt) inboxOpt.disabled = false;
-    if (bottomInboxSlot && inbox.parentElement !== bottomInboxSlot){
-      bottomInboxSlot.appendChild(inbox);
-    }
-  } else {
-    document.body.classList.remove('weekMode');
-    document.body.classList.add('monthMode');
-    whereInput.value = 'selected';
-    const inboxOpt = whereInput.querySelector('option[value="inbox"]');
-    if (inboxOpt) inboxOpt.disabled = true;
-    if (inbox.parentElement !== side){
-      side.insertBefore(inbox, side.firstChild);
-    }
-  }
-}
-
-// ----------------------------------------------------------------------
-// Tag manager
-// ----------------------------------------------------------------------
+/* ====================================================================
+   Tag manager
+==================================================================== */
 function renderTagManager(){
   tagManager.innerHTML = '';
   const addRow = document.createElement('div');
-  addRow.className = 'tagItem';
+  addRow.className='tagItem';
   addRow.innerHTML = `
     <input id="newTagText" type="text" placeholder="Yeni tag (örn: kompozit)" />
     <input id="newTagColor" type="color" value="#7dd3fc" />
-    <button id="newTagBtn" class="btn" type="button">Ekle</button>
-  `;
+    <button id="newTagBtn" class="btn" type="button">Ekle</button>`;
   tagManager.appendChild(addRow);
 
   const newTagText = addRow.querySelector('#newTagText');
   const newTagColor = addRow.querySelector('#newTagColor');
-
   addRow.querySelector('#newTagBtn').addEventListener('click', ()=>{
     const name = normalizeTagName(newTagText.value);
-    if (!name) return;
-    if (db.tags.some(x=>x.name===name)) return;
+    if (!name || db.tags.some(x=>x.name===name)) return;
     const maxOrder = Math.max(0, ...db.tags.map(x=>x.order||0));
-    db.tags.push({ name, color: newTagColor.value || '#7dd3fc', order: maxOrder+1 });
-    saveDB(db);
-    rebuildTagDropdowns();
-    render();
-    renderTagManager();
+    db.tags.push({ name, color: newTagColor.value||'#7dd3fc', order: maxOrder+1 });
+    saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
   });
 
   const hint = document.createElement('div');
-  hint.className='muted'; hint.textContent='Tag sıralamasını sürükleyip bırakarak değiştir.';
+  hint.className='muted'; hint.textContent='Sıralamayı sürükle-bırak ile değiştir.';
   tagManager.appendChild(hint);
 
-  if(!db) return;
+  if (!db) return;
   db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
   let dragTagName = null;
 
@@ -1745,108 +2014,137 @@ function renderTagManager(){
     const row = document.createElement('div');
     row.className='tagItem'; row.draggable = true; row.dataset.tag = t.name;
 
-    const nameBox = document.createElement('div');
-    nameBox.className='tagName';
-    const d = document.createElement('span'); d.className='dot'; d.style.background=t.color || '#999';
-    const s = document.createElement('span'); s.textContent=t.name;
+    const nameBox = document.createElement('div'); nameBox.className='tagName';
+    const d = document.createElement('span'); d.className='dot'; d.style.background = t.color||'#999';
+    const s = document.createElement('span'); s.textContent = t.name;
     nameBox.appendChild(d); nameBox.appendChild(s);
 
     const color = document.createElement('input');
-    color.type='color'; color.value = t.color || '#7dd3fc';
-    color.addEventListener('input', ()=>{
-      t.color = color.value;
-      saveDB(db);
-      render();
-    });
+    color.type='color'; color.value = t.color||'#7dd3fc';
+    color.addEventListener('input', ()=>{ t.color = color.value; saveDB(db); render(); });
 
     const del = document.createElement('button');
     del.className='iconBtn'; del.type='button'; del.textContent='🗑';
-
     del.addEventListener('click', ()=>{
-      showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, () => {
+      showConfirm(`"${t.name}" silinsin mi? (kartlardan tag kalkar)`, ()=>{
         db.tags = db.tags.filter(x=>x.name!==t.name);
-        for (const k of Object.keys(db.days)){
-          db.days[k].forEach(it=>{ if (it.tag===t.name) it.tag=''; });
-        }
+        for (const k of Object.keys(db.days)) db.days[k].forEach(it=>{ if (it.tag===t.name) it.tag=''; });
         (db.inbox||[]).forEach(it=>{ if (it.tag===t.name) it.tag=''; });
-        saveDB(db);
-        rebuildTagDropdowns();
-        render();
-        renderTagManager();
+        saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
       });
     });
 
     row.appendChild(nameBox); row.appendChild(color); row.appendChild(del);
 
     row.addEventListener('dragstart', ()=>{ dragTagName = t.name; });
-    row.addEventListener('dragover', (e)=>{ e.preventDefault(); row.classList.add('dragOver'); });
-    row.addEventListener('dragleave', ()=>row.classList.remove('dragOver'));
-    row.addEventListener('drop', (e)=>{
-      e.preventDefault();
-      row.classList.remove('dragOver');
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('dragOver'); });
+    row.addEventListener('dragleave', ()=> row.classList.remove('dragOver'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault(); row.classList.remove('dragOver');
       const targetName = row.dataset.tag;
-      if (!dragTagName || !targetName || dragTagName === targetName) return;
-      const names = db.tags.slice().sort((a,b)=>(a.order??9999)-(b.order??9999)).map(x=>x.name);
-      const from = names.indexOf(dragTagName);
-      const to = names.indexOf(targetName);
+      if (!dragTagName || dragTagName === targetName) return;
+      const names = db.tags.map(x=>x.name);
+      const from = names.indexOf(dragTagName), to = names.indexOf(targetName);
       if (from<0 || to<0) return;
-      names.splice(from,1);
-      names.splice(to,0,dragTagName);
-      names.forEach((name, idx)=>{
-        const m = db.tags.find(x=>x.name===name);
-        if (m) m.order = idx+1;
-      });
-      saveDB(db);
-      rebuildTagDropdowns();
-      render();
-      renderTagManager();
+      names.splice(from,1); names.splice(to,0,dragTagName);
+      names.forEach((n,i)=>{ const m = db.tags.find(x=>x.name===n); if (m) m.order = i+1; });
+      saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
     });
 
     tagManager.appendChild(row);
   }
 }
+tagSettingsBtn.addEventListener('click', ()=>{
+  modalTitle.textContent = 'Tag Ayarları';
+  showSection('tags');
+  renderTagManager();
+});
 
-// ----------------------------------------------------------------------
-// Render
-// ----------------------------------------------------------------------
-function render(){
-  if(!db) return;
+/* ====================================================================
+   Layout
+==================================================================== */
+function dockForMode(){
+  const side = document.querySelector('.side');
+  document.body.classList.toggle('weekMode',  mode==='week');
+  document.body.classList.toggle('monthMode', mode==='month');
+  document.body.classList.toggle('planMode',  mode==='plan');
 
-  for (const k of Object.keys(db.days||{})){
-    db.days[k] = (db.days[k]||[]).map(fixItem);
+  const inboxOpt = whereInput.querySelector('option[value="inbox"]');
+  schedToggleWrap.style.display = (mode==='plan') ? 'flex' : 'none';
+
+  if (mode === 'week'){
+    if (inboxOpt) inboxOpt.disabled = false;
+    if (bottomInboxSlot && inbox.parentElement !== bottomInboxSlot) bottomInboxSlot.appendChild(inbox);
+  } else {
+    if (mode === 'month'){ whereInput.value='selected'; if (inboxOpt) inboxOpt.disabled = true; }
+    else if (inboxOpt) inboxOpt.disabled = false;
+    if (inbox.parentElement !== side) side.insertBefore(inbox, side.firstChild);
   }
+}
+
+function adjustMonthCellHeight(totalCells){
+  if (mode !== 'month') return;
+  const rows = Math.ceil(totalCells/7);
+  const calH = calendarArea.clientHeight || 0;
+  const cellH = Math.floor((calH - 24 - (rows-1)*10) / rows);
+  document.documentElement.style.setProperty('--monthCellH', Math.max(78, cellH)+'px');
+}
+
+function renderDOW(){
+  dowRow.innerHTML = '';
+  dowRow.className = 'grid ' + (mode==='month' ? 'month' : 'week');
+  for (const n of DOW){
+    const el = document.createElement('div'); el.className='dow'; el.textContent = n;
+    dowRow.appendChild(el);
+  }
+}
+
+/* ====================================================================
+   RENDER
+==================================================================== */
+function render(){
+  if (!db) return;
+
+  for (const k of Object.keys(db.days||{})) db.days[k] = (db.days[k]||[]).map(fixItem);
   db.inbox = (db.inbox||[]).map(fixItem);
 
   rebuildTagDropdowns();
+  dockForMode();
+
+  /* --- PLAN --- */
+  if (mode === 'plan'){
+    dowRow.style.display = 'none';
+    grid.style.display = 'none';
+    renderPlan();
+    renderInbox(); renderHabits(); renderPanel();
+    return;
+  }
+  planWrap.innerHTML = '';
+  dowRow.style.display = '';
+  grid.style.display = '';
   renderDOW();
-  dockInboxForMode();
 
   grid.className = 'grid ' + (mode==='month' ? 'month' : 'week');
   grid.innerHTML = '';
 
-  let cells = [];
+  const cells = [];
   if (mode === 'week'){
     const start = startOfWeek(anchor);
-    const end = addDays(start, 6);
-    rangeTitle.textContent = fmtRange(start, end);
+    rangeTitle.textContent = `${fmtRange(start, addDays(start,6))} · KW ${isoWeek(start)}`;
     for (let i=0;i<7;i++) cells.push({ date: addDays(start,i), out:false });
   } else {
-    const first = startOfMonth(anchor);
-    const last = endOfMonth(anchor);
-    const start = startOfWeek(first);
-    const end = addDays(startOfWeek(last), 6);
-    rangeTitle.textContent = anchor.toLocaleDateString('tr-TR', { month:'long', year:'numeric' });
-    const totalDays = Math.round((end - start) / (24*3600*1000)) + 1;
-    for (let i=0;i<totalDays;i++){
+    const first = startOfMonth(anchor), last = endOfMonth(anchor);
+    const start = startOfWeek(first), end = addDays(startOfWeek(last), 6);
+    rangeTitle.textContent = anchor.toLocaleDateString('tr-TR',{ month:'long', year:'numeric' });
+    const total = Math.round((end-start)/86400000) + 1;
+    for (let i=0;i<total;i++){
       const d = addDays(start,i);
       cells.push({ date:d, out: d.getMonth() !== anchor.getMonth() });
     }
   }
-
-  // ✅ Ay görünümünü ekrana sığdır
   if (mode === 'month') adjustMonthCellHeight(cells.length);
 
-  const selKey = dayKey(selected);
+  const selKey = dayKey(selected), todayK = todayKey();
 
   for (const c of cells){
     const k = dayKey(c.date);
@@ -1854,234 +2152,162 @@ function render(){
     const openCount = items.filter(x=>!x.done).length;
 
     const cell = document.createElement('div');
-    cell.className =
-      'cell ' + (mode==='month' ? 'monthCell' : 'weekCell') +
-      (c.out ? ' out' : '') +
-      (k===selKey ? ' sel' : '');
+    cell.className = 'cell ' + (mode==='month'?'monthCell':'weekCell') +
+      (c.out ? ' out':'') + (k===selKey ? ' sel':'');
     cell.dataset.key = k;
 
-    const top = document.createElement('div');
-    top.className='dateRow';
-
-    const left = document.createElement('div');
-    left.className='dateLeft';
+    const top = document.createElement('div'); top.className='dateRow';
+    const left = document.createElement('div'); left.className='dateLeft';
     const dateEl = document.createElement('div');
     dateEl.className='date'; dateEl.textContent = String(c.date.getDate()).padStart(2,'0');
+    if (k === todayK) dateEl.style.color = 'var(--accent)';
+
     const plus = document.createElement('button');
     plus.className='plusBtn'; plus.type='button'; plus.textContent='+';
-    plus.addEventListener('click', (e)=>{ e.stopPropagation(); openModalAdd({ dest:'day', dayKey:k }); });
+    plus.addEventListener('click', e=>{ e.stopPropagation(); openModalAdd({ dest:'day', dayKey:k }); });
 
     left.appendChild(dateEl); left.appendChild(plus);
-
     const count = document.createElement('div');
-    count.className='count'; count.textContent = openCount ? `${openCount}` : '';
-
+    count.className='count'; count.textContent = openCount ? String(openCount) : '';
     top.appendChild(left); top.appendChild(count);
 
-    const cards = document.createElement('div');
-    cards.className='cards';
-    for (const it of items){
-      cards.appendChild(makeCard(it, { from:'day', dayKey:k }));
-    }
+    const cards = document.createElement('div'); cards.className='cards';
+    for (const it of items) cards.appendChild(makeCard(it, { from:'day', dayKey:k }));
 
     cell.appendChild(top); cell.appendChild(cards);
 
     cell.addEventListener('click', ()=>{
       selected = c.date;
-      if (mode==='month' && c.out){
-        anchor = new Date(c.date.getFullYear(), c.date.getMonth(), 1);
-      }
+      if (mode==='month' && c.out) anchor = new Date(c.date.getFullYear(), c.date.getMonth(), 1);
       render();
     });
-
-    cell.addEventListener('dragover', (e)=>{ e.preventDefault(); cell.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
-    cell.addEventListener('dragleave', ()=>cell.classList.remove('dragOver'));
-    cell.addEventListener('drop', (e)=>{
-      e.preventDefault();
-      cell.classList.remove('dragOver');
-      let payload = dragPayload;
-      try {
-        const txt = e.dataTransfer.getData('text/plain');
-        if (txt) payload = JSON.parse(txt);
-      } catch {}
-      if (!payload?.itemId) return;
-
-      const toKey = k;
-      if (payload.from === 'inbox'){
-        const idx = (db.inbox||[]).findIndex(x=>x.id===payload.itemId);
-        if (idx === -1) return;
-        const [moved] = db.inbox.splice(idx,1);
-        db.days[toKey] = db.days[toKey] || [];
-        db.days[toKey].push(moved);
-      } else if (payload.from === 'day'){
-        const fromKey = payload.dayKey;
-        if (!fromKey || fromKey===toKey) return;
-        const fromArr = db.days[fromKey] || [];
-        const idx = fromArr.findIndex(x=>x.id===payload.itemId);
-        if (idx === -1) return;
-        const [moved] = fromArr.splice(idx,1);
-        if (!fromArr.length) delete db.days[fromKey];
-        db.days[toKey] = db.days[toKey] || [];
-        db.days[toKey].push(moved);
-      }
-      saveDB(db);
-      dragPayload = null;
-      selected = c.date;
-      render();
+    cell.addEventListener('dragover', e=>{ e.preventDefault(); cell.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+    cell.addEventListener('dragleave', ()=> cell.classList.remove('dragOver'));
+    cell.addEventListener('drop', e=>{
+      e.preventDefault(); cell.classList.remove('dragOver');
+      const p = readPayload(e); if (!p?.itemId) return;
+      if (p.from==='day' && p.dayKey===k) return;
+      if (!moveItem(p, k)) return;
+      saveDB(db); dragPayload = null; selected = c.date; render();
     });
 
     grid.appendChild(cell);
   }
 
-  renderInbox();
-  renderHabits();
-  renderPanel();
+  renderInbox(); renderHabits(); renderPanel();
 }
 
-// ----------------------------------------------------------------------
-// Controls
-// ----------------------------------------------------------------------
+/* ====================================================================
+   Controls
+==================================================================== */
 document.getElementById('prev').addEventListener('click', ()=>{
-  anchor = (mode==='week') ? addDays(anchor, -7) : new Date(anchor.getFullYear(), anchor.getMonth()-1, 1);
+  anchor = (mode==='month')
+    ? new Date(anchor.getFullYear(), anchor.getMonth()-1, 1)
+    : addDays(anchor, -7);
   render();
 });
 document.getElementById('next').addEventListener('click', ()=>{
-  anchor = (mode==='week') ? addDays(anchor, 7) : new Date(anchor.getFullYear(), anchor.getMonth()+1, 1);
+  anchor = (mode==='month')
+    ? new Date(anchor.getFullYear(), anchor.getMonth()+1, 1)
+    : addDays(anchor, 7);
   render();
 });
 document.getElementById('today').addEventListener('click', ()=>{
-  anchor = new Date();
-  selected = new Date();
-  render();
+  anchor = new Date(); selected = new Date(); render();
 });
 
-btnWeek.addEventListener('click', ()=>{
-  mode='week';
-  btnWeek.classList.add('active'); btnMonth.classList.remove('active');
-  anchor = new Date(selected);
+function setMode(m){
+  mode = m;
+  btnWeek.classList.toggle('active', m==='week');
+  btnPlan.classList.toggle('active', m==='plan');
+  btnMonth.classList.toggle('active', m==='month');
+  anchor = (m==='month')
+    ? new Date(selected.getFullYear(), selected.getMonth(), 1)
+    : new Date(selected);
   typeFilter.value = '__preset__';
-  typeInput.value = 'gorev';
+  typeInput.value = (m==='month') ? 'termin' : 'gorev';
   render();
-});
-btnMonth.addEventListener('click', ()=>{
-  mode='month';
-  btnMonth.classList.add('active'); btnWeek.classList.remove('active');
-  anchor = new Date(selected.getFullYear(), selected.getMonth(), 1);
-  typeFilter.value = '__preset__';
-  typeInput.value = 'termin';
-  render();
-});
+}
+btnWeek.addEventListener('click', ()=> setMode('week'));
+btnPlan.addEventListener('click', ()=> setMode('plan'));
+btnMonth.addEventListener('click', ()=> setMode('month'));
 
 tagFilter.addEventListener('change', render);
 typeFilter.addEventListener('change', render);
 search.addEventListener('input', render);
+schedToggle.addEventListener('change', render);
 
-taskInput.addEventListener('keydown', (e)=>{
-  if (e.key === 'Enter'){
-    e.preventDefault();
-    addSubmit.click();
-  }
+taskInput.addEventListener('keydown', e=>{
+  if (e.key === 'Enter'){ e.preventDefault(); addSubmit.click(); }
 });
 
-addForm.addEventListener('submit', (e)=>{
+addForm.addEventListener('submit', e=>{
   e.preventDefault();
   const text = (taskInput.value||'').trim();
   if (!text) return;
-
   const item = {
-    text,
-    notes: '',
-    time: timeInput.value || '',
+    text, notes:'', time: timeInput.value||'', dur:60,
     type: typeInput.value,
     tag: (tagInput.value==='__none__' ? '' : tagInput.value),
-    done:false,
-    created: Date.now()
+    done:false, created: Date.now()
   };
-
-  if (whereInput.value === 'inbox'){
-    addItemTo('inbox', null, item);
-  } else {
-    addItemTo('day', dayKey(selected), item);
-  }
+  if (whereInput.value === 'inbox') addItemTo('inbox', null, item);
+  else addItemTo('day', dayKey(selected), item);
 
   taskInput.value=''; timeInput.value=''; tagInput.value='__none__';
-  render();
-  taskInput.focus();
+  render(); taskInput.focus();
 });
 
 clearDone.addEventListener('click', ()=>{
   const k = dayKey(selected);
-  const items = db.days[k] || [];
-  const kept = items.filter(t=>!t.done);
+  const kept = (db.days[k]||[]).filter(t=>!t.done);
   if (kept.length) db.days[k]=kept; else delete db.days[k];
-  saveDB(db);
-  render();
+  saveDB(db); render();
 });
-
 clearInboxDone.addEventListener('click', ()=>{
   db.inbox = (db.inbox||[]).filter(t=>!t.done);
-  saveDB(db);
-  render();
+  saveDB(db); render();
 });
+inboxAdd.addEventListener('click', ()=> openModalAdd({ dest:'inbox', dayKey:null }));
 
-inboxAdd.addEventListener('click', ()=>openModalAdd({ dest:'inbox', dayKey:null }));
-
-inbox.addEventListener('dragover', (e)=>{ e.preventDefault(); inbox.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
-inbox.addEventListener('dragleave', ()=>inbox.classList.remove('dragOver'));
-inbox.addEventListener('drop', (e)=>{
-  e.preventDefault();
-  inbox.classList.remove('dragOver');
-  let payload = dragPayload;
-  try {
-    const txt = e.dataTransfer.getData('text/plain');
-    if (txt) payload = JSON.parse(txt);
-  } catch {}
-  if (!payload?.itemId) return;
-
-  if (payload.from === 'day'){
-    const fromKey = payload.dayKey;
-    const fromArr = db.days[fromKey] || [];
-    const idx = fromArr.findIndex(x=>x.id===payload.itemId);
-    if (idx === -1) return;
-    const [moved] = fromArr.splice(idx,1);
-    if (!fromArr.length) delete db.days[fromKey];
-    db.inbox = db.inbox || [];
-    db.inbox.push(moved);
-    saveDB(db);
-    dragPayload = null;
-    render();
-  }
+inbox.addEventListener('dragover', e=>{ e.preventDefault(); inbox.classList.add('dragOver'); e.dataTransfer.dropEffect='move'; });
+inbox.addEventListener('dragleave', ()=> inbox.classList.remove('dragOver'));
+inbox.addEventListener('drop', e=>{
+  e.preventDefault(); inbox.classList.remove('dragOver');
+  const p = readPayload(e);
+  if (!p?.itemId || p.from !== 'day') return;
+  const arr = db.days[p.dayKey] || [];
+  const i = arr.findIndex(x=>x.id===p.itemId);
+  if (i < 0) return;
+  const [moved] = arr.splice(i,1);
+  if (!arr.length) delete db.days[p.dayKey];
+  db.inbox = db.inbox||[]; db.inbox.push(moved);
+  saveDB(db); dragPayload = null; render();
 });
 
 habitAddBtn.addEventListener('click', ()=>{
   const name = prompt('Yeni alışkanlık:');
-  if (!name) return;
+  if (!name || !name.trim()) return;
   db.habits = db.habits || [];
-db.habits.push({
-  id: crypto.randomUUID(),
-  name: name.trim(),
-  color: '#7dd3fc'
+  db.habits.push({ id: uid(), name: name.trim(), color:'#7dd3fc' });
+  saveDB(db); renderHabits();
 });
-  saveDB(db);
-  renderHabits();
-});
-
 habitResetBtn.addEventListener('click', ()=>{
-  db.habitState = { date: todayKey(), doneIds: [] };
-  saveDB(db);
-  renderHabits();
+  db.habitState = { date: todayKey(), doneIds:[] };
+  saveDB(db); renderHabits();
 });
 
-// Defaults
-typeFilter.value='__preset__';
+typeFilter.value = '__preset__';
 typeInput.value = 'gorev';
 
-initApp();
-
+let resizeT = null;
 window.addEventListener('resize', ()=>{
-  if (mode === 'month') render();
+  if (mode !== 'month') return;
+  clearTimeout(resizeT);
+  resizeT = setTimeout(render, 120);
 });
 
-  </script> 
+initApp();
+</script>
 </body>
 </html>
