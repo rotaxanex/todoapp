@@ -30,15 +30,16 @@ h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
 
 .btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; font-size:13px; }
 .btn:hover{ border-color:#3a3a44; }
-.btn:active{ transform: translateY(1px); }
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.4; cursor:default; }
 .btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
 .btn.primary{ background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
-.btn.sm{ padding:5px 8px; font-size:11px; border-radius:10px; }
-.btn:disabled{ opacity:.4; cursor:default; }
+.btn.sm{ padding:5px 9px; font-size:11.5px; border-radius:10px; }
 
 .seg{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 .seg button{ border:0; background:transparent; color:var(--muted); padding:8px 12px; cursor:pointer; font-size:13px; }
 .seg button.active{ color:var(--text); background:#1f1f24; }
+.seg.sm button{ padding:5px 10px; font-size:11.5px; }
 
 .bar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin:10px 0 12px; flex-wrap:wrap; }
 .nav{ display:flex; gap:8px; align-items:center; }
@@ -52,7 +53,7 @@ input[type="email"], input[type="password"]{
 }
 textarea{ background:#101014; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px; outline:none; font-size:13px; resize:vertical; min-height:80px; }
 select:focus, input:focus, textarea:focus{ border-color:#3a3a44; }
-input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px solid var(--line); background:transparent; padding:0; cursor:pointer; }
+input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px solid var(--line); background:transparent; padding:0; }
 
 .main{ display:grid; grid-template-columns: 1fr 240px; gap:12px; align-items:start; }
 .main > div:first-child{ display:flex; flex-direction:column; min-height:0; }
@@ -105,71 +106,6 @@ body.monthMode .checkBtn{ width:14px; height:14px; border-radius:5px; font-size:
 body.monthMode .titleText{ font-size:10.5px; }
 body.monthMode .timeText{ font-size:9px; background:rgba(0,0,0,.30); padding:1px 4px; border-radius:4px; color:#fff; opacity:1; }
 
-/* ==================== RUTİN TABLOSU (overlay) ==================== */
-.tblOverlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(2px);
-  display:none; align-items:center; justify-content:center; padding:16px; z-index:80;
-}
-.tblOverlay.open{ display:flex; }
-.tblPanel{
-  width:min(1280px,100%); height:min(94vh,100%);
-  background:var(--bg); border:1px solid var(--line); border-radius:20px;
-  box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
-}
-.tblTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-.tblTop h2{ margin:0; font-size:15px; }
-.tblWeekNav{ display:flex; align-items:center; gap:6px; }
-.tblWeekLbl{ font-size:12px; color:var(--muted); min-width:190px; text-align:center; }
-
-.tblTools{ display:flex; align-items:center; gap:6px; padding:10px 14px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-.toolSep{ width:1px; height:22px; background:var(--line); margin:0 2px; }
-.swatchRow{ display:flex; gap:4px; align-items:center; }
-.swatchBtn{ width:20px; height:20px; border-radius:6px; border:1px solid rgba(255,255,255,.15); cursor:pointer; padding:0; }
-.swatchBtn:hover{ transform:scale(1.1); }
-
-.tblBody{ flex:1 1 auto; overflow:auto; padding:12px 14px 16px; }
-.tblHint{ font-size:11px; color:var(--muted); padding:0 14px 10px; line-height:1.5; }
-
-.raster{
-  display:grid; gap:1px; background:var(--line);
-  border:1px solid var(--line); border-radius:12px; overflow:hidden;
-  min-width:700px; user-select:none;
-}
-.rHeadCorner{ background:#121216; }
-.rHead{ background:#121216; padding:6px 4px; text-align:center; cursor:pointer; border-top:3px solid transparent; }
-.rHead:hover{ background:#1a1a20; }
-.rHead .hName{ font-size:12px; font-weight:650; }
-.rHead .hDate{ font-size:10px; color:var(--muted); }
-.rHead .hTheme{ font-size:9.5px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rHead.today .hName{ color:var(--accent); }
-.rHour{ background:#121216; display:grid; place-items:center; font-size:10px; color:var(--muted); padding:0 4px; }
-
-.rCell{
-  background:var(--card); position:relative; cursor:cell;
-  display:flex; align-items:center; justify-content:center;
-  padding:3px 6px; min-height:42px; overflow:hidden;
-}
-.rCell .cName{ font-size:11.5px; line-height:1.2; text-align:center; overflow:hidden; text-overflow:ellipsis;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; max-width:100%; }
-.rCell.ghost .cName{ opacity:.6; }
-.rCell.ghost{ background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 6px, transparent 6px 12px); }
-.rCell.sel{ outline:2px solid var(--accent); outline-offset:-2px; z-index:2; }
-.rCell.done .cName{ opacity:.45; text-decoration:line-through; }
-.rCell .tickBtn{
-  position:absolute; top:2px; right:3px; width:15px; height:15px; border-radius:5px;
-  border:1px solid rgba(255,255,255,.2); background:rgba(0,0,0,.25); color:#34d399;
-  font-size:9px; line-height:1; display:none; place-items:center; cursor:pointer; padding:0; z-index:3;
-}
-.rCell:hover .tickBtn, .rCell.done .tickBtn{ display:grid; }
-.rCell.done .tickBtn{ background:rgba(52,211,153,.25); border-color:rgba(52,211,153,.4); }
-.rCell .habitDot{ position:absolute; top:4px; left:4px; width:5px; height:5px; border-radius:999px; background:var(--accent); opacity:.85; }
-.rCell.nowRow{ box-shadow: inset 0 0 0 1px rgba(251,113,133,.45); }
-.rCell input.cellEdit{
-  position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:0;
-  background:#0b0b0e; color:var(--text); font-size:11.5px; text-align:center; padding:2px 4px; z-index:5;
-}
-
-/* Side */
 .side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
 .panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
 .panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -199,6 +135,65 @@ body.monthMode #addForm input, body.monthMode #addForm select, body.monthMode #a
 body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; background:var(--accent); color:#000; border:none; }
 .list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
 
+/* ==================== RUTİN TABLOSU (overlay) ==================== */
+.rtOverlay{
+  position:fixed; inset:0; background:rgba(6,6,8,.72); backdrop-filter:blur(3px);
+  z-index:80; display:none; align-items:center; justify-content:center; padding:14px;
+}
+.rtOverlay.open{ display:flex; }
+.rtPanel{
+  width:min(1280px,100%); max-height:100%; display:flex; flex-direction:column;
+  background:var(--bg); border:1px solid var(--line); border-radius:18px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.rtTop{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line); }
+.rtTop h3{ margin:0; font-size:15px; font-weight:650; }
+.rtWeekLbl{ font-size:12px; color:var(--muted); min-width:170px; }
+
+.rtTools{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:9px 14px; border-bottom:1px solid var(--line); background:#121216; }
+.rtSep{ width:1px; height:22px; background:var(--line); }
+.swatches{ display:flex; gap:4px; align-items:center; }
+.sw{ width:20px; height:20px; border-radius:6px; border:1px solid rgba(255,255,255,.14); cursor:pointer; }
+.sw:hover{ transform:scale(1.12); }
+.sw.none{ background:
+  linear-gradient(45deg, transparent 45%, #fb7185 45%, #fb7185 55%, transparent 55%), #101014; }
+.rtHint{ font-size:11px; color:var(--muted); padding:8px 14px 12px; line-height:1.6; }
+
+.rtScroll{ overflow:auto; padding:12px 14px; flex:1 1 auto; }
+.rtGrid{
+  display:grid; gap:1px; background:var(--line);
+  border:1px solid var(--line); border-radius:10px; overflow:hidden;
+  min-width:680px; user-select:none; outline:none;
+}
+.rtCorner, .rtHead, .rtHour{ background:#121216; }
+.rtHead{ padding:7px 4px; text-align:center; cursor:pointer; border-top:3px solid transparent; }
+.rtHead:hover{ background:#1a1a20; }
+.rtHead .hName{ font-size:12px; font-weight:650; }
+.rtHead .hDate{ font-size:10px; color:var(--muted); }
+.rtHead .hTheme{ font-size:9.5px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rtHead.today .hName{ color:var(--accent); }
+.rtHour{ display:grid; place-items:center; font-size:10px; color:var(--muted); padding:0 5px; }
+
+.rtCell{
+  background:var(--card); position:relative; cursor:cell; overflow:hidden;
+  display:flex; align-items:center; justify-content:center; padding:3px 5px; min-height:38px;
+}
+.rtCell .txt{ font-size:11.5px; line-height:1.2; text-align:center; width:100%;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+.rtCell.ghost .txt{ opacity:.55; }
+.rtCell.ghost{ background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 12px); }
+.rtCell.selected{ box-shadow: inset 0 0 0 2px rgba(125,211,252,.55); }
+.rtCell.anchorCell{ box-shadow: inset 0 0 0 2px var(--accent); }
+.rtCell.done .txt{ opacity:.45; text-decoration:line-through; }
+.rtCell .tick{ position:absolute; top:2px; right:4px; font-size:9px; color:#34d399; }
+.rtCell .hlink{ position:absolute; top:3px; left:4px; width:5px; height:5px; border-radius:999px; background:var(--accent); opacity:.85; }
+.rtCell.nowRow{ outline:1px solid rgba(251,113,133,.45); outline-offset:-1px; }
+.rtCell input.editor{
+  position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:0;
+  background:#0b0b0e; color:var(--text); font-size:11.5px; text-align:center; padding:2px 4px;
+}
+
+/* Modal */
 .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:90; }
 .modal{ width:min(720px,100%); background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); max-height:86vh; overflow:auto; }
 .modalTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -207,13 +202,13 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
 .modalGrid .full{ grid-column:1 / -1; }
 .modalActions{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
 .fieldLbl{ font-size:10px; color:var(--muted); display:block; margin-bottom:3px; }
+.formRow{ display:grid; grid-template-columns: 1fr 44px auto; gap:8px; align-items:end; margin-top:10px; }
 
 .rowList{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
 .rowItem{ display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; border:1px solid var(--line); background:#121216; padding:8px 10px; border-radius:14px; }
 .rowItem.dragOver{ outline:2px dashed rgba(125,211,252,.35); }
 .iconBtn{ width:36px; height:32px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; }
 .iconBtn:hover{ border-color:#3a3a44; color:var(--text); }
-.formRow{ display:grid; grid-template-columns: 1fr 44px auto; gap:8px; align-items:end; margin-top:10px; }
 .tagName{ display:flex; align-items:center; gap:10px; min-width:0; }
 .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; }
 
@@ -243,6 +238,12 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
 .hDay.done{ background:rgba(52,211,153,.2); color:#34d399; border:1px solid rgba(52,211,153,.3); font-weight:bold; }
 .hDay.today{ border-color:var(--accent); color:var(--text); font-weight:bold; }
 
+#ctxMenu{ position:fixed; z-index:120; display:none; min-width:220px; max-height:70vh; overflow:auto; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:6px; flex-direction:column; gap:2px; }
+#ctxMenu button{ background:transparent; border:0; color:var(--text); text-align:left; padding:8px 10px; border-radius:10px; cursor:pointer; font-size:13px; }
+#ctxMenu button:hover{ background:#1f1f24; }
+#ctxMenu button.danger{ color:#fb7185; }
+#ctxMenu .ctxHead{ font-size:11px; color:var(--muted); padding:6px 10px 8px; border-bottom:1px solid var(--line); margin-bottom:4px; }
+
 #authOverlay{ position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; padding:20px; }
 .authBox{ width:100%; max-width:360px; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:24px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px; }
 .authBox h2{ text-align:center; margin-bottom:8px; font-size:20px; }
@@ -253,11 +254,16 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   .side{ position:static; }
   body.weekMode .bottomGrid{ grid-template-columns:1fr; }
   .modalGrid{ grid-template-columns:1fr 1fr; }
-  .tblPanel{ height:100%; border-radius:14px; }
+  .rtOverlay{ padding:0; }
+  .rtPanel{ border-radius:0; height:100%; }
 }
   </style>
 </head>
 <body>
+
+<div id="errBar" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999;
+  background:#7f1d1d; color:#fff; font:12px/1.5 ui-monospace,monospace; padding:10px 14px;
+  white-space:pre-wrap; max-height:40vh; overflow:auto;"></div>
 
 <div id="authOverlay">
   <div class="authBox">
@@ -268,6 +274,7 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
     <div class="authError" id="authError"></div>
     <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
     <button id="btnSignup" class="btn" type="button">Kayıt Ol</button>
+    <button id="btnOffline" class="btn" type="button" style="font-size:12px; color:var(--muted);">Çevrimdışı devam et</button>
   </div>
 </div>
 
@@ -279,12 +286,12 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
         <button id="btnWeek" class="active" type="button">Hafta</button>
         <button id="btnMonth" type="button">Ay</button>
       </div>
-      <button id="btnTable" class="btn" type="button">▦ Rutin tablosu</button>
     </div>
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
       <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
-      <button id="btnLogout" class="btn danger" type="button">Çıkış</button>
+      <button id="btnRoutine" class="btn primary" type="button">Rutin tablosu</button>
       <button id="tagSettingsBtn" class="btn" type="button">Tag Ayarları</button>
+      <button id="btnLogout" class="btn danger" type="button">Çıkış</button>
       <button id="btnInstall" class="btn" type="button" style="display:none;">Yükle</button>
     </div>
   </header>
@@ -377,48 +384,49 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   </div>
 </div>
 
-<!-- ============ RUTİN TABLOSU OVERLAY ============ -->
-<div id="tblOverlay" class="tblOverlay">
-  <div class="tblPanel">
-    <div class="tblTop">
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <h2>Rutin tablosu</h2>
-        <div class="seg">
-          <button id="tblViewWeek" class="active" type="button">Bu hafta</button>
-          <button id="tblViewTpl" type="button">Şablon</button>
-        </div>
+<!-- ============ RUTİN TABLOSU ============ -->
+<div id="rtOverlay" class="rtOverlay">
+  <div class="rtPanel">
+    <div class="rtTop">
+      <h3>Rutin tablosu</h3>
+      <div class="seg sm">
+        <button id="rtViewWeek" class="active" type="button">Bu hafta</button>
+        <button id="rtViewTpl" type="button">Şablon</button>
       </div>
-      <div class="tblWeekNav" id="tblWeekNav">
-        <button id="tblPrev" class="btn sm" type="button">◀</button>
-        <div class="tblWeekLbl" id="tblWeekLbl"></div>
-        <button id="tblNext" class="btn sm" type="button">▶</button>
-        <button id="tblToday" class="btn sm" type="button">Bugün</button>
+      <div style="display:flex; gap:6px; align-items:center;" id="rtNav">
+        <button id="rtPrev" class="btn sm" type="button">◀</button>
+        <button id="rtToday" class="btn sm" type="button">Bu hafta</button>
+        <button id="rtNext" class="btn sm" type="button">▶</button>
       </div>
-      <button id="tblClose" class="btn" type="button">Kapat</button>
+      <div class="rtWeekLbl" id="rtWeekLbl"></div>
+      <button id="rtClose" class="btn" type="button" style="margin-left:auto;">Kapat</button>
     </div>
 
-    <div class="tblTools">
-      <div class="swatchRow" id="swatchRow"></div>
-      <input type="color" id="tblColor" value="#7dd3fc" title="Özel renk" />
-      <button id="tblColorClear" class="btn sm" type="button">Rengi sil</button>
-      <div class="toolSep"></div>
-      <button id="tblMerge" class="btn sm" type="button">⊞ Birleştir</button>
-      <button id="tblUnmerge" class="btn sm" type="button">⊟ Ayır</button>
-      <div class="toolSep"></div>
-      <button id="tblClear" class="btn sm" type="button">Temizle</button>
-      <div class="toolSep"></div>
-      <select id="tblHabit" title="Alışkanlığa bağla" style="font-size:11px; padding:5px 8px;"></select>
-      <button id="tblHabitApply" class="btn sm" type="button">Bağla</button>
-      <div class="toolSep"></div>
-      <button id="tblCfgBtn" class="btn sm" type="button">Saat aralığı</button>
-      <button id="tblSaveAsTpl" class="btn sm" type="button">Bu haftayı şablon yap</button>
+    <div class="rtTools">
+      <div class="swatches" id="rtSwatches"></div>
+      <input type="color" id="rtCustomColor" value="#7dd3fc" title="Özel renk" style="width:34px;height:28px;border-radius:9px;" />
+      <div class="rtSep"></div>
+      <button id="rtMerge" class="btn sm" type="button">Birleştir</button>
+      <button id="rtUnmerge" class="btn sm" type="button">Ayır</button>
+      <div class="rtSep"></div>
+      <button id="rtTick" class="btn sm" type="button">✓ İşaretle</button>
+      <button id="rtLink" class="btn sm" type="button">Alışkanlığa bağla</button>
+      <button id="rtClear" class="btn sm" type="button">Temizle</button>
+      <div class="rtSep"></div>
+      <button id="rtToTpl" class="btn sm" type="button">Bu haftayı şablon yap</button>
+      <button id="rtResetWeek" class="btn sm" type="button">Şablona dön</button>
+      <button id="rtHours" class="btn sm" type="button">Saat aralığı</button>
     </div>
 
-    <div class="tblBody"><div class="raster" id="raster"></div></div>
-    <div class="tblHint" id="tblHint"></div>
+    <div class="rtScroll">
+      <div class="rtGrid" id="rtGrid" tabindex="0"></div>
+    </div>
+
+    <div class="rtHint" id="rtHint"></div>
   </div>
 </div>
 
+<!-- Modal -->
 <div id="overlay" class="overlay">
   <div class="modal">
     <div class="modalTop">
@@ -493,7 +501,7 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   </div>
 </div>
 
-<div id="confirmOverlay" class="overlay" style="z-index:95;">
+<div id="confirmOverlay" class="overlay" style="z-index:100;">
   <div class="modal" style="width:300px; max-width:90%;">
     <h3 style="margin-top:0; text-align:center;">Emin misin?</h3>
     <div id="confirmMsg" style="text-align:center; color:var(--muted); margin-bottom:16px;"></div>
@@ -504,16 +512,44 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   </div>
 </div>
 
+<div id="ctxMenu"></div>
+
 <script>
+/* ============ hata gostericisi ============ */
+function showErr(msg){
+  var bar = document.getElementById('errBar');
+  if(!bar) return;
+  bar.style.display = 'block';
+  bar.textContent = bar.textContent + (bar.textContent ? '\n' : '') + msg;
+}
+window.addEventListener('error', function(e){
+  var where = (e.filename || '') + ' satir ' + (e.lineno || 0) + ':' + (e.colno || 0);
+  showErr('HATA: ' + e.message + '\n  ' + where);
+});
+window.addEventListener('unhandledrejection', function(e){
+  var r = e.reason;
+  showErr('PROMISE HATASI: ' + (r && r.message ? r.message : String(r)));
+});
+if(typeof supabase === 'undefined'){
+  showErr('Supabase kutuphanesi yuklenemedi. Internet baglantisini veya CDN erisimini kontrol et.');
+}
+
 /* ============ SUPABASE ============ */
 const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM";
 const LOCAL_KEY = 'minimal_todo_v18_routine';
 let db=null, currentUser=null, _supabase=null;
-if (SUPABASE_URL && SUPABASE_KEY) _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY){
+  try { _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
+  catch(err){ showErr('Supabase baslatilamadi: ' + err.message); }
+}
 
 /* ============ PWA ============ */
-if ('serviceWorker' in navigator) window.addEventListener('load', ()=> navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if ('serviceWorker' in navigator) window.addEventListener('load', ()=>{
+  navigator.serviceWorker.register('./sw.js')
+    .then(reg => reg.update())   // her açılışta güncelleme kontrolü: eski önbellek takılı kalmasın
+    .catch(()=>{});
+});
 let deferredPrompt=null;
 const btnInstall=document.getElementById('btnInstall');
 window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; btnInstall.style.display='inline-block'; });
@@ -531,28 +567,70 @@ const authOverlay=document.getElementById('authOverlay'), authEmail=document.get
       authPass=document.getElementById('authPass'), authError=document.getElementById('authError'),
       appWrap=document.getElementById('appWrap'), userEmailDisplay=document.getElementById('userEmailDisplay');
 
+function localMode(reason){
+  currentUser = null;
+  authOverlay.style.display = 'none';
+  appWrap.style.display = 'block';
+  userEmailDisplay.textContent = 'çevrimdışı';
+  showErr('ÇEVRİMDIŞI MOD — ' + reason + '\nDeğişiklikler sadece bu cihazda saklanır, sunucuya gitmez.');
+  let local = null;
+  try { const raw = localStorage.getItem(LOCAL_KEY); if(raw) local = JSON.parse(raw); } catch(e){}
+  db = local ? migrate(local) : getEmptyDB();
+  render();
+}
+
 async function initApp(){
-  if(!_supabase){ alert("Supabase bilgileri eksik."); return; }
-  const { data:{ session } } = await _supabase.auth.getSession();
-  session ? handleSession(session) : showAuth();
-  _supabase.auth.onAuthStateChange((_e,s)=> s ? handleSession(s) : showAuth());
+  if(!_supabase){ localMode('Supabase kütüphanesi yüklenemedi.'); return; }
+  try {
+    const { data:{ session } } = await _supabase.auth.getSession();
+    session ? handleSession(session) : showAuth();
+    _supabase.auth.onAuthStateChange((_e,s)=> s ? handleSession(s) : showAuth());
+  } catch(err){
+    localMode('Sunucuya ulaşılamadı: ' + err.message);
+  }
 }
 function showAuth(){ authOverlay.style.display='flex'; appWrap.style.display='none'; currentUser=null; }
 async function handleSession(s){
   currentUser=s.user; authOverlay.style.display='none'; appWrap.style.display='block';
   userEmailDisplay.textContent=currentUser.email;
-  await loadRemoteDB(); render();
+  try { await loadRemoteDB(); }
+  catch(err){
+    showErr('Veri çekilemedi, yerel kopya kullanılıyor: ' + err.message);
+    let local=null;
+    try{ const raw=localStorage.getItem(LOCAL_KEY); if(raw) local=JSON.parse(raw); }catch(e){}
+    db = local ? migrate(local) : getEmptyDB();
+  }
+  try { render(); } catch(err){ showErr('Ekran çizilemedi: ' + err.message); }
 }
 document.getElementById('btnLogin').addEventListener('click', async ()=>{
+  if(!_supabase){ authError.textContent='Sunucu bağlantısı hazır değil. Çevrimdışı devam edebilirsin.'; return; }
+  const email=(authEmail.value||'').trim();
+  const password=authPass.value||'';
+  if(!email || !password){ authError.textContent='E-posta ve şifre gerekli.'; return; }
   authError.textContent='Giriş yapılıyor...';
-  const { error } = await _supabase.auth.signInWithPassword({ email:authEmail.value, password:authPass.value });
-  authError.textContent = error ? error.message : '';
+  try{
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    authError.textContent = error ? error.message : '';
+  }catch(err){ authError.textContent=err.message||String(err); }
 });
 document.getElementById('btnSignup').addEventListener('click', async ()=>{
-  const { error } = await _supabase.auth.signUp({ email:authEmail.value, password:authPass.value });
-  authError.textContent = error ? error.message : 'Kayıt başarılı, giriş yapabilirsin.';
+  if(!_supabase){ authError.textContent='Sunucu bağlantısı hazır değil. Çevrimdışı devam edebilirsin.'; return; }
+  const email=(authEmail.value||'').trim();
+  const password=authPass.value||'';
+  if(!email || password.length<6){ authError.textContent='Geçerli bir e-posta ve en az 6 karakterli şifre gir.'; return; }
+  try{
+    const { error } = await _supabase.auth.signUp({ email, password });
+    authError.textContent = error ? error.message : 'Kayıt başarılı. E-posta doğrulaması gerekiyorsa gelen kutunu kontrol et.';
+  }catch(err){ authError.textContent=err.message||String(err); }
 });
-document.getElementById('btnLogout').addEventListener('click', ()=> _supabase.auth.signOut());
+document.getElementById('btnOffline').addEventListener('click', ()=> localMode('Çevrimdışı devam edildi.'));
+document.getElementById('btnLogout').addEventListener('click', async ()=>{
+  currentUser=null;
+  if(_supabase){
+    try{ await _supabase.auth.signOut(); }catch(err){ showErr('Çıkış hatası: '+(err.message||String(err))); }
+  }
+  showAuth();
+});
 
 /* ============ UTIL ============ */
 function dayKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -565,7 +643,6 @@ function fmtRange(a,b){ const o={day:'2-digit',month:'short',year:'numeric'}; re
 function fmtDay(d){ return d.toLocaleDateString('tr-TR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}); }
 function isoWeek(date){ const t=new Date(date.getFullYear(),date.getMonth(),date.getDate()); t.setDate(t.getDate()+3-((t.getDay()+6)%7)); const w1=new Date(t.getFullYear(),0,4); return 1+Math.round(((t-w1)/86400000-3+((w1.getDay()+6)%7))/7); }
 function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pad2(n){ return String(n).padStart(2,'0'); }
 function normalizeTagName(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,'-'); }
 function getCssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
@@ -586,40 +663,58 @@ function timeKey(t){ return t.time||'99:99'; }
 
 const DOW=['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
 const DOW_LONG=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
-const SWATCHES=['#7dd3fc','#34d399','#fbbf24','#fb7185','#a78bfa','#f472b6','#94a3b8','#4ade80'];
+const SWATCHES=['#7dd3fc','#34d399','#fbbf24','#fb7185','#a78bfa','#f472b6','#38bdf8','#94a3b8'];
 
 let mode='week', anchor=new Date(), selected=new Date(), dragPayload=null;
 
 /* ============ DB ============ */
+function emptyRoutine(){
+  return { cfg:{start:7,end:23}, dayThemes:{}, template:{}, weeks:{}, done:{} };
+}
 function getEmptyDB(){
   return {
     days:{}, inbox:[],
     tags:[{name:'akademik',color:'#7dd3fc',order:1},{name:'praktikum',color:'#34d399',order:2},
           {name:'finans',color:'#fbbf24',order:3},{name:'ev',color:'#fb7185',order:4}],
     habits:[], habitState:{date:todayKey(),doneIds:[]}, habitHistory:{},
-    routine:{ cfg:{start:7,end:23}, template:{}, weeks:{}, dayThemes:{}, done:{} }
+    routine: emptyRoutine()
   };
 }
 function migrate(d){
   d.days=d.days||{}; d.inbox=d.inbox||[]; d.tags=d.tags||[];
   d.habits=d.habits||[]; d.habitHistory=d.habitHistory||{};
   d.habitState=d.habitState||{date:todayKey(),doneIds:[]};
-  d.routine = Object.assign({ cfg:{start:7,end:23}, template:{}, weeks:{}, dayThemes:{}, done:{} }, d.routine||{});
-  d.routine.cfg = Object.assign({start:7,end:23}, d.routine.cfg||{});
+  d.routine=Object.assign(emptyRoutine(), d.routine||{});
+  d.routine.cfg=Object.assign({start:7,end:23}, d.routine.cfg||{});
+  d.routine.dayThemes=d.routine.dayThemes||{};
   d.routine.template=d.routine.template||{};
   d.routine.weeks=d.routine.weeks||{};
-  d.routine.dayThemes=d.routine.dayThemes||{};
   d.routine.done=d.routine.done||{};
   return d;
 }
 async function loadRemoteDB(){
-  if(!currentUser) return;
+  if(!currentUser || !_supabase) return;
   let local=null;
   try{ const raw=localStorage.getItem(LOCAL_KEY); if(raw) local=JSON.parse(raw); }catch{}
-  const { data } = await _supabase.from('user_data').select('content').eq('id',currentUser.id).single();
-  if(data && data.content){ db=migrate(data.content); localStorage.setItem(LOCAL_KEY,JSON.stringify(db)); }
-  else if(local){ db=migrate(local); saveDB(db); }
-  else { db=getEmptyDB(); saveDB(db); }
+
+  const { data, error } = await _supabase
+    .from('user_data')
+    .select('content')
+    .eq('id',currentUser.id)
+    .maybeSingle();
+
+  if(error) throw error;
+
+  if(data && data.content){
+    db=migrate(data.content);
+    localStorage.setItem(LOCAL_KEY,JSON.stringify(db));
+  } else if(local){
+    db=migrate(local);
+    saveDB(db);
+  } else {
+    db=getEmptyDB();
+    saveDB(db);
+  }
 }
 let saveTimeout=null;
 function saveDB(newDB){
@@ -629,7 +724,14 @@ function saveDB(newDB){
   clearTimeout(saveTimeout);
   saveTimeout=setTimeout(async ()=>{
     if(!currentUser) return;
-    await _supabase.from('user_data').upsert({ id:currentUser.id, content:db, updated_at:new Date() });
+    try{
+      const { error } = await _supabase
+        .from('user_data')
+        .upsert({ id:currentUser.id, content:db, updated_at:new Date().toISOString() });
+      if(error) throw error;
+    }catch(err){
+      showErr('Senkronizasyon hatası: ' + (err && err.message ? err.message : String(err)));
+    }
   },1000);
 }
 
@@ -651,6 +753,7 @@ const overlay=document.getElementById('overlay'), modalTitle=document.getElement
       mNotes=document.getElementById('mNotes'), mTime=document.getElementById('mTime'),
       mType=document.getElementById('mType'), mTag=document.getElementById('mTag'),
       modalSave=document.getElementById('modalSave'), modalDelete=document.getElementById('modalDelete');
+const ctxMenu=document.getElementById('ctxMenu');
 let modalContext={mode:'add',dest:'day',dayKey:null,origin:null,itemId:null};
 
 function showSection(n){
@@ -666,10 +769,26 @@ overlay.addEventListener('keydown', e=>{
   if(e.target.tagName==='TEXTAREA') return;
   if(e.key==='Enter'){ e.preventDefault(); modalSave.click(); }
 });
+function hideCtx(){ ctxMenu.style.display='none'; }
+document.addEventListener('click', hideCtx);
+function openCtx(pos, title, entries){
+  ctxMenu.innerHTML='';
+  if(title){ const h=document.createElement('div'); h.className='ctxHead'; h.textContent=title; ctxMenu.appendChild(h); }
+  for(const [label,fn,danger] of entries){
+    const b=document.createElement('button'); b.type='button'; b.textContent=label;
+    if(danger) b.className='danger';
+    b.addEventListener('click', ev=>{ ev.stopPropagation(); hideCtx(); fn(); });
+    ctxMenu.appendChild(b);
+  }
+  ctxMenu.style.display='flex'; ctxMenu.style.left='0px'; ctxMenu.style.top='0px';
+  const w=ctxMenu.offsetWidth||230, h=ctxMenu.offsetHeight||200;
+  ctxMenu.style.left=Math.max(6,Math.min(pos.clientX, innerWidth-w-8))+'px';
+  ctxMenu.style.top =Math.max(6,Math.min(pos.clientY, innerHeight-h-8))+'px';
+}
 
 /* ============ Tag / filtre ============ */
 function tagMeta(n){ return (db&&db.tags) ? db.tags.find(x=>x.name===n)||null : null; }
-function tagOrder(n){ if(!n) return 9999; const m=tagMeta(n); return m?(m.order==null?9999:m.order):9999; }
+function tagOrder(n){ if(!n) return 9999; const m=tagMeta(n); return m?(m.order??9999):9999; }
 function itemSort(a,b){
   const r=typeRank(a.type)-typeRank(b.type); if(r) return r;
   if(timeKey(a)!==timeKey(b)) return timeKey(a)<timeKey(b)?-1:1;
@@ -689,7 +808,7 @@ function passesFilters(it){
 }
 function rebuildTagDropdowns(){
   if(!db) return;
-  db.tags.sort((a,b)=>(a.order==null?9999:a.order)-(b.order==null?9999:b.order));
+  db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
   const fill=(sel)=>{
     const keep=sel.value; sel.innerHTML='';
     const o=document.createElement('option'); o.value='__none__'; o.textContent='Tag: yok'; sel.appendChild(o);
@@ -754,7 +873,7 @@ function openModalEdit(origin,id){
 modalSave.addEventListener('click', ()=>{
   const text=(mText.value||'').trim(); if(!text) return;
   const p={ text, notes:mNotes.value||'', time:mTime.value||'', type:mType.value, tag: mTag.value==='__none__'?'':mTag.value };
-  if(modalContext.mode==='add') addItemTo(modalContext.dest,modalContext.dayKey,Object.assign({},p,{done:false,created:Date.now()}));
+  if(modalContext.mode==='add') addItemTo(modalContext.dest,modalContext.dayKey,{...p,done:false,created:Date.now()});
   else { const it=findItem(modalContext.origin,modalContext.itemId); if(it) Object.assign(it,p); saveDB(db); }
   closeModal(); render();
 });
@@ -784,7 +903,7 @@ function makeCard(item,origin){
 
   row.appendChild(check); row.appendChild(body); card.appendChild(row);
   card.addEventListener('dragstart', e=>{
-    dragPayload=Object.assign({},origin,{itemId:item.id});
+    dragPayload={...origin,itemId:item.id};
     e.dataTransfer.setData('text/plain',JSON.stringify(dragPayload));
     e.dataTransfer.effectAllowed='move';
   });
@@ -797,426 +916,434 @@ function makeCard(item,origin){
 
 /* ====================================================================
    RUTİN TABLOSU
-   Hücre: { t:metin, c:renk, rs:satır birleştirme, cs:sütun birleştirme, h:habitId }
+   Hücre: { t:metin, c:renk, rs:satır span, cs:kolon span, cov:kapalı, hb:habitId }
 ==================================================================== */
-const tblOverlay=document.getElementById('tblOverlay'), raster=document.getElementById('raster'),
-      tblWeekLbl=document.getElementById('tblWeekLbl'), tblHint=document.getElementById('tblHint'),
-      tblViewWeek=document.getElementById('tblViewWeek'), tblViewTpl=document.getElementById('tblViewTpl'),
-      tblHabit=document.getElementById('tblHabit'), tblColor=document.getElementById('tblColor'),
-      swatchRow=document.getElementById('swatchRow'), tblWeekNav=document.getElementById('tblWeekNav');
+const rtOverlay=document.getElementById('rtOverlay'), rtGridEl=document.getElementById('rtGrid'),
+      rtWeekLbl=document.getElementById('rtWeekLbl'), rtHint=document.getElementById('rtHint'),
+      rtNav=document.getElementById('rtNav'), rtSwatches=document.getElementById('rtSwatches');
+const rtViewWeekBtn=document.getElementById('rtViewWeek'), rtViewTplBtn=document.getElementById('rtViewTpl');
 
-let tblOpen=false, tblView='week', tblAnchor=new Date();
-let sel=null;                 // {d1,h1,d2,h2}
-let selecting=false, editing=false;
-let cellEls={};               // key -> element
+let rtOpen=false, rtView='week', rtAnchor=new Date();
+let rtSel=null;              // {r1,c1,r2,c2}
+let rtSelecting=false, rtEditing=false;
+let rtClipboard=null;
 
-function rcfg(){ return db.routine.cfg; }
+function R(){ return db.routine; }
+function rtHours(){ const c=R().cfg; return { start:c.start, end:c.end, n:c.end-c.start }; }
 function ck(dow,hour){ return `${dow}-${hour}`; }
-function wkKey(){ return dayKey(startOfWeek(tblAnchor)); }
+function rtWeekKey(){ return dayKey(startOfWeek(rtAnchor)); }
 
-function getTplCell(k){ return db.routine.template[k]||null; }
-function getWeekOverride(k){
-  const w=db.routine.weeks[wkKey()];
-  if(w && Object.prototype.hasOwnProperty.call(w,k)) return { has:true, val:w[k] };
-  return { has:false, val:null };
+/* aktif hücre kümesi (okuma) */
+function rtCells(){
+  if(rtView==='tpl') return R().template;
+  const w=R().weeks[rtWeekKey()];
+  return w ? w : R().template;
 }
-function resolveCell(k){
-  if(tblView==='week'){
-    const o=getWeekOverride(k);
-    if(o.has) return { cell:o.val, source:'week' };
-  }
-  return { cell:getTplCell(k), source:'template' };
+function rtIsGhost(){ return rtView==='week' && !R().weeks[rtWeekKey()]; }
+/* yazma: bu hafta düzenlenecekse şablondan kopya çıkar */
+function rtEditable(){
+  if(rtView==='tpl') return R().template;
+  const wk=rtWeekKey();
+  if(!R().weeks[wk]) R().weeks[wk]=JSON.parse(JSON.stringify(R().template));
+  return R().weeks[wk];
 }
-function writeCell(k,cell){
-  if(tblView==='tpl'){
-    if(cell) db.routine.template[k]=cell; else delete db.routine.template[k];
-    return;
-  }
-  const w=wkKey();
-  db.routine.weeks[w]=db.routine.weeks[w]||{};
-  db.routine.weeks[w][k]=cell;   // null = bu hafta boş
-  if(!Object.keys(db.routine.weeks[w]).length) delete db.routine.weeks[w];
+function getCell(cells,dow,hour){ return cells[ck(dow,hour)] || null; }
+function ensureCell(cells,dow,hour){
+  const k=ck(dow,hour);
+  if(!cells[k]) cells[k]={};
+  return cells[k];
 }
-function emptyCell(){ return { t:'', c:'', rs:1, cs:1, h:'' }; }
-function cellIsEmpty(c){ return !c || (!c.t && !c.c && (c.rs||1)===1 && (c.cs||1)===1); }
-
-/* çözümlenmiş harita + kapalı hücreler */
-function buildResolved(){
-  const cfg=rcfg(), map={}, covered={};
-  for(let dw=0; dw<7; dw++) for(let h=cfg.start; h<cfg.end; h++){
-    const k=ck(dw,h);
-    const r=resolveCell(k);
-    map[k]=r;
-  }
-  for(let dw=0; dw<7; dw++) for(let h=cfg.start; h<cfg.end; h++){
-    const k=ck(dw,h);
-    if(covered[k]) continue;
-    const c=map[k].cell; if(!c) continue;
-    const rs=Math.max(1,c.rs||1), cs=Math.max(1,c.cs||1);
-    if(rs===1 && cs===1) continue;
-    for(let i=0;i<rs;i++) for(let j=0;j<cs;j++){
-      if(i===0&&j===0) continue;
-      const kk=ck(dw+j, h+i);
-      if(dw+j<7 && h+i<cfg.end) covered[kk]=k;
-    }
-  }
-  return { map, covered };
+function cleanCell(cells,dow,hour){
+  const k=ck(dow,hour), c=cells[k];
+  if(!c) return;
+  if(!c.t && !c.c && !c.hb && !c.cov && (!c.rs||c.rs===1) && (!c.cs||c.cs===1)) delete cells[k];
 }
 
-/* seçim normalizasyonu: birleşik hücreleri tamamen kapsa */
-function normSel(){
-  if(!sel) return null;
-  const cfg=rcfg();
-  let d1=Math.min(sel.d1,sel.d2), d2=Math.max(sel.d1,sel.d2);
-  let h1=Math.min(sel.h1,sel.h2), h2=Math.max(sel.h1,sel.h2);
-  const { map, covered } = buildResolved();
+/* seçim dikdörtgenini birleşmiş hücreleri kapsayacak şekilde genişlet */
+function normSel(sel){
+  const cells=rtCells(), H=rtHours();
+  let { r1,c1,r2,c2 } = sel;
+  if(r1>r2) [r1,r2]=[r2,r1];
+  if(c1>c2) [c1,c2]=[c2,c1];
   let changed=true, guard=0;
-  while(changed && guard++<10){
+  while(changed && guard++<20){
     changed=false;
-    for(let dw=d1; dw<=d2; dw++) for(let h=h1; h<=h2; h++){
-      const k=ck(dw,h);
-      const anchorK = covered[k] || k;
-      const [adw,ah]=anchorK.split('-').map(Number);
-      const c=map[anchorK] && map[anchorK].cell;
-      const rs=c?Math.max(1,c.rs||1):1, cs=c?Math.max(1,c.cs||1):1;
-      if(adw<d1){ d1=adw; changed=true; }
-      if(ah<h1){ h1=ah; changed=true; }
-      if(adw+cs-1>d2){ d2=adw+cs-1; changed=true; }
-      if(ah+rs-1>h2){ h2=ah+rs-1; changed=true; }
+    for(let r=0;r<H.n;r++) for(let c=0;c<7;c++){
+      const cell=getCell(cells,c,H.start+r);
+      if(!cell) continue;
+      const rs=cell.rs||1, cs=cell.cs||1;
+      if(rs===1&&cs===1) continue;
+      const R2=r+rs-1, C2=c+cs-1;
+      const overlaps = !(R2<r1 || r>r2 || C2<c1 || c>c2);
+      if(overlaps){
+        if(r<r1){ r1=r; changed=true; }
+        if(c<c1){ c1=c; changed=true; }
+        if(R2>r2){ r2=R2; changed=true; }
+        if(C2>c2){ c2=C2; changed=true; }
+      }
     }
   }
-  return { d1, d2, h1:Math.max(cfg.start,h1), h2:Math.min(cfg.end-1,h2) };
+  return { r1,c1,r2,c2 };
+}
+function selCells(fn){
+  if(!rtSel) return;
+  const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++) fn(cells, c, H.start+r, r);
+  saveDB(db); renderRoutine();
 }
 
-function selKeys(){
-  const n=normSel(); if(!n) return [];
-  const out=[];
-  for(let dw=n.d1; dw<=n.d2; dw++) for(let h=n.h1; h<=n.h2; h++) out.push(ck(dw,h));
-  return out;
-}
-
-function applySelectionStyles(){
-  const keys=new Set(selKeys());
-  for(const k in cellEls) cellEls[k].classList.toggle('sel', keys.has(k));
-}
-
-function doneK(dateK,hour){ return `${dateK}|${hour}`; }
-
+/* ---- render ---- */
 function renderRoutine(){
   if(!db) return;
-  const cfg=rcfg();
-  const weekStart=startOfWeek(tblAnchor);
-  const todayK=todayKey();
+  const H=rtHours(), cells=rtCells(), ghost=rtIsGhost();
+  const weekStart=startOfWeek(rtAnchor), todayK=todayKey();
 
-  tblWeekNav.style.visibility = tblView==='week' ? 'visible' : 'hidden';
-  tblWeekLbl.textContent = `${fmtRange(weekStart, addDays(weekStart,6))} · KW ${isoWeek(weekStart)}`;
-  tblHint.textContent = tblView==='week'
-    ? 'Taralı hücreler şablondan geliyor. Yazınca bu haftaya özel olur. Tıkla–sürükle: seç · Çift tık veya direkt yaz: düzenle · Space: ✓ · Delete: temizle'
-    : 'Bu düzen her hafta tekrar eder. Tıkla–sürükle: seç · Çift tık veya direkt yaz: düzenle · Birleştir ile hücreleri birleştir';
+  rtNav.style.visibility = rtView==='week' ? 'visible' : 'hidden';
+  rtWeekLbl.textContent = rtView==='tpl'
+    ? 'Her hafta tekrar eden düzen'
+    : `${fmtRange(weekStart,addDays(weekStart,6))} · KW ${isoWeek(weekStart)}`;
 
-  const { map, covered } = buildResolved();
-  raster.innerHTML=''; cellEls={};
-  raster.style.gridTemplateColumns='64px repeat(7, minmax(0,1fr))';
-  raster.style.gridTemplateRows=`auto repeat(${cfg.end-cfg.start}, minmax(42px, auto))`;
+  rtGridEl.innerHTML='';
+  rtGridEl.style.gridTemplateColumns=`64px repeat(7, minmax(76px,1fr))`;
+  rtGridEl.style.gridTemplateRows=`auto repeat(${H.n}, minmax(38px,auto))`;
 
-  const corner=document.createElement('div'); corner.className='rHeadCorner';
-  corner.style.gridColumn='1'; corner.style.gridRow='1';
-  raster.appendChild(corner);
+  const corner=document.createElement('div');
+  corner.className='rtCorner'; corner.style.gridArea='1 / 1';
+  rtGridEl.appendChild(corner);
 
   for(let dw=0; dw<7; dw++){
-    const d=addDays(weekStart,dw), k=dayKey(d);
-    const th=db.routine.dayThemes[dw];
+    const d=addDays(weekStart,dw), k=dayKey(d), th=R().dayThemes[dw];
     const h=document.createElement('div');
-    h.className='rHead'+(tblView==='week'&&k===todayK?' today':'');
-    h.style.gridColumn=String(2+dw); h.style.gridRow='1';
-    if(th && th.color){ h.style.borderTopColor=th.color; h.style.background=hexToRgba(th.color,.10); }
-    h.innerHTML=`<div class="hName">${DOW[dw]}</div>`+
-      (tblView==='week'?`<div class="hDate">${pad2(d.getDate())}.${pad2(d.getMonth()+1)}</div>`:'')+
-      ((th&&th.name)?`<div class="hTheme" style="color:${th.color}">${esc(th.name)}</div>`:'');
+    h.className='rtHead'+(rtView==='week'&&k===todayK?' today':'');
+    h.style.gridArea=`1 / ${dw+2}`;
+    if(th && th.color){ h.style.borderTopColor=th.color; h.style.background=hexToRgba(th.color,.12); }
+    const nm=document.createElement('div'); nm.className='hName'; nm.textContent=DOW[dw]; h.appendChild(nm);
+    if(rtView==='week'){ const dt=document.createElement('div'); dt.className='hDate'; dt.textContent=`${pad2(d.getDate())}.${pad2(d.getMonth()+1)}`; h.appendChild(dt); }
+    if(th && th.name){ const tn=document.createElement('div'); tn.className='hTheme'; tn.style.color=th.color; tn.textContent=th.name; h.appendChild(tn); }
     h.title='Gün temasını düzenle';
     h.addEventListener('click', ()=> openDayTheme(dw));
-    raster.appendChild(h);
+    rtGridEl.appendChild(h);
   }
 
-  for(let hour=cfg.start; hour<cfg.end; hour++){
+  const sel = rtSel ? normSel(rtSel) : null;
+
+  for(let r=0; r<H.n; r++){
+    const hour=H.start+r;
     const lbl=document.createElement('div');
-    lbl.className='rHour'; lbl.textContent=`${pad2(hour)}–${pad2(hour+1)}`;
-    lbl.style.gridColumn='1'; lbl.style.gridRow=String(2+hour-cfg.start);
-    raster.appendChild(lbl);
+    lbl.className='rtHour'; lbl.style.gridArea=`${r+2} / 1`;
+    lbl.textContent=`${pad2(hour)}–${pad2(hour+1)}`;
+    rtGridEl.appendChild(lbl);
 
     for(let dw=0; dw<7; dw++){
-      const k=ck(dw,hour);
-      if(covered[k]) continue;
-      const r=map[k], c=r.cell;
-      const rs=c?Math.max(1,c.rs||1):1, cs=c?Math.max(1,c.cs||1):1;
-      const d=addDays(weekStart,dw), dateK=dayKey(d);
+      const cell=getCell(cells,dw,hour);
+      if(cell && cell.cov) continue;
+      const rs=(cell&&cell.rs)||1, cs=(cell&&cell.cs)||1;
 
       const el=document.createElement('div');
-      el.className='rCell';
-      el.style.gridColumn=`${2+dw} / span ${cs}`;
-      el.style.gridRow=`${2+hour-cfg.start} / span ${rs}`;
-      el.dataset.dow=dw; el.dataset.hour=hour;
+      el.className='rtCell';
+      el.style.gridArea=`${r+2} / ${dw+2} / span ${rs} / span ${cs}`;
+      el.dataset.r=r; el.dataset.c=dw;
 
-      if(c && c.c) el.style.background=hexToRgba(c.c,.32);
-      else { const th=db.routine.dayThemes[dw]; if(th&&th.color) el.style.background=hexToRgba(th.color,.05); }
+      const th=R().dayThemes[dw];
+      if(th && th.color) el.style.background=hexToRgba(th.color,.05);
+      if(cell && cell.c) el.style.background=hexToRgba(cell.c,.32);
 
-      if(c && c.t){
-        const n=document.createElement('div'); n.className='cName'; n.textContent=c.t; el.appendChild(n);
+      if(cell && cell.t){
+        const t=document.createElement('div'); t.className='txt'; t.textContent=cell.t; el.appendChild(t);
       }
-      if(c && c.h){ const hd=document.createElement('div'); hd.className='habitDot'; el.appendChild(hd); }
+      if(ghost && cell && (cell.t||cell.c)) el.classList.add('ghost');
+      if(cell && cell.hb){ const d=document.createElement('div'); d.className='hlink'; el.appendChild(d); }
 
-      if(tblView==='week' && c && (c.t||c.c)){
-        if(r.source==='template') el.classList.add('ghost');
-        const isDone=!!db.routine.done[doneK(dateK,hour)];
-        if(isDone) el.classList.add('done');
-        const tick=document.createElement('button');
-        tick.className='tickBtn'; tick.type='button'; tick.textContent='✓';
-        tick.addEventListener('pointerdown', e=> e.stopPropagation());
-        tick.addEventListener('click', e=>{ e.stopPropagation(); toggleDone(dw,hour,dateK); });
-        el.appendChild(tick);
+      if(rtView==='week'){
+        const dateK=dayKey(addDays(weekStart,dw));
+        if(R().done[`${dateK}|${hour}`]){
+          el.classList.add('done');
+          const tk=document.createElement('div'); tk.className='tick'; tk.textContent='✓'; el.appendChild(tk);
+        }
         if(dateK===todayK && new Date().getHours()===hour) el.classList.add('nowRow');
       }
 
+      if(sel && r>=sel.r1 && r<=sel.r2 && dw>=sel.c1 && dw<=sel.c2){
+        el.classList.add('selected');
+        if(r===sel.r1 && dw===sel.c1) el.classList.add('anchorCell');
+      }
+
       el.addEventListener('pointerdown', e=>{
-        if(editing) return;
-        if(e.button===2) return;
-        selecting=true;
-        sel={ d1:dw, h1:hour, d2:dw, h2:hour };
-        applySelectionStyles();
-        raster.setPointerCapture && raster.setPointerCapture(e.pointerId);
+        if(e.button===2 || rtEditing) return;
+        e.preventDefault();
+        rtGridEl.focus();
+        if(e.shiftKey && rtSel) rtSel={ r1:rtSel.r1, c1:rtSel.c1, r2:r, c2:dw };
+        else { rtSel={ r1:r, c1:dw, r2:r, c2:dw }; rtSelecting=true; }
+        renderRoutine();
       });
       el.addEventListener('pointerenter', ()=>{
-        if(!selecting||!sel) return;
-        sel.d2=dw; sel.h2=hour; applySelectionStyles();
+        if(!rtSelecting) return;
+        rtSel={ ...rtSel, r2:r, c2:dw }; renderRoutine();
       });
-      el.addEventListener('dblclick', ()=> startEdit(dw,hour));
+      el.addEventListener('dblclick', ()=>{ rtSel={r1:r,c1:dw,r2:r,c2:dw}; rtStartEdit(); });
+      el.addEventListener('contextmenu', e=>{
+        e.preventDefault(); e.stopPropagation();
+        if(!sel || r<sel.r1||r>sel.r2||dw<sel.c1||dw>sel.c2){ rtSel={r1:r,c1:dw,r2:r,c2:dw}; renderRoutine(); }
+        rtCellMenu(e,dw,hour);
+      });
 
-      cellEls[k]=el;
-      raster.appendChild(el);
+      rtGridEl.appendChild(el);
     }
   }
-  applySelectionStyles();
+
+  rtHint.textContent = rtView==='week'
+    ? (ghost
+        ? 'Şu an şablonu görüyorsun (taralı). İlk değişiklikte bu haftaya özel kopya oluşur, şablonun bozulmaz.'
+        : 'Bu haftaya özel düzen. Yaz: sürükleyerek seç → yazmaya başla · Enter düzenle · Space ✓ · Del temizle · Ctrl+C/V kopyala-yapıştır')
+    : 'Şablon her hafta tekrar eder. Sürükleyerek seç → yazmaya başla · Birleştir ile kareleri kaynaştır · Gün başlığına tıkla = gün teması';
 }
 
-document.addEventListener('pointerup', ()=>{ selecting=false; });
+document.addEventListener('pointermove', e=>{
+  if(!rtSelecting || rtEditing) return;
+  const target=document.elementFromPoint(e.clientX,e.clientY);
+  const cell=target && target.closest ? target.closest('.rtCell') : null;
+  if(!cell || !rtGridEl.contains(cell)) return;
+  const r=Number(cell.dataset.r), c=Number(cell.dataset.c);
+  if(!Number.isInteger(r) || !Number.isInteger(c)) return;
+  if(rtSel && rtSel.r2===r && rtSel.c2===c) return;
+  rtSel={ ...rtSel, r2:r, c2:c };
+  renderRoutine();
+});
+document.addEventListener('pointerup', ()=>{ rtSelecting=false; });
 
-/* --- hücre düzenleme --- */
-function startEdit(dow,hour,initial){
-  const k=ck(dow,hour), el=cellEls[k];
+/* ---- düzenleme ---- */
+function rtStartEdit(preset){
+  if(!rtSel) return;
+  const s=normSel(rtSel), H=rtHours();
+  const el=rtGridEl.querySelector(`.rtCell[data-r="${s.r1}"][data-c="${s.c1}"]`);
   if(!el) return;
-  editing=true;
-  const r=resolveCell(k), cur=r.cell||emptyCell();
+  const cells=rtEditable();
+  const cell=ensureCell(cells,s.c1,H.start+s.r1);
+
+  rtEditing=true;
   const inp=document.createElement('input');
-  inp.className='cellEdit'; inp.type='text'; inp.maxLength=60;
-  inp.value = initial!=null ? initial : (cur.t||'');
+  inp.className='editor'; inp.value = preset!==undefined ? preset : (cell.t||'');
   el.appendChild(inp);
   inp.focus();
-  if(initial==null) inp.select();
+  if(preset===undefined) inp.select();
 
-  const commit=(save)=>{
-    if(!editing) return;
-    editing=false;
-    const val=inp.value.trim();
-    inp.remove();
-    if(save){
-      const base=Object.assign(emptyCell(), r.cell||{});
-      base.t=val;
-      if(cellIsEmpty(base)) writeCell(k, tblView==='tpl'?null:(getTplCell(k)?null:null));
-      else writeCell(k, base);
-      saveDB(db);
-    }
-    renderRoutine();
+  const commit=(move)=>{
+    if(!rtEditing) return;
+    rtEditing=false;
+    cell.t=(inp.value||'').trim();
+    cleanCell(cells,s.c1,H.start+s.r1);
+    saveDB(db);
+    if(move==='down' && s.r1+1<H.n) rtSel={r1:s.r1+1,c1:s.c1,r2:s.r1+1,c2:s.c1};
+    if(move==='right' && s.c1+1<7) rtSel={r1:s.r1,c1:s.c1+1,r2:s.r1,c2:s.c1+1};
+    renderRoutine(); rtGridEl.focus();
   };
   inp.addEventListener('keydown', e=>{
     e.stopPropagation();
-    if(e.key==='Enter'){ e.preventDefault(); commit(true); }
-    else if(e.key==='Escape'){ e.preventDefault(); commit(false); }
+    if(e.key==='Enter'){ e.preventDefault(); commit('down'); }
+    else if(e.key==='Tab'){ e.preventDefault(); commit('right'); }
+    else if(e.key==='Escape'){ e.preventDefault(); rtEditing=false; renderRoutine(); rtGridEl.focus(); }
   });
-  inp.addEventListener('blur', ()=> commit(true));
+  inp.addEventListener('blur', ()=> commit());
 }
 
-function eachSelected(fn){
-  const keys=selKeys(); if(!keys.length) return;
-  for(const k of keys){
-    const r=resolveCell(k);
-    const cell=Object.assign(emptyCell(), r.cell||{});
-    const out=fn(cell,k);
-    if(out===null) writeCell(k,null);
-    else writeCell(k, cellIsEmpty(out)? (tblView==='tpl'?null:null) : out);
-  }
-  saveDB(db); renderRoutine();
-}
-
-function applyColor(hex){
-  eachSelected(c=>{ c.c=hex; return c; });
-}
-document.getElementById('tblColorClear').addEventListener('click', ()=> eachSelected(c=>{ c.c=''; return c; }));
-tblColor.addEventListener('input', ()=> applyColor(tblColor.value));
-function buildSwatches(){
-  swatchRow.innerHTML='';
-  for(const s of SWATCHES){
-    const b=document.createElement('button');
-    b.type='button'; b.className='swatchBtn'; b.style.background=s; b.title=s;
-    b.addEventListener('click', ()=>{ tblColor.value=s; applyColor(s); });
-    swatchRow.appendChild(b);
-  }
-}
-document.getElementById('tblClear').addEventListener('click', ()=>{
-  const keys=selKeys();
-  for(const k of keys) writeCell(k, tblView==='tpl'?null:null);
-  saveDB(db); renderRoutine();
+rtGridEl.addEventListener('keydown', e=>{
+  if(rtEditing || !rtSel) return;
+  const H=rtHours(), s=normSel(rtSel);
+  const move=(dr,dc,extend)=>{
+    e.preventDefault();
+    if(extend) rtSel={ r1:rtSel.r1, c1:rtSel.c1, r2:Math.max(0,Math.min(H.n-1,(rtSel.r2)+dr)), c2:Math.max(0,Math.min(6,(rtSel.c2)+dc)) };
+    else { const r=Math.max(0,Math.min(H.n-1,s.r1+dr)), c=Math.max(0,Math.min(6,s.c1+dc)); rtSel={r1:r,c1:c,r2:r,c2:c}; }
+    renderRoutine();
+  };
+  if(e.key==='ArrowDown')  return move(1,0,e.shiftKey);
+  if(e.key==='ArrowUp')    return move(-1,0,e.shiftKey);
+  if(e.key==='ArrowRight') return move(0,1,e.shiftKey);
+  if(e.key==='ArrowLeft')  return move(0,-1,e.shiftKey);
+  if(e.key==='Enter' || e.key==='F2'){ e.preventDefault(); return rtStartEdit(); }
+  if(e.key===' '){ e.preventDefault(); return rtTickSel(); }
+  if(e.key==='Delete' || e.key==='Backspace'){ e.preventDefault(); return rtClearSel(); }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='c'){ e.preventDefault(); return rtCopy(); }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='v'){ e.preventDefault(); return rtPaste(); }
+  if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); return rtStartEdit(e.key); }
 });
 
-document.getElementById('tblMerge').addEventListener('click', ()=>{
-  const n=normSel(); if(!n) return;
-  const rs=n.h2-n.h1+1, cs=n.d2-n.d1+1;
-  if(rs===1&&cs===1) return;
-  const anchorK=ck(n.d1,n.h1);
-  const base=Object.assign(emptyCell(), resolveCell(anchorK).cell||{});
-  // birleşen hücrelerdeki ilk dolu metni/rengi devral
-  if(!base.t || !base.c){
-    for(let dw=n.d1; dw<=n.d2; dw++) for(let h=n.h1; h<=n.h2; h++){
-      const c=resolveCell(ck(dw,h)).cell;
-      if(!c) continue;
-      if(!base.t && c.t) base.t=c.t;
-      if(!base.c && c.c) base.c=c.c;
-      if(!base.h && c.h) base.h=c.h;
+function rtFill(color){ selCells((cells,c,hour)=>{ const x=ensureCell(cells,c,hour); if(color) x.c=color; else delete x.c; cleanCell(cells,c,hour); }); }
+function rtClearSel(){ selCells((cells,c,hour)=>{ const x=cells[ck(c,hour)]; if(!x) return; delete x.t; delete x.c; delete x.hb; cleanCell(cells,c,hour); }); }
+
+function rtMerge(){
+  if(!rtSel) return;
+  const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
+  if(s.r1===s.r2 && s.c1===s.c2) return;
+  const anchor=ensureCell(cells,s.c1,H.start+s.r1);
+  const texts=[];
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
+    const k=ck(c,H.start+r);
+    if(r===s.r1&&c===s.c1) continue;
+    const x=cells[k];
+    if(x && x.t) texts.push(x.t);
+    cells[k]={ cov:true };
+  }
+  if(!anchor.t && texts.length) anchor.t=texts[0];
+  if(!anchor.c){ /* renk yoksa dokunma */ }
+  anchor.rs=s.r2-s.r1+1; anchor.cs=s.c2-s.c1+1;
+  saveDB(db); renderRoutine();
+}
+function rtUnmerge(){
+  if(!rtSel) return;
+  const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
+    const k=ck(c,H.start+r), x=cells[k];
+    if(!x) continue;
+    if(x.cov){ delete cells[k]; continue; }
+    delete x.rs; delete x.cs;
+    cleanCell(cells,c,H.start+r);
+  }
+  saveDB(db); renderRoutine();
+}
+function rtCopy(){
+  if(!rtSel) return;
+  const cells=rtCells(), H=rtHours(), s=normSel(rtSel), out=[];
+  for(let r=s.r1;r<=s.r2;r++){
+    const row=[];
+    for(let c=s.c1;c<=s.c2;c++){
+      const x=getCell(cells,c,H.start+r);
+      row.push(x&&!x.cov ? { t:x.t||'', c:x.c||'', hb:x.hb||'' } : null);
     }
+    out.push(row);
   }
-  base.rs=rs; base.cs=cs;
-  for(let dw=n.d1; dw<=n.d2; dw++) for(let h=n.h1; h<=n.h2; h++){
-    if(dw===n.d1&&h===n.h1) continue;
-    writeCell(ck(dw,h), null);
-  }
-  writeCell(anchorK, base);
-  saveDB(db); renderRoutine();
-});
-
-document.getElementById('tblUnmerge').addEventListener('click', ()=>{
-  const keys=selKeys();
-  for(const k of keys){
-    const r=resolveCell(k);
-    if(!r.cell) continue;
-    if((r.cell.rs||1)>1 || (r.cell.cs||1)>1){
-      const c=Object.assign(emptyCell(), r.cell); c.rs=1; c.cs=1;
-      writeCell(k,c);
-    }
-  }
-  saveDB(db); renderRoutine();
-});
-
-document.getElementById('tblHabitApply').addEventListener('click', ()=>{
-  const v=tblHabit.value||'';
-  eachSelected(c=>{ c.h=v; return c; });
-});
-function fillTblHabit(){
-  tblHabit.innerHTML='';
-  const o=document.createElement('option'); o.value=''; o.textContent='Habit: yok'; tblHabit.appendChild(o);
-  for(const h of (db.habits||[])){ const x=document.createElement('option'); x.value=h.id; x.textContent=h.name; tblHabit.appendChild(x); }
+  rtClipboard=out;
+  rtHint.textContent=`${out.length}×${out[0].length} hücre kopyalandı. Ctrl+V ile yapıştır.`;
 }
-
-function toggleDone(dow,hour,dateK){
-  const k=ck(dow,hour);
-  const r=resolveCell(k); if(!r.cell) return;
-  const dk=doneK(dateK,hour);
-  const now=!db.routine.done[dk];
-  if(now) db.routine.done[dk]=true; else delete db.routine.done[dk];
-  if(r.cell.h && db.habits.some(h=>h.id===r.cell.h)) setHabitDate(r.cell.h, dateK, now);
+function rtPaste(){
+  if(!rtClipboard || !rtSel) return;
+  const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
+  for(let i=0;i<rtClipboard.length;i++) for(let j=0;j<rtClipboard[i].length;j++){
+    const r=s.r1+i, c=s.c1+j;
+    if(r>=H.n || c>=7) continue;
+    const src=rtClipboard[i][j], k=ck(c,H.start+r);
+    if(!src){ delete cells[k]; continue; }
+    cells[k]={ ...(src.t?{t:src.t}:{}) , ...(src.c?{c:src.c}:{}), ...(src.hb?{hb:src.hb}:{}) };
+    if(!Object.keys(cells[k]).length) delete cells[k];
+  }
+  saveDB(db); renderRoutine();
+}
+function rtTickSel(){
+  if(rtView!=='week' || !rtSel) return;
+  const cells=rtCells(), H=rtHours(), s=normSel(rtSel), weekStart=startOfWeek(rtAnchor);
+  let anyOff=false;
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
+    const x=getCell(cells,c,H.start+r);
+    if(!x || x.cov || !x.t) continue;
+    if(!R().done[`${dayKey(addDays(weekStart,c))}|${H.start+r}`]) anyOff=true;
+  }
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
+    const x=getCell(cells,c,H.start+r);
+    if(!x || x.cov || !x.t) continue;
+    const dateK=dayKey(addDays(weekStart,c)), dk=`${dateK}|${H.start+r}`;
+    if(anyOff) R().done[dk]=true; else delete R().done[dk];
+    if(x.hb && db.habits.some(h=>h.id===x.hb)) setHabitDate(x.hb, dateK, anyOff);
+  }
   saveDB(db); renderRoutine(); renderHabits();
 }
-
-/* klavye */
-document.addEventListener('keydown', e=>{
-  if(!tblOpen) return;
-  if(overlay.style.display==='flex' || confirmOverlay.style.display==='flex'){
-    if(e.key==='Escape'){ closeModal(); confirmOverlay.style.display='none'; }
-    return;
-  }
-  if(editing) return;
-  if(e.key==='Escape'){ closeTable(); return; }
-  if(!sel) return;
-  const n=normSel();
-
-  if(e.key==='Delete'||e.key==='Backspace'){
-    e.preventDefault();
-    for(const k of selKeys()) writeCell(k,null);
-    saveDB(db); renderRoutine(); return;
-  }
-  if(e.key===' '){
-    e.preventDefault();
-    if(tblView!=='week') return;
-    const weekStart=startOfWeek(tblAnchor);
-    for(let dw=n.d1; dw<=n.d2; dw++) for(let h=n.h1; h<=n.h2; h++){
-      const dateK=dayKey(addDays(weekStart,dw));
-      if(resolveCell(ck(dw,h)).cell) toggleDone(dw,h,dateK);
-    }
-    return;
-  }
-  if(e.key==='Enter'||e.key==='F2'){ e.preventDefault(); startEdit(n.d1,n.h1); return; }
-  if(e.key.startsWith('Arrow')){
-    e.preventDefault();
-    const cfg=rcfg();
-    let d=n.d1, h=n.h1;
-    if(e.key==='ArrowLeft') d=Math.max(0,d-1);
-    if(e.key==='ArrowRight') d=Math.min(6,d+1);
-    if(e.key==='ArrowUp') h=Math.max(cfg.start,h-1);
-    if(e.key==='ArrowDown') h=Math.min(cfg.end-1,h+1);
-    sel={d1:d,h1:h,d2:d,h2:h}; applySelectionStyles(); return;
-  }
-  if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
-    e.preventDefault();
-    startEdit(n.d1,n.h1,e.key);
-  }
-});
-
-/* aç / kapat */
-function openTable(){
-  tblAnchor=new Date(selected);
-  tblOpen=true; tblOverlay.classList.add('open');
-  fillTblHabit(); buildSwatches(); sel=null;
-  renderRoutine();
+function rtLinkHabit(){
+  if(!rtSel) return;
+  const entries=(db.habits||[]).map(h=>[h.name, ()=>{
+    selCells((cells,c,hour)=>{ const x=ensureCell(cells,c,hour); x.hb=h.id; });
+  }]);
+  entries.push(['— bağlantıyı kaldır —', ()=>{
+    selCells((cells,c,hour)=>{ const x=cells[ck(c,hour)]; if(x){ delete x.hb; cleanCell(cells,c,hour); } });
+  }]);
+  if(!db.habits.length) entries.unshift(['(önce Habits paneline alışkanlık ekle)', ()=>{}]);
+  const r=document.getElementById('rtLink').getBoundingClientRect();
+  openCtx({clientX:r.left, clientY:r.bottom+4}, 'Seçili hücreleri bağla', entries);
 }
-function closeTable(){ tblOpen=false; tblOverlay.classList.remove('open'); }
-document.getElementById('btnTable').addEventListener('click', openTable);
-document.getElementById('tblClose').addEventListener('click', closeTable);
+function rtCellMenu(e,dow,hour){
+  const entries=[
+    ['Düzenle', ()=> rtStartEdit()],
+    ['Birleştir', rtMerge],
+    ['Ayır', rtUnmerge],
+    ['Kopyala', rtCopy],
+    ['Yapıştır', rtPaste],
+    ['Temizle', rtClearSel, true],
+  ];
+  if(rtView==='week') entries.splice(1,0,['✓ İşaretle / geri al', rtTickSel]);
+  openCtx(e, `${DOW_LONG[dow]} ${pad2(hour)}:00`, entries);
+}
 
-tblViewWeek.addEventListener('click', ()=>{ tblView='week'; tblViewWeek.classList.add('active'); tblViewTpl.classList.remove('active'); renderRoutine(); });
-tblViewTpl.addEventListener('click', ()=>{ tblView='tpl'; tblViewTpl.classList.add('active'); tblViewWeek.classList.remove('active'); renderRoutine(); });
-document.getElementById('tblPrev').addEventListener('click', ()=>{ tblAnchor=addDays(tblAnchor,-7); renderRoutine(); });
-document.getElementById('tblNext').addEventListener('click', ()=>{ tblAnchor=addDays(tblAnchor,7); renderRoutine(); });
-document.getElementById('tblToday').addEventListener('click', ()=>{ tblAnchor=new Date(); renderRoutine(); });
+/* toolbar */
+function buildSwatches(){
+  rtSwatches.innerHTML='';
+  for(const c of SWATCHES){
+    const b=document.createElement('div'); b.className='sw'; b.style.background=hexToRgba(c,.6);
+    b.title=c; b.addEventListener('click', ()=> rtFill(c));
+    rtSwatches.appendChild(b);
+  }
+  const none=document.createElement('div'); none.className='sw none'; none.title='Rengi kaldır';
+  none.addEventListener('click', ()=> rtFill(''));
+  rtSwatches.appendChild(none);
+}
+document.getElementById('rtCustomColor').addEventListener('input', e=> rtFill(e.target.value));
+document.getElementById('rtMerge').addEventListener('click', rtMerge);
+document.getElementById('rtUnmerge').addEventListener('click', rtUnmerge);
+document.getElementById('rtTick').addEventListener('click', rtTickSel);
+document.getElementById('rtClear').addEventListener('click', rtClearSel);
+document.getElementById('rtLink').addEventListener('click', rtLinkHabit);
 
-document.getElementById('tblSaveAsTpl').addEventListener('click', ()=>{
-  showConfirm('Bu haftada gördüğün düzen şablona yazılsın mı?', ()=>{
-    const cfg=rcfg(), tpl={};
-    for(let dw=0; dw<7; dw++) for(let h=cfg.start; h<cfg.end; h++){
-      const k=ck(dw,h), r=resolveCell(k);
-      if(r.cell && !cellIsEmpty(r.cell)) tpl[k]=r.cell;
-    }
-    db.routine.template=tpl;
-    delete db.routine.weeks[wkKey()];
+document.getElementById('rtPrev').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,-7); renderRoutine(); });
+document.getElementById('rtNext').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,7); renderRoutine(); });
+document.getElementById('rtToday').addEventListener('click', ()=>{ rtAnchor=new Date(); renderRoutine(); });
+
+rtViewWeekBtn.addEventListener('click', ()=>{ rtView='week'; rtViewWeekBtn.classList.add('active'); rtViewTplBtn.classList.remove('active'); renderRoutine(); });
+rtViewTplBtn.addEventListener('click', ()=>{ rtView='tpl'; rtViewTplBtn.classList.add('active'); rtViewWeekBtn.classList.remove('active'); renderRoutine(); });
+
+document.getElementById('rtToTpl').addEventListener('click', ()=>{
+  showConfirm('Bu haftadaki düzen şablona yazılsın mı?', ()=>{
+    R().template=JSON.parse(JSON.stringify(rtCells()));
+    delete R().weeks[rtWeekKey()];
     saveDB(db); renderRoutine();
   });
 });
-
-document.getElementById('tblCfgBtn').addEventListener('click', ()=>{
+document.getElementById('rtResetWeek').addEventListener('click', ()=>{
+  if(rtView!=='week') return;
+  showConfirm('Bu haftaya özel değişiklikler silinip şablona dönülsün mü?', ()=>{
+    delete R().weeks[rtWeekKey()]; saveDB(db); renderRoutine();
+  });
+});
+document.getElementById('rtHours').addEventListener('click', ()=>{
   modalTitle.textContent='Saat aralığı'; showSection('cfg');
-  document.getElementById('cfgStart').value=rcfg().start;
-  document.getElementById('cfgEnd').value=rcfg().end;
+  document.getElementById('cfgStart').value=R().cfg.start;
+  document.getElementById('cfgEnd').value=R().cfg.end;
 });
 document.getElementById('cfgSave').addEventListener('click', ()=>{
   const s=Math.max(0,Math.min(23,Number(document.getElementById('cfgStart').value)||7));
   const e=Math.max(s+1,Math.min(24,Number(document.getElementById('cfgEnd').value)||23));
-  db.routine.cfg={start:s,end:e}; saveDB(db); closeModal();
-  if(tblOpen) renderRoutine();
+  R().cfg={start:s,end:e}; rtSel=null; saveDB(db); closeModal(); renderRoutine();
 });
 
+function openRoutine(){
+  rtOpen=true; rtOverlay.classList.add('open');
+  rtAnchor=new Date(selected);
+  buildSwatches(); renderRoutine();
+  setTimeout(()=>rtGridEl.focus(),0);
+}
+function closeRoutine(){ rtOpen=false; rtOverlay.classList.remove('open'); rtSel=null; }
+document.getElementById('btnRoutine').addEventListener('click', openRoutine);
+document.getElementById('rtClose').addEventListener('click', closeRoutine);
+rtOverlay.addEventListener('pointerdown', e=>{ if(e.target===rtOverlay) closeRoutine(); });
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  hideCtx();
+  if(overlay.style.display==='flex'){ closeModal(); return; }
+  if(rtOpen && !rtEditing) closeRoutine();
+});
+
+/* gün teması */
 let editingDow=null;
 function openDayTheme(dow){
   editingDow=dow;
   modalTitle.textContent=DOW_LONG[dow]+' — gün teması';
-  document.getElementById('dayWhere').textContent='Bu güne tema ve renk ver. Tüm haftalarda geçerli.';
-  const t=db.routine.dayThemes[dow]||{};
+  document.getElementById('dayWhere').textContent='Bu güne bir isim ve renk ver; kolon o renge boyanır.';
+  const t=R().dayThemes[dow]||{};
   document.getElementById('dayName').value=t.name||'';
   document.getElementById('dayColor').value=t.color||'#7dd3fc';
   showSection('day');
@@ -1224,12 +1351,12 @@ function openDayTheme(dow){
 document.getElementById('daySave').addEventListener('click', ()=>{
   const name=(document.getElementById('dayName').value||'').trim();
   const color=document.getElementById('dayColor').value;
-  if(!name) delete db.routine.dayThemes[editingDow];
-  else db.routine.dayThemes[editingDow]={name,color};
-  saveDB(db); closeModal(); if(tblOpen) renderRoutine();
+  if(!name) delete R().dayThemes[editingDow];
+  else R().dayThemes[editingDow]={name,color};
+  saveDB(db); closeModal(); renderRoutine();
 });
 document.getElementById('dayClear').addEventListener('click', ()=>{
-  delete db.routine.dayThemes[editingDow]; saveDB(db); closeModal(); if(tblOpen) renderRoutine();
+  delete R().dayThemes[editingDow]; saveDB(db); closeModal(); renderRoutine();
 });
 
 /* ============ Inbox ============ */
@@ -1295,4 +1422,319 @@ function renderHabitCalendar(){
   const g=document.getElementById('habitCalendarGrid'); g.innerHTML='';
   document.getElementById('hbMonthTitle').textContent=habitViewDate.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
   const y=habitViewDate.getFullYear(), m=habitViewDate.getMonth();
-  cons
+  const startIdx=(new Date(y,m,1).getDay()+6)%7, daysIn=new Date(y,m+1,0).getDate();
+  const hist=new Set(db.habitHistory[viewingHabitId]||[]), tK=todayKey();
+  for(let i=0;i<startIdx;i++){ const e=document.createElement('div'); e.className='hDay empty'; g.appendChild(e); }
+  for(let d=1;d<=daysIn;d++){
+    const k=dayKey(new Date(y,m,d));
+    const el=document.createElement('div');
+    el.className='hDay'+(hist.has(k)?' done':'')+(k===tK?' today':'');
+    el.textContent=d;
+    el.addEventListener('click', ()=>{
+      setHabitDate(viewingHabitId,k,!hist.has(k));
+      renderHabitCalendar();
+      const st=calculateStreak(viewingHabitId);
+      document.getElementById('currentStreak').textContent=st.current;
+      document.getElementById('maxStreak').textContent=st.max;
+      renderHabits(); if(rtOpen) renderRoutine();
+    });
+    g.appendChild(el);
+  }
+}
+document.getElementById('hbPrev').addEventListener('click', ()=>{ habitViewDate=new Date(habitViewDate.getFullYear(),habitViewDate.getMonth()-1,1); renderHabitCalendar(); });
+document.getElementById('hbNext').addEventListener('click', ()=>{ habitViewDate=new Date(habitViewDate.getFullYear(),habitViewDate.getMonth()+1,1); renderHabitCalendar(); });
+
+function renderHabits(){
+  ensureHabitReset(); habitsList.innerHTML='';
+  if(!db) return;
+  const today=todayKey(), total=(db.habits||[]).length;
+  const done=(db.habits||[]).filter(h=>(db.habitHistory[h.id]||[]).includes(today)).length;
+  habitsSub.textContent = total ? `Bugün: ${done}/${total}` : 'Her gün sıfırlanır';
+  if(!total){ const e=document.createElement('div'); e.className='muted'; e.textContent='Alışkanlık eklemek için +'; habitsList.appendChild(e); return; }
+
+  let dragId=null;
+  for(const h of db.habits){
+    const st=calculateStreak(h.id);
+    const isDone=(db.habitHistory[h.id]||[]).includes(today);
+    const row=document.createElement('div'); row.className='habitRow'; row.draggable=true; row.dataset.habit=h.id;
+    const c=h.color||'#7dd3fc';
+    row.style.borderLeft=`4px solid ${c}`;
+    row.style.background=`linear-gradient(90deg, ${hexToRgba(c,.08)} 0%, var(--card) 100%)`;
+
+    const lab=document.createElement('label');
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=isDone;
+    cb.addEventListener('click', e=>{ e.stopPropagation(); setHabitDate(h.id,today,cb.checked); renderHabits(); if(rtOpen) renderRoutine(); });
+    const nm=document.createElement('span'); nm.className='name'; nm.textContent=h.name;
+    nm.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); openHabitDetail(h.id); });
+    lab.appendChild(cb); lab.appendChild(nm);
+    if(st.current>0){ const b=document.createElement('span'); b.className='habitStreak'; b.textContent=`🔥 ${st.current}`; lab.appendChild(b); }
+
+    const del=document.createElement('button'); del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+    del.addEventListener('click', ()=>{
+      showConfirm(`"${h.name}" silinsin mi?`, ()=>{
+        db.habits=db.habits.filter(x=>x.id!==h.id);
+        ensureHabitReset();
+        db.habitState.doneIds=(db.habitState.doneIds||[]).filter(i=>i!==h.id);
+        delete db.habitHistory[h.id];
+        saveDB(db); renderHabits();
+      });
+    });
+    row.appendChild(lab); row.appendChild(del);
+
+    row.addEventListener('dragstart', ()=>{ dragId=h.id; row.classList.add('dragging'); });
+    row.addEventListener('dragend', ()=>{ dragId=null; row.classList.remove('dragging'); habitsList.querySelectorAll('.habitRow').forEach(x=>x.classList.remove('dragOver')); });
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('dragOver'); });
+    row.addEventListener('dragleave', ()=> row.classList.remove('dragOver'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault(); row.classList.remove('dragOver');
+      const t=row.dataset.habit; if(!dragId||dragId===t) return;
+      const ids=db.habits.map(x=>x.id), f=ids.indexOf(dragId), to=ids.indexOf(t);
+      if(f<0||to<0) return;
+      db.habits.splice(to,0,db.habits.splice(f,1)[0]);
+      saveDB(db); renderHabits();
+    });
+    habitsList.appendChild(row);
+  }
+}
+
+/* ============ Panel ============ */
+function renderPanel(){
+  const k=dayKey(selected);
+  panelTitle.textContent=fmtDay(selected);
+  const items=((db&&db.days[k])||[]).filter(passesFilters).sort(itemSort);
+  taskList.innerHTML='';
+  if(!items.length){
+    const e=document.createElement('div'); e.className='muted'; e.style.padding='10px 2px';
+    e.textContent='Bu gün için (filtreye göre) kart yok.'; taskList.appendChild(e); return;
+  }
+  for(const it of items) taskList.appendChild(makeCard(it,{from:'day',dayKey:k}));
+}
+
+/* ============ Tag manager ============ */
+const tagManager=document.getElementById('tagManager');
+function renderTagManager(){
+  tagManager.innerHTML='';
+  const add=document.createElement('div'); add.className='rowItem';
+  add.innerHTML=`<input id="newTagText" type="text" placeholder="Yeni tag" /><input id="newTagColor" type="color" value="#7dd3fc" /><button id="newTagBtn" class="btn" type="button">Ekle</button>`;
+  tagManager.appendChild(add);
+  add.querySelector('#newTagBtn').addEventListener('click', ()=>{
+    const n=normalizeTagName(add.querySelector('#newTagText').value);
+    if(!n || db.tags.some(x=>x.name===n)) return;
+    db.tags.push({ name:n, color:add.querySelector('#newTagColor').value, order:Math.max(0,...db.tags.map(x=>x.order||0))+1 });
+    saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
+  });
+
+  let dragName=null;
+  db.tags.sort((a,b)=>(a.order??9999)-(b.order??9999));
+  for(const t of db.tags){
+    const row=document.createElement('div'); row.className='rowItem'; row.draggable=true; row.dataset.tag=t.name;
+    const nb=document.createElement('div'); nb.className='tagName';
+    const d=document.createElement('span'); d.className='dot'; d.style.background=t.color;
+    const s=document.createElement('span'); s.textContent=t.name;
+    nb.appendChild(d); nb.appendChild(s);
+    const col=document.createElement('input'); col.type='color'; col.value=t.color;
+    col.addEventListener('input', ()=>{ t.color=col.value; saveDB(db); render(); });
+    const del=document.createElement('button'); del.className='iconBtn'; del.type='button'; del.textContent='🗑';
+    del.addEventListener('click', ()=>{
+      showConfirm(`"${t.name}" silinsin mi?`, ()=>{
+        db.tags=db.tags.filter(x=>x.name!==t.name);
+        for(const k in db.days) db.days[k].forEach(i=>{ if(i.tag===t.name) i.tag=''; });
+        (db.inbox||[]).forEach(i=>{ if(i.tag===t.name) i.tag=''; });
+        saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
+      });
+    });
+    row.appendChild(nb); row.appendChild(col); row.appendChild(del);
+    row.addEventListener('dragstart', ()=>{ dragName=t.name; });
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('dragOver'); });
+    row.addEventListener('dragleave', ()=> row.classList.remove('dragOver'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault(); row.classList.remove('dragOver');
+      const target=row.dataset.tag; if(!dragName||dragName===target) return;
+      const names=db.tags.map(x=>x.name);
+      const f=names.indexOf(dragName), to=names.indexOf(target);
+      names.splice(to,0,names.splice(f,1)[0]);
+      names.forEach((n,i)=>{ const m=db.tags.find(x=>x.name===n); if(m) m.order=i+1; });
+      saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
+    });
+    tagManager.appendChild(row);
+  }
+}
+document.getElementById('tagSettingsBtn').addEventListener('click', ()=>{
+  modalTitle.textContent='Tag Ayarları'; showSection('tags'); renderTagManager();
+});
+
+/* ============ Layout ============ */
+function dockForMode(){
+  const side=document.querySelector('.side');
+  document.body.classList.toggle('weekMode',mode==='week');
+  document.body.classList.toggle('monthMode',mode==='month');
+  const opt=whereInput.querySelector('option[value="inbox"]');
+  if(mode==='week'){
+    if(opt) opt.disabled=false;
+    if(inbox.parentElement!==bottomInboxSlot) bottomInboxSlot.appendChild(inbox);
+  } else {
+    whereInput.value='selected';
+    if(opt) opt.disabled=true;
+    if(inbox.parentElement!==side) side.insertBefore(inbox,side.firstChild);
+  }
+}
+function adjustMonthCellHeight(total){
+  if(mode!=='month') return;
+  const rows=Math.ceil(total/7);
+  const h=Math.floor(((calendarArea.clientHeight||0)-24-(rows-1)*10)/rows);
+  document.documentElement.style.setProperty('--monthCellH',Math.max(78,h)+'px');
+}
+function renderDOW(){
+  dowRow.innerHTML=''; dowRow.className='grid '+(mode==='month'?'month':'week');
+  for(const n of DOW){ const e=document.createElement('div'); e.className='dow'; e.textContent=n; dowRow.appendChild(e); }
+}
+
+/* ============ RENDER ============ */
+function render(){
+  if(!db) return;
+  for(const k in db.days) db.days[k]=(db.days[k]||[]).map(fixItem);
+  db.inbox=(db.inbox||[]).map(fixItem);
+  rebuildTagDropdowns(); dockForMode(); renderDOW();
+
+  grid.className='grid '+(mode==='month'?'month':'week');
+  grid.innerHTML='';
+
+  const cells=[];
+  if(mode==='week'){
+    const s=startOfWeek(anchor);
+    rangeTitle.textContent=`${fmtRange(s,addDays(s,6))} · KW ${isoWeek(s)}`;
+    for(let i=0;i<7;i++) cells.push({date:addDays(s,i),out:false});
+  } else {
+    const f=startOfMonth(anchor), l=endOfMonth(anchor);
+    const s=startOfWeek(f), e=addDays(startOfWeek(l),6);
+    rangeTitle.textContent=anchor.toLocaleDateString('tr-TR',{month:'long',year:'numeric'});
+    const n=Math.round((e-s)/86400000)+1;
+    for(let i=0;i<n;i++){ const d=addDays(s,i); cells.push({date:d,out:d.getMonth()!==anchor.getMonth()}); }
+  }
+  if(mode==='month') adjustMonthCellHeight(cells.length);
+
+  const selKey=dayKey(selected), todayK=todayKey();
+  for(const c of cells){
+    const k=dayKey(c.date);
+    const items=(db.days[k]||[]).filter(passesFilters).sort(itemSort);
+    const open=items.filter(x=>!x.done).length;
+
+    const cell=document.createElement('div');
+    cell.className='cell '+(mode==='month'?'monthCell':'weekCell')+(c.out?' out':'')+(k===selKey?' sel':'');
+
+    const top=document.createElement('div'); top.className='dateRow';
+    const left=document.createElement('div'); left.className='dateLeft';
+    const de=document.createElement('div'); de.className='date'; de.textContent=pad2(c.date.getDate());
+    if(k===todayK) de.style.color='var(--accent)';
+    const plus=document.createElement('button'); plus.className='plusBtn'; plus.type='button'; plus.textContent='+';
+    plus.addEventListener('click', e=>{ e.stopPropagation(); openModalAdd({dest:'day',dayKey:k}); });
+    left.appendChild(de); left.appendChild(plus);
+    const cnt=document.createElement('div'); cnt.className='count'; cnt.textContent=open||'';
+    top.appendChild(left); top.appendChild(cnt);
+
+    const cards=document.createElement('div'); cards.className='cards';
+    for(const it of items) cards.appendChild(makeCard(it,{from:'day',dayKey:k}));
+    cell.appendChild(top); cell.appendChild(cards);
+
+    cell.addEventListener('click', ()=>{
+      selected=c.date;
+      if(mode==='month'&&c.out) anchor=new Date(c.date.getFullYear(),c.date.getMonth(),1);
+      render();
+    });
+    cell.addEventListener('dragover', e=>{ e.preventDefault(); cell.classList.add('dragOver'); });
+    cell.addEventListener('dragleave', ()=> cell.classList.remove('dragOver'));
+    cell.addEventListener('drop', e=>{
+      e.preventDefault(); cell.classList.remove('dragOver');
+      const p=readPayload(e); if(!p||!p.itemId) return;
+      if(p.from==='day'&&p.dayKey===k) return;
+      if(!moveItem(p,k)) return;
+      saveDB(db); dragPayload=null; selected=c.date; render();
+    });
+    grid.appendChild(cell);
+  }
+  renderInbox(); renderHabits(); renderPanel();
+}
+
+/* ============ Controls ============ */
+document.getElementById('prev').addEventListener('click', ()=>{
+  anchor = mode==='month' ? new Date(anchor.getFullYear(),anchor.getMonth()-1,1) : addDays(anchor,-7);
+  render();
+});
+document.getElementById('next').addEventListener('click', ()=>{
+  anchor = mode==='month' ? new Date(anchor.getFullYear(),anchor.getMonth()+1,1) : addDays(anchor,7);
+  render();
+});
+document.getElementById('today').addEventListener('click', ()=>{ anchor=new Date(); selected=new Date(); render(); });
+
+function setMode(m){
+  mode=m;
+  btnWeek.classList.toggle('active',m==='week');
+  btnMonth.classList.toggle('active',m==='month');
+  anchor = m==='month' ? new Date(selected.getFullYear(),selected.getMonth(),1) : new Date(selected);
+  typeFilter.value='__preset__';
+  typeInput.value = m==='month'?'termin':'gorev';
+  render();
+}
+btnWeek.addEventListener('click', ()=> setMode('week'));
+btnMonth.addEventListener('click', ()=> setMode('month'));
+
+tagFilter.addEventListener('change', render);
+typeFilter.addEventListener('change', render);
+search.addEventListener('input', render);
+taskInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addSubmit.click(); } });
+
+addForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const text=(taskInput.value||'').trim(); if(!text) return;
+  const item={ text, notes:'', time:timeInput.value||'', type:typeInput.value,
+               tag: tagInput.value==='__none__'?'':tagInput.value, done:false, created:Date.now() };
+  if(whereInput.value==='inbox') addItemTo('inbox',null,item);
+  else addItemTo('day',dayKey(selected),item);
+  taskInput.value=''; timeInput.value=''; tagInput.value='__none__';
+  render(); taskInput.focus();
+});
+document.getElementById('clearDone').addEventListener('click', ()=>{
+  const k=dayKey(selected);
+  const kept=(db.days[k]||[]).filter(t=>!t.done);
+  if(kept.length) db.days[k]=kept; else delete db.days[k];
+  saveDB(db); render();
+});
+document.getElementById('clearInboxDone').addEventListener('click', ()=>{
+  db.inbox=(db.inbox||[]).filter(t=>!t.done); saveDB(db); render();
+});
+document.getElementById('inboxAdd').addEventListener('click', ()=> openModalAdd({dest:'inbox',dayKey:null}));
+
+inbox.addEventListener('dragover', e=>{ e.preventDefault(); inbox.classList.add('dragOver'); });
+inbox.addEventListener('dragleave', ()=> inbox.classList.remove('dragOver'));
+inbox.addEventListener('drop', e=>{
+  e.preventDefault(); inbox.classList.remove('dragOver');
+  const p=readPayload(e); if(!p||!p.itemId||p.from!=='day') return;
+  const arr=db.days[p.dayKey]||[]; const i=arr.findIndex(x=>x.id===p.itemId); if(i<0) return;
+  const m=arr.splice(i,1)[0]; if(!arr.length) delete db.days[p.dayKey];
+  db.inbox=db.inbox||[]; db.inbox.push(m); saveDB(db); dragPayload=null; render();
+});
+
+document.getElementById('habitAddBtn').addEventListener('click', ()=>{
+  const n=prompt('Yeni alışkanlık:'); if(!n||!n.trim()) return;
+  db.habits=db.habits||[]; db.habits.push({ id:uid(), name:n.trim(), color:'#7dd3fc' });
+  saveDB(db); renderHabits();
+});
+document.getElementById('habitResetBtn').addEventListener('click', ()=>{
+  const today=todayKey();
+  db.habitState={date:today,doneIds:[]};
+  db.habitHistory=db.habitHistory||{};
+  for(const h of (db.habits||[])){
+    db.habitHistory[h.id]=(db.habitHistory[h.id]||[]).filter(d=>d!==today);
+  }
+  saveDB(db);
+  renderHabits();
+  if(rtOpen) renderRoutine();
+});
+
+typeFilter.value='__preset__'; typeInput.value='gorev';
+let rtimer=null;
+window.addEventListener('resize', ()=>{ if(mode!=='month') return; clearTimeout(rtimer); rtimer=setTimeout(render,120); });
+try { initApp(); } catch(err){ showErr('BAŞLATMA HATASI: ' + (err && err.message ? err.message : err)); }
+</script>
+</body>
+</html>
