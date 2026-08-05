@@ -172,7 +172,7 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   min-width:680px;
   user-select:none;
   outline:none;
-  height:calc(100vh - 210px);
+  height:100%;                          /* FIX: sabit 100vh hesabı yerine kapsayıcıya uy */
   min-height:420px;
 }
 .rtCorner, .rtHead, .rtHour{ background:#121216; }
@@ -545,7 +545,11 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
 <div id="ctxMenu"></div>
 
 <script>
-/* ============ hata gostericisi ============ */
+/* ============================================================
+   todoapp — app.js  (düzeltilmiş sürüm)
+   ============================================================ */
+
+/* ============ hata göstericisi ============ */
 function showErr(msg){
   var bar = document.getElementById('errBar');
   if(!bar) return;
@@ -568,11 +572,16 @@ if(typeof supabase === 'undefined'){
 const SUPABASE_URL = "https://czuprhvrnlqpipcytvwx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_IR67FHQQNsnA9aNMizaqUA_HYGC8cKM";
 const LOCAL_KEY = 'minimal_todo_v18_routine';
-let db=null, currentUser=null, _supabase=null;
+let db=null, currentUser=null, _supabase=null, loadedUserId=null;
 if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY){
   try { _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
   catch(err){ showErr('Supabase baslatilamadi: ' + err.message); }
 }
+
+/* FIX: localStorage gizli sekmede / kota dolunca throw ediyordu -> tüm kayıt zinciri çöküyordu */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ /* sessiz geç */ } }
+function lsParse(k){ try{ const raw=lsGet(k); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
 
 /* ============ PWA ============ */
 if ('serviceWorker' in navigator) window.addEventListener('load', ()=>{
@@ -587,8 +596,9 @@ btnInstall.addEventListener('click', async ()=>{ if(!deferredPrompt) return; def
 const confirmOverlay=document.getElementById('confirmOverlay'), confirmMsg=document.getElementById('confirmMsg');
 let onConfirmYes=null;
 function showConfirm(t,cb){ confirmMsg.textContent=t; onConfirmYes=cb; confirmOverlay.style.display='flex'; }
-document.getElementById('confirmYes').addEventListener('click', ()=>{ if(onConfirmYes) onConfirmYes(); confirmOverlay.style.display='none'; onConfirmYes=null; });
-document.getElementById('confirmNo').addEventListener('click', ()=>{ confirmOverlay.style.display='none'; onConfirmYes=null; });
+function closeConfirm(){ confirmOverlay.style.display='none'; onConfirmYes=null; }
+document.getElementById('confirmYes').addEventListener('click', ()=>{ const f=onConfirmYes; closeConfirm(); if(f) f(); });
+document.getElementById('confirmNo').addEventListener('click', closeConfirm);
 
 /* ============ AUTH ============ */
 const authOverlay=document.getElementById('authOverlay'), authEmail=document.getElementById('authEmail'),
@@ -596,13 +606,12 @@ const authOverlay=document.getElementById('authOverlay'), authEmail=document.get
       appWrap=document.getElementById('appWrap'), userEmailDisplay=document.getElementById('userEmailDisplay');
 
 function localMode(reason){
-  currentUser = null;
+  currentUser = null; loadedUserId = null;
   authOverlay.style.display = 'none';
   appWrap.style.display = 'block';
   userEmailDisplay.textContent = 'çevrimdışı';
   showErr('ÇEVRİMDIŞI MOD — ' + reason + '\nDeğişiklikler sadece bu cihazda saklanır.');
-  let local = null;
-  try { const raw = localStorage.getItem(LOCAL_KEY); if(raw) local = JSON.parse(raw); } catch(e){}
+  const local = lsParse(LOCAL_KEY);
   db = local ? migrate(local) : getEmptyDB();
   render();
 }
@@ -617,15 +626,24 @@ async function initApp(){
     localMode('Sunucuya ulaşılamadı: ' + err.message);
   }
 }
-function showAuth(){ authOverlay.style.display='flex'; appWrap.style.display='none'; currentUser=null; }
+function showAuth(){
+  authOverlay.style.display='flex'; appWrap.style.display='none';
+  currentUser=null; loadedUserId=null;
+}
+/* FIX: giriş sonrası hem signInWithPassword hem onAuthStateChange handleSession'ı
+   çağırıyordu -> veri iki kez çekiliyor, ekran iki kez çiziliyordu. */
 async function handleSession(s){
-  currentUser=s.user; authOverlay.style.display='none'; appWrap.style.display='block';
+  currentUser=s.user;
+  authOverlay.style.display='none'; appWrap.style.display='block';
   userEmailDisplay.textContent=currentUser.email;
+
+  if(loadedUserId===currentUser.id && db){ try{ render(); }catch(e){} return; }
+  loadedUserId=currentUser.id;
+
   try { await loadRemoteDB(); }
   catch(err){
-    showErr('Veri çekilemedi, yerel kopya kullanılıyor: ' + err.message);
-    let local=null;
-    try{ const raw=localStorage.getItem(LOCAL_KEY); if(raw) local=JSON.parse(raw); }catch(e){}
+    showErr('Veri çekilemedi, yerel kopya kullanılıyor: ' + (err.message||err));
+    const local = lsParse(LOCAL_KEY);
     db = local ? migrate(local) : getEmptyDB();
   }
   try { render(); } catch(err){ showErr('Ekran çizilemedi: ' + err.message); }
@@ -648,6 +666,7 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
     authError.textContent='Giriş hatası: '+(err.message||String(err));
   }
 });
+authPass.addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('btnLogin').click(); });
 document.getElementById('btnSignup').addEventListener('click', async ()=>{
   if(!_supabase){ authError.textContent='Sunucu bağlantısı hazır değil.'; return; }
   const email=(authEmail.value||'').trim(), password=authPass.value||'';
@@ -658,9 +677,12 @@ document.getElementById('btnSignup').addEventListener('click', async ()=>{
   }catch(err){ authError.textContent=err.message||String(err); }
 });
 document.getElementById('btnOffline').addEventListener('click', ()=> localMode('Çevrimdışı devam edildi.'));
+/* FIX: çıkışta currentUser hemen null yapılıyordu -> bekleyen senkronizasyon iptal oluyor,
+   son değişiklikler sunucuya hiç yazılmıyordu. Önce flush, sonra signOut. */
 document.getElementById('btnLogout').addEventListener('click', async ()=>{
-  currentUser=null;
+  try{ await flushSave(); }catch(e){}
   if(_supabase){ try{ await _supabase.auth.signOut(); }catch(err){ showErr('Çıkış hatası: '+(err.message||String(err))); } }
+  currentUser=null; loadedUserId=null;
   showAuth();
 });
 
@@ -677,12 +699,19 @@ function isoWeek(date){ const t=new Date(date.getFullYear(),date.getMonth(),date
 function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
 function pad2(n){ return String(n).padStart(2,'0'); }
 function normalizeTagName(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,'-'); }
-function getCssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+/* FIX: her kart için getComputedStyle çağrılıyordu (yüzlerce kart = layout thrash). Cache'lendi. */
+const _cssVarCache={};
+function getCssVar(n){
+  if(_cssVarCache[n]===undefined) _cssVarCache[n]=getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  return _cssVarCache[n];
+}
 function typeFrameColor(t){ return t==='termin'?getCssVar('--frame-termin'):t==='hedef'?getCssVar('--frame-hedef'):getCssVar('--frame-gorev'); }
 
 function hexRGB(hex){
   const h=(hex||'').replace('#','').trim();
   const f=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  if(f.length<6) return null;
   const r=parseInt(f.slice(0,2),16), g=parseInt(f.slice(2,4),16), b=parseInt(f.slice(4,6),16);
   return [r,g,b].some(isNaN) ? null : [r,g,b];
 }
@@ -690,8 +719,7 @@ function hexToRgba(hex,a){
   const c=hexRGB(hex);
   return c ? `rgba(${c[0]},${c[1]},${c[2]},${a})` : `rgba(255,255,255,${a})`;
 }
-/* saydamlık yerine DÜZ renk: hücre zeminiyle önceden karıştırılır,
-   böylece altındaki ızgara/çizgi sızmaz, üst kısım koyu görünmez */
+/* saydamlık yerine DÜZ renk: hücre zeminiyle önceden karıştırılır */
 function solidMix(hex, alpha){
   const c=hexRGB(hex);
   if(!c) return 'var(--card)';
@@ -701,6 +729,7 @@ function solidMix(hex, alpha){
 }
 
 function fixItem(t){
+  t=t||{};
   const type=['gorev','termin','hedef'].includes(t.type)?t.type:'gorev';
   return { id:t.id||uid(), text:(t.text||'').trim(), notes:t.notes||'', done:!!t.done,
            type, tag:t.tag||'', time:t.time||'', created:t.created||Date.now() };
@@ -726,11 +755,17 @@ function getEmptyDB(){
   };
 }
 function migrate(d){
+  d=d||{};
   d.days=d.days||{}; d.inbox=d.inbox||[]; d.tags=d.tags||[];
   d.habits=d.habits||[]; d.habitHistory=d.habitHistory||{};
   d.habitState=d.habitState||{date:todayKey(),doneIds:[]};
   d.routine=Object.assign(emptyRoutine(), d.routine||{});
   d.routine.cfg=Object.assign({start:7,end:23}, d.routine.cfg||{});
+  /* FIX: bozuk cfg (start>=end) gelirse rtHours().n negatif oluyor ve tablo hiç çizilmiyordu */
+  let cs=Number(d.routine.cfg.start), ce=Number(d.routine.cfg.end);
+  if(!Number.isFinite(cs) || cs<0 || cs>23) cs=7;
+  if(!Number.isFinite(ce) || ce<=cs || ce>24) ce=Math.max(cs+1,23);
+  d.routine.cfg={start:cs,end:ce};
   d.routine.dayThemes=d.routine.dayThemes||{};
   d.routine.template=d.routine.template||{};
   d.routine.weeks=d.routine.weeks||{};
@@ -739,8 +774,7 @@ function migrate(d){
 }
 async function loadRemoteDB(){
   if(!currentUser || !_supabase) return;
-  let local=null;
-  try{ const raw=localStorage.getItem(LOCAL_KEY); if(raw) local=JSON.parse(raw); }catch(e){}
+  const local = lsParse(LOCAL_KEY);
 
   const { data, error } = await _supabase
     .from('user_data').select('content').eq('id',currentUser.id).maybeSingle();
@@ -748,30 +782,39 @@ async function loadRemoteDB(){
 
   if(data && data.content){
     db=migrate(data.content);
-    localStorage.setItem(LOCAL_KEY,JSON.stringify(db));
+    lsSet(LOCAL_KEY,JSON.stringify(db));
   } else if(local){
     db=migrate(local); saveDB(db);
   } else {
     db=getEmptyDB(); saveDB(db);
   }
 }
-let saveTimeout=null;
+
+let saveTimeout=null, pendingSave=false;
 function saveDB(newDB){
   if(!newDB) return;
   db=newDB;
-  localStorage.setItem(LOCAL_KEY,JSON.stringify(db));
+  lsSet(LOCAL_KEY,JSON.stringify(db));
+  pendingSave=true;
   clearTimeout(saveTimeout);
-  saveTimeout=setTimeout(async ()=>{
-    if(!currentUser || !_supabase) return;
-    try{
-      const { error } = await _supabase.from('user_data')
-        .upsert({ id:currentUser.id, content:db, updated_at:new Date().toISOString() });
-      if(error) throw error;
-    }catch(err){
-      showErr('Senkronizasyon hatası: ' + (err && err.message ? err.message : String(err)));
-    }
-  },1000);
+  saveTimeout=setTimeout(flushSave,1000);
 }
+async function flushSave(){
+  clearTimeout(saveTimeout);
+  if(!pendingSave) return;
+  if(!currentUser || !_supabase){ pendingSave=false; return; }
+  pendingSave=false;
+  try{
+    const { error } = await _supabase.from('user_data')
+      .upsert({ id:currentUser.id, content:db, updated_at:new Date().toISOString() });
+    if(error) throw error;
+  }catch(err){
+    pendingSave=true;   // tekrar denenebilsin
+    showErr('Senkronizasyon hatası: ' + (err && err.message ? err.message : String(err)));
+  }
+}
+/* FIX: sekme kapanırken/arka plana alınırken bekleyen değişiklik sunucuya gitmiyordu */
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushSave(); });
 
 /* ============ DOM ============ */
 const grid=document.getElementById('grid'), dowRow=document.getElementById('dowRow'),
@@ -807,8 +850,13 @@ overlay.addEventListener('keydown', e=>{
   if(e.target.tagName==='TEXTAREA') return;
   if(e.key==='Enter'){ e.preventDefault(); modalSave.click(); }
 });
+
+/* FIX (önemli): openCtx bir click handler'ından çağrıldığında, aynı click event'i
+   document'a kadar baloncuklanıp hideCtx()'i tetikliyordu -> menü hiç görünmüyordu.
+   ("Alışkanlığa bağla" butonu bu yüzden çalışmıyordu.) */
+let ctxJustOpened=false;
 function hideCtx(){ ctxMenu.style.display='none'; }
-document.addEventListener('click', hideCtx);
+document.addEventListener('click', ()=>{ if(ctxJustOpened) return; hideCtx(); });
 function openCtx(pos, title, entries){
   ctxMenu.innerHTML='';
   if(title){ const h=document.createElement('div'); h.className='ctxHead'; h.textContent=title; ctxMenu.appendChild(h); }
@@ -822,6 +870,8 @@ function openCtx(pos, title, entries){
   const w=ctxMenu.offsetWidth||230, h=ctxMenu.offsetHeight||200;
   ctxMenu.style.left=Math.max(6,Math.min(pos.clientX, innerWidth-w-8))+'px';
   ctxMenu.style.top =Math.max(6,Math.min(pos.clientY, innerHeight-h-8))+'px';
+  ctxJustOpened=true;
+  setTimeout(()=>{ ctxJustOpened=false; },0);
 }
 
 /* ============ Tag / filtre ============ */
@@ -916,7 +966,8 @@ modalSave.addEventListener('click', ()=>{
   closeModal(); render();
 });
 modalDelete.addEventListener('click', ()=>{
-  showConfirm('Bu kart silinsin mi?', ()=>{ deleteItem(modalContext.origin,modalContext.itemId); closeModal(); });
+  const o=modalContext.origin, id=modalContext.itemId;
+  showConfirm('Bu kart silinsin mi?', ()=>{ deleteItem(o,id); closeModal(); });
 });
 
 /* ============ Kart ============ */
@@ -927,6 +978,7 @@ function makeCard(item,origin){
   card.className='card'+(item.done?' done':''); card.draggable=true;
   card.style.setProperty('--frameColor',typeColor);
   card.style.setProperty('--fillColor',hexToRgba(base,.22));
+  card.title=(item.notes||'').trim() || item.text || '';
 
   const row=document.createElement('div'); row.className='cardRow';
   const check=document.createElement('button');
@@ -949,6 +1001,11 @@ function makeCard(item,origin){
     if(e.target.closest('.checkBtn')) return;
     e.preventDefault(); e.stopPropagation(); openModalEdit(origin,item.id);
   });
+  /* FIX: dokunmatik cihazda sağ tık yok -> karta çift dokunma/çift tıkla da düzenleme açılsın */
+  card.addEventListener('dblclick', e=>{
+    if(e.target.closest('.checkBtn')) return;
+    e.stopPropagation(); openModalEdit(origin,item.id);
+  });
   return card;
 }
 
@@ -965,7 +1022,7 @@ let rtOpen=false, rtView='week', rtAnchor=new Date();
 let rtSel=null, rtSelecting=false, rtEditing=false, rtClipboard=null;
 
 function R(){ return db.routine; }
-function rtHours(){ const c=R().cfg; return { start:c.start, end:c.end, n:c.end-c.start }; }
+function rtHours(){ const c=R().cfg; return { start:c.start, end:c.end, n:Math.max(1,c.end-c.start) }; }
 function ck(dow,hour){ return `${dow}-${hour}`; }
 function rtWeekKey(){ return dayKey(startOfWeek(rtAnchor)); }
 
@@ -999,10 +1056,10 @@ function normSel(sel){
     changed=false;
     for(let r=0;r<H.n;r++) for(let c=0;c<7;c++){
       const cell=getCell(cells,c,H.start+r);
-      if(!cell) continue;
+      if(!cell || cell.cov) continue;
       const rs=cell.rs||1, cs=cell.cs||1;
       if(rs===1&&cs===1) continue;
-      const R2=r+rs-1, C2=c+cs-1;
+      const R2=Math.min(H.n-1, r+rs-1), C2=Math.min(6, c+cs-1);
       if(!(R2<r1 || r>r2 || C2<c1 || c>c2)){
         if(r<r1){ r1=r; changed=true; }
         if(c<c1){ c1=c; changed=true; }
@@ -1013,10 +1070,16 @@ function normSel(sel){
   }
   return { r1,c1,r2,c2 };
 }
+/* FIX: seçim birleştirilmiş bir alanı kapsadığında, görünmeyen "cov" hücrelere de
+   renk/metin yazılıyordu; ayrıldığında ortaya çöp veri çıkıyordu. Artık atlanıyor. */
 function selCells(fn){
   if(!rtSel) return;
   const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
-  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++) fn(cells, c, H.start+r, r);
+  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
+    const ex=cells[ck(c,H.start+r)];
+    if(ex && ex.cov) continue;
+    fn(cells, c, H.start+r, r);
+  }
   saveDB(db); renderRoutine();
 }
 
@@ -1059,6 +1122,22 @@ function renderRoutine(){
     rtGridEl.appendChild(h);
   }
 
+  /* FIX: saat aralığı daraltıldığında birleştirilmiş hücrelerin span'i taşıyor,
+     "cov" hücreler ise hiç çizilmediği için tabloda delikler kalıyordu.
+     Artık görünür alandaki kapsama haritası baştan hesaplanıyor ve span'ler kırpılıyor. */
+  const covered=new Set();
+  for(let r=0;r<H.n;r++) for(let dw=0;dw<7;dw++){
+    const c0=getCell(cells,dw,H.start+r);
+    if(!c0 || c0.cov) continue;
+    const rs=Math.max(1,Math.min(c0.rs||1, H.n-r));
+    const cs=Math.max(1,Math.min(c0.cs||1, 7-dw));
+    if(rs===1 && cs===1) continue;
+    for(let i=0;i<rs;i++) for(let j=0;j<cs;j++){
+      if(!i && !j) continue;
+      covered.add((r+i)+':'+(dw+j));
+    }
+  }
+
   const sel = rtSel ? normSel(rtSel) : null;
 
   for(let r=0; r<H.n; r++){
@@ -1069,9 +1148,12 @@ function renderRoutine(){
     rtGridEl.appendChild(lbl);
 
     for(let dw=0; dw<7; dw++){
-      const cell=getCell(cells,dw,hour);
-      if(cell && cell.cov) continue;
-      const rs=(cell&&cell.rs)||1, cs=(cell&&cell.cs)||1;
+      if(covered.has(r+':'+dw)) continue;
+      const raw=getCell(cells,dw,hour);
+      // sahipsiz kalmış cov hücreleri boş hücre gibi çiz (delik oluşmasın)
+      const cell = (raw && raw.cov) ? null : raw;
+      const rs=Math.max(1,Math.min((cell&&cell.rs)||1, H.n-r));
+      const cs=Math.max(1,Math.min((cell&&cell.cs)||1, 7-dw));
 
       const el=document.createElement('div');
       el.className='rtCell';
@@ -1084,6 +1166,7 @@ function renderRoutine(){
 
       if(cell && cell.t){
         const t=document.createElement('div'); t.className='txt'; t.textContent=cell.t; el.appendChild(t);
+        el.title=cell.t;
       }
       if(ghost && cell && (cell.t||cell.c)) el.classList.add('ghost');
       if(cell && cell.hb){ const d=document.createElement('div'); d.className='hlink'; el.appendChild(d); }
@@ -1140,8 +1223,9 @@ function renderRoutine(){
 }
 
 /* sürükleyerek seçim */
+/* FIX: bu dinleyici rutin tablosu kapalıyken de her fare hareketinde çalışıyordu */
 document.addEventListener('pointermove', e=>{
-  if(!rtSelecting || rtEditing) return;
+  if(!rtOpen || !rtSelecting || rtEditing) return;
   const target=document.elementFromPoint(e.clientX,e.clientY);
   const cell=target && target.closest ? target.closest('.rtCell') : null;
   if(!cell || !rtGridEl.contains(cell)) return;
@@ -1154,38 +1238,46 @@ document.addEventListener('pointermove', e=>{
 document.addEventListener('pointerup', ()=>{ rtSelecting=false; });
 
 /* ---- hücre düzenleme ---- */
+/* FIX: eskiden düzenlemeye başlar başlamaz rtEditable() çağrılıyordu; ESC'e bassan bile
+   o hafta için şablon kopyası oluşuyor ve boş {} hücre nesneleri kalıyordu.
+   Artık kopya sadece metin gerçekten değiştiyse oluşturuluyor. */
 function rtStartEdit(preset){
   if(!rtSel) return;
   const s=normSel(rtSel), H=rtHours();
   const el=rtGridEl.querySelector(`.rtCell[data-r="${s.r1}"][data-c="${s.c1}"]`);
   if(!el) return;
-  const cells=rtEditable();
-  const cell=ensureCell(cells,s.c1,H.start+s.r1);
+  const existing=getCell(rtCells(), s.c1, H.start+s.r1);
+  const oldText=(existing && existing.t) || '';
 
   rtEditing=true;
   const inp=document.createElement('input');
-  inp.className='editor'; inp.value = preset!==undefined ? preset : (cell.t||'');
+  inp.className='editor'; inp.value = preset!==undefined ? preset : oldText;
   el.appendChild(inp);
   inp.focus();
   if(preset===undefined) inp.select();
 
-  const commit=(move)=>{
+  const finish=(move)=>{
     if(!rtEditing) return;
     rtEditing=false;
-    cell.t=(inp.value||'').trim();
-    cleanCell(cells,s.c1,H.start+s.r1);
-    saveDB(db);
+    const val=(inp.value||'').trim();
+    if(val!==oldText){
+      const cells=rtEditable();
+      const cell=ensureCell(cells,s.c1,H.start+s.r1);
+      if(val) cell.t=val; else delete cell.t;
+      cleanCell(cells,s.c1,H.start+s.r1);
+      saveDB(db);
+    }
     if(move==='down' && s.r1+1<H.n) rtSel={r1:s.r1+1,c1:s.c1,r2:s.r1+1,c2:s.c1};
     if(move==='right' && s.c1+1<7) rtSel={r1:s.r1,c1:s.c1+1,r2:s.r1,c2:s.c1+1};
     renderRoutine(); rtGridEl.focus();
   };
   inp.addEventListener('keydown', e=>{
     e.stopPropagation();
-    if(e.key==='Enter'){ e.preventDefault(); commit('down'); }
-    else if(e.key==='Tab'){ e.preventDefault(); commit('right'); }
+    if(e.key==='Enter'){ e.preventDefault(); finish('down'); }
+    else if(e.key==='Tab'){ e.preventDefault(); finish('right'); }
     else if(e.key==='Escape'){ e.preventDefault(); rtEditing=false; renderRoutine(); rtGridEl.focus(); }
   });
-  inp.addEventListener('blur', ()=> commit());
+  inp.addEventListener('blur', ()=> finish());
 }
 
 rtGridEl.addEventListener('keydown', e=>{
@@ -1212,6 +1304,17 @@ rtGridEl.addEventListener('keydown', e=>{
 function rtFill(color){ selCells((cells,c,hour)=>{ const x=ensureCell(cells,c,hour); if(color) x.c=color; else delete x.c; cleanCell(cells,c,hour); }); }
 function rtClearSel(){ selCells((cells,c,hour)=>{ const x=cells[ck(c,hour)]; if(!x) return; delete x.t; delete x.c; delete x.hb; cleanCell(cells,c,hour); }); }
 
+/* seçili dikdörtgendeki tüm birleştirmeleri çöz (yapıştırma öncesi güvenlik) */
+function rtBreakArea(cells,H,r1,c1,r2,c2){
+  for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++){
+    const k=ck(c,H.start+r), x=cells[k];
+    if(!x) continue;
+    if(x.cov){ delete cells[k]; continue; }
+    delete x.rs; delete x.cs;
+    cleanCell(cells,c,H.start+r);
+  }
+}
+
 function rtMerge(){
   if(!rtSel) return;
   const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
@@ -1231,13 +1334,7 @@ function rtMerge(){
 function rtUnmerge(){
   if(!rtSel) return;
   const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
-  for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
-    const k=ck(c,H.start+r), x=cells[k];
-    if(!x) continue;
-    if(x.cov){ delete cells[k]; continue; }
-    delete x.rs; delete x.cs;
-    cleanCell(cells,c,H.start+r);
-  }
+  rtBreakArea(cells,H,s.r1,s.c1,s.r2,s.c2);
   saveDB(db); renderRoutine();
 }
 function rtCopy(){
@@ -1254,9 +1351,15 @@ function rtCopy(){
   rtClipboard=out;
   rtHint.textContent=`${out.length}×${out[0].length} hücre kopyalandı. Ctrl+V ile yapıştır.`;
 }
+/* FIX: yapıştırma birleştirilmiş hücrenin üstüne gelince baş hücrenin rs/cs'i siliniyor ama
+   "cov" hücreler kalıyordu -> tabloda kalıcı boşluklar oluşuyordu. */
 function rtPaste(){
   if(!rtClipboard || !rtSel) return;
   const cells=rtEditable(), H=rtHours(), s=normSel(rtSel);
+  const rEnd=Math.min(H.n-1, s.r1+rtClipboard.length-1);
+  const cEnd=Math.min(6,     s.c1+rtClipboard[0].length-1);
+  rtBreakArea(cells,H,s.r1,s.c1,rEnd,cEnd);
+
   for(let i=0;i<rtClipboard.length;i++) for(let j=0;j<rtClipboard[i].length;j++){
     const r=s.r1+i, c=s.c1+j;
     if(r>=H.n || c>=7) continue;
@@ -1273,6 +1376,7 @@ function rtPaste(){
 function rtTickSel(){
   if(rtView!=='week' || !rtSel) return;
   const cells=rtCells(), H=rtHours(), s=normSel(rtSel), weekStart=startOfWeek(rtAnchor);
+  const habits=db.habits||[];
   let anyOff=false;
   for(let r=s.r1;r<=s.r2;r++) for(let c=s.c1;c<=s.c2;c++){
     const x=getCell(cells,c,H.start+r);
@@ -1284,19 +1388,20 @@ function rtTickSel(){
     if(!x || x.cov || !x.t) continue;
     const dateK=dayKey(addDays(weekStart,c)), dk=`${dateK}|${H.start+r}`;
     if(anyOff) R().done[dk]=true; else delete R().done[dk];
-    if(x.hb && db.habits.some(h=>h.id===x.hb)) setHabitDate(x.hb, dateK, anyOff);
+    if(x.hb && habits.some(h=>h.id===x.hb)) setHabitDate(x.hb, dateK, anyOff);
   }
   saveDB(db); renderRoutine(); renderHabits();
 }
 function rtLinkHabit(){
   if(!rtSel) return;
-  const entries=(db.habits||[]).map(h=>[h.name, ()=>{
+  const habits=db.habits||[];
+  const entries=habits.map(h=>[h.name, ()=>{
     selCells((cells,c,hour)=>{ const x=ensureCell(cells,c,hour); x.hb=h.id; });
   }]);
   entries.push(['— bağlantıyı kaldır —', ()=>{
     selCells((cells,c,hour)=>{ const x=cells[ck(c,hour)]; if(x){ delete x.hb; cleanCell(cells,c,hour); } });
   }]);
-  if(!db.habits.length) entries.unshift(['(önce Habits paneline alışkanlık ekle)', ()=>{}]);
+  if(!habits.length) entries.unshift(['(önce Habits paneline alışkanlık ekle)', ()=>{}]);
   const r=document.getElementById('rtLink').getBoundingClientRect();
   openCtx({clientX:r.left, clientY:r.bottom+4}, 'Seçili hücreleri bağla', entries);
 }
@@ -1325,21 +1430,24 @@ function buildSwatches(){
   none.addEventListener('click', ()=> rtFill(''));
   rtSwatches.appendChild(none);
 }
-document.getElementById('rtCustomColor').addEventListener('input', e=> rtFill(e.target.value));
+document.getElementById('rtCustomColor').addEventListener('change', e=> rtFill(e.target.value));
 document.getElementById('rtMerge').addEventListener('click', rtMerge);
 document.getElementById('rtUnmerge').addEventListener('click', rtUnmerge);
 document.getElementById('rtTick').addEventListener('click', rtTickSel);
 document.getElementById('rtClear').addEventListener('click', rtClearSel);
-document.getElementById('rtLink').addEventListener('click', rtLinkHabit);
+document.getElementById('rtLink').addEventListener('click', e=>{ e.stopPropagation(); rtLinkHabit(); });
 
-document.getElementById('rtPrev').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,-7); renderRoutine(); });
-document.getElementById('rtNext').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,7); renderRoutine(); });
-document.getElementById('rtToday').addEventListener('click', ()=>{ rtAnchor=new Date(); renderRoutine(); });
+document.getElementById('rtPrev').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,-7); rtSel=null; renderRoutine(); });
+document.getElementById('rtNext').addEventListener('click', ()=>{ rtAnchor=addDays(rtAnchor,7); rtSel=null; renderRoutine(); });
+document.getElementById('rtToday').addEventListener('click', ()=>{ rtAnchor=new Date(); rtSel=null; renderRoutine(); });
 
-rtViewWeekBtn.addEventListener('click', ()=>{ rtView='week'; rtViewWeekBtn.classList.add('active'); rtViewTplBtn.classList.remove('active'); renderRoutine(); });
-rtViewTplBtn.addEventListener('click', ()=>{ rtView='tpl'; rtViewTplBtn.classList.add('active'); rtViewWeekBtn.classList.remove('active'); renderRoutine(); });
+rtViewWeekBtn.addEventListener('click', ()=>{ rtView='week'; rtSel=null; rtViewWeekBtn.classList.add('active'); rtViewTplBtn.classList.remove('active'); renderRoutine(); });
+rtViewTplBtn.addEventListener('click', ()=>{ rtView='tpl'; rtSel=null; rtViewTplBtn.classList.add('active'); rtViewWeekBtn.classList.remove('active'); renderRoutine(); });
 
+/* FIX: şablon görünümündeyken "Bu haftayı şablon yap" bu haftanın özel kopyasını
+   sebepsiz siliyordu. Artık sadece hafta görünümünde çalışıyor. */
 document.getElementById('rtToTpl').addEventListener('click', ()=>{
+  if(rtView!=='week'){ rtHint.textContent='Bu işlem sadece "Bu hafta" görünümünde çalışır.'; return; }
   showConfirm('Bu haftadaki düzen şablona yazılsın mı?', ()=>{
     R().template=JSON.parse(JSON.stringify(rtCells()));
     delete R().weeks[rtWeekKey()];
@@ -1349,7 +1457,7 @@ document.getElementById('rtToTpl').addEventListener('click', ()=>{
 document.getElementById('rtResetWeek').addEventListener('click', ()=>{
   if(rtView!=='week') return;
   showConfirm('Bu haftaya özel değişiklikler silinip şablona dönülsün mü?', ()=>{
-    delete R().weeks[rtWeekKey()]; saveDB(db); renderRoutine();
+    delete R().weeks[rtWeekKey()]; rtSel=null; saveDB(db); renderRoutine();
   });
 });
 document.getElementById('rtHours').addEventListener('click', ()=>{
@@ -1365,17 +1473,19 @@ document.getElementById('cfgSave').addEventListener('click', ()=>{
 
 function openRoutine(){
   rtOpen=true; rtOverlay.classList.add('open');
-  rtAnchor=new Date(selected);
+  rtAnchor=new Date(selected); rtSel=null; rtSelecting=false; rtEditing=false;
   buildSwatches(); renderRoutine();
   setTimeout(()=>rtGridEl.focus(),0);
 }
-function closeRoutine(){ rtOpen=false; rtOverlay.classList.remove('open'); rtSel=null; }
+function closeRoutine(){ rtOpen=false; rtOverlay.classList.remove('open'); rtSel=null; rtSelecting=false; }
 document.getElementById('btnRoutine').addEventListener('click', openRoutine);
 document.getElementById('rtClose').addEventListener('click', closeRoutine);
 rtOverlay.addEventListener('pointerdown', e=>{ if(e.target===rtOverlay) closeRoutine(); });
+/* FIX: ESC sırası — açık onay kutusu varken önce o kapanmalı */
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   hideCtx();
+  if(confirmOverlay.style.display==='flex'){ closeConfirm(); return; }
   if(overlay.style.display==='flex'){ closeModal(); return; }
   if(rtOpen && !rtEditing) closeRoutine();
 });
@@ -1392,6 +1502,7 @@ function openDayTheme(dow){
   showSection('day');
 }
 document.getElementById('daySave').addEventListener('click', ()=>{
+  if(editingDow===null) return;
   const name=(document.getElementById('dayName').value||'').trim();
   const color=document.getElementById('dayColor').value;
   if(!name) delete R().dayThemes[editingDow];
@@ -1399,6 +1510,7 @@ document.getElementById('daySave').addEventListener('click', ()=>{
   saveDB(db); closeModal(); renderRoutine();
 });
 document.getElementById('dayClear').addEventListener('click', ()=>{
+  if(editingDow===null) return;
   delete R().dayThemes[editingDow]; saveDB(db); closeModal(); renderRoutine();
 });
 
@@ -1433,28 +1545,34 @@ function setHabitDate(habitId,dateStr,isDone){
   }
   saveDB(db);
 }
+/* FIX: seri hesabı bugün işaretli değilken de "cur"u artırmaya devam ediyordu ve
+   sonsuz döngü riski vardı (kayıt yoksa while hemen kırılıyordu ama sınır yoktu). */
 function calculateStreak(id){
-  const h=new Set(db.habitHistory[id]||[]);
-  let cur=0; const c=new Date();
-  if(h.has(dayKey(c))) cur++;
-  while(true){ c.setDate(c.getDate()-1); if(h.has(dayKey(c))) cur++; else break; }
-  const s=[...h].sort(); let max=0,tmp=0;
+  const h=new Set((db.habitHistory && db.habitHistory[id])||[]);
+  let cur=0;
+  const c=new Date();
+  if(!h.has(dayKey(c))) c.setDate(c.getDate()-1);   // bugün boşsa dünden say (seri henüz kırılmadı)
+  let guard=0;
+  while(h.has(dayKey(c)) && guard++<3650){ cur++; c.setDate(c.getDate()-1); }
+
+  const s=[...h].sort();
+  let max=0,tmp=0;
   for(let i=0;i<s.length;i++){
     if(i===0){ tmp=1; continue; }
-    const diff=Math.round((new Date(s[i])-new Date(s[i-1]))/86400000);
+    const diff=Math.round((new Date(s[i]+'T00:00:00') - new Date(s[i-1]+'T00:00:00'))/86400000);
     if(diff===1) tmp++; else { max=Math.max(max,tmp); tmp=1; }
   }
   return { current:cur, max:Math.max(max,tmp) };
 }
 let habitViewDate=new Date(), viewingHabitId=null;
 function openHabitDetail(id){
-  const h=db.habits.find(x=>x.id===id); if(!h) return;
+  const h=(db.habits||[]).find(x=>x.id===id); if(!h) return;
   viewingHabitId=id; habitViewDate=new Date(); modalTitle.textContent=h.name;
   const slot=document.getElementById('habitColorSlot'); slot.innerHTML='';
   const box=document.createElement('div'); box.style.marginTop='10px';
   const lb=document.createElement('label'); lb.className='fieldLbl'; lb.textContent='Renk';
   const ci=document.createElement('input'); ci.type='color'; ci.value=h.color||'#7dd3fc';
-  ci.addEventListener('input', ()=>{ h.color=ci.value; saveDB(db); renderHabits(); });
+  ci.addEventListener('change', ()=>{ h.color=ci.value; saveDB(db); renderHabits(); });
   box.appendChild(lb); box.appendChild(ci); slot.appendChild(box);
   const st=calculateStreak(id);
   document.getElementById('currentStreak').textContent=st.current;
@@ -1520,7 +1638,11 @@ function renderHabits(){
         ensureHabitReset();
         db.habitState.doneIds=(db.habitState.doneIds||[]).filter(i=>i!==h.id);
         delete db.habitHistory[h.id];
-        saveDB(db); renderHabits();
+        /* FIX: silinen alışkanlığa bağlı rutin hücreleri "ölü" referans tutuyordu */
+        const clearLinks=(map)=>{ for(const k in map){ if(map[k] && map[k].hb===h.id) delete map[k].hb; } };
+        clearLinks(R().template);
+        for(const wk in R().weeks) clearLinks(R().weeks[wk]);
+        saveDB(db); renderHabits(); if(rtOpen) renderRoutine();
       });
     });
     row.appendChild(lab); row.appendChild(del);
@@ -1562,12 +1684,14 @@ function renderTagManager(){
   const nt=document.createElement('input'); nt.type='text'; nt.placeholder='Yeni tag';
   const nc=document.createElement('input'); nc.type='color'; nc.value='#7dd3fc';
   const nb=document.createElement('button'); nb.className='btn'; nb.type='button'; nb.textContent='Ekle';
-  nb.addEventListener('click', ()=>{
+  const addTag=()=>{
     const n=normalizeTagName(nt.value);
     if(!n || db.tags.some(x=>x.name===n)) return;
     db.tags.push({ name:n, color:nc.value, order:Math.max(0,...db.tags.map(x=>x.order||0))+1 });
     saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
-  });
+  };
+  nb.addEventListener('click', addTag);
+  nt.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } });
   add.appendChild(nt); add.appendChild(nc); add.appendChild(nb);
   tagManager.appendChild(add);
 
@@ -1580,7 +1704,9 @@ function renderTagManager(){
     const s=document.createElement('span'); s.textContent=t.name;
     box.appendChild(d); box.appendChild(s);
     const col=document.createElement('input'); col.type='color'; col.value=t.color;
-    col.addEventListener('input', ()=>{ t.color=col.value; saveDB(db); render(); });
+    /* FIX: 'input' olayı renk seçicide sürüklerken saniyede onlarca kez full render +
+       kayıt tetikliyordu. 'change' yeterli. */
+    col.addEventListener('change', ()=>{ t.color=col.value; d.style.background=col.value; saveDB(db); render(); });
     const del=document.createElement('button'); del.className='iconBtn'; del.type='button'; del.textContent='🗑';
     del.addEventListener('click', ()=>{
       showConfirm(`"${t.name}" silinsin mi?`, ()=>{
@@ -1599,6 +1725,7 @@ function renderTagManager(){
       const target=row.dataset.tag; if(!dragName||dragName===target) return;
       const names=db.tags.map(x=>x.name);
       const f=names.indexOf(dragName), to=names.indexOf(target);
+      if(f<0||to<0) return;
       names.splice(to,0,names.splice(f,1)[0]);
       names.forEach((n,i)=>{ const m=db.tags.find(x=>x.name===n); if(m) m.order=i+1; });
       saveDB(db); rebuildTagDropdowns(); render(); renderTagManager();
@@ -1627,7 +1754,7 @@ function dockForMode(){
 }
 function adjustMonthCellHeight(total){
   if(mode!=='month') return;
-  const rows=Math.ceil(total/7);
+  const rows=Math.max(1,Math.ceil(total/7));
   const h=Math.floor(((calendarArea.clientHeight||0)-24-(rows-1)*10)/rows);
   document.documentElement.style.setProperty('--monthCellH',Math.max(78,h)+'px');
 }
@@ -1639,8 +1766,8 @@ function renderDOW(){
 /* ============ RENDER ============ */
 function render(){
   if(!db) return;
-  for(const k in db.days) db.days[k]=(db.days[k]||[]).map(fixItem);
-  db.inbox=(db.inbox||[]).map(fixItem);
+  for(const k in db.days) db.days[k]=(db.days[k]||[]).map(x=>fixItem(x));
+  db.inbox=(db.inbox||[]).map(x=>fixItem(x));
   rebuildTagDropdowns(); dockForMode(); renderDOW();
 
   grid.className='grid '+(mode==='month'?'month':'week');
@@ -1674,7 +1801,7 @@ function render(){
     const de=document.createElement('div'); de.className='date'; de.textContent=pad2(c.date.getDate());
     if(k===todayK) de.style.color='var(--accent)';
     const plus=document.createElement('button'); plus.className='plusBtn'; plus.type='button'; plus.textContent='+';
-    plus.addEventListener('click', e=>{ e.stopPropagation(); openModalAdd({dest:'day',dayKey:k}); });
+    plus.addEventListener('click', e=>{ e.stopPropagation(); selected=c.date; openModalAdd({dest:'day',dayKey:k}); });
     left.appendChild(de); left.appendChild(plus);
     const cnt=document.createElement('div'); cnt.className='count'; cnt.textContent=open||'';
     top.appendChild(left); top.appendChild(cnt);
@@ -1700,6 +1827,7 @@ function render(){
     grid.appendChild(cell);
   }
   renderInbox(); renderHabits(); renderPanel();
+  if(rtOpen) renderRoutine();
 }
 
 /* ============ Controls ============ */
@@ -1727,7 +1855,9 @@ btnMonth.addEventListener('click', ()=> setMode('month'));
 
 tagFilter.addEventListener('change', render);
 typeFilter.addEventListener('change', render);
-search.addEventListener('input', render);
+/* FIX: her tuş vuruşunda tüm takvim yeniden çiziliyordu -> yazarken takılma */
+let searchTimer=null;
+search.addEventListener('input', ()=>{ clearTimeout(searchTimer); searchTimer=setTimeout(render,180); });
 taskInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addSubmit.click(); } });
 
 addForm.addEventListener('submit', e=>{
@@ -1735,7 +1865,7 @@ addForm.addEventListener('submit', e=>{
   const text=(taskInput.value||'').trim(); if(!text) return;
   const item={ text, notes:'', time:timeInput.value||'', type:typeInput.value,
                tag: tagInput.value==='__none__'?'':tagInput.value, done:false, created:Date.now() };
-  if(whereInput.value==='inbox') addItemTo('inbox',null,item);
+  if(whereInput.value==='inbox' && mode==='week') addItemTo('inbox',null,item);
   else addItemTo('day',dayKey(selected),item);
   taskInput.value=''; timeInput.value=''; tagInput.value='__none__';
   render(); taskInput.focus();
@@ -1767,11 +1897,13 @@ document.getElementById('habitAddBtn').addEventListener('click', ()=>{
   saveDB(db); renderHabits();
 });
 document.getElementById('habitResetBtn').addEventListener('click', ()=>{
-  const today=todayKey();
-  db.habitState={date:today,doneIds:[]};
-  db.habitHistory=db.habitHistory||{};
-  for(const h of (db.habits||[])) db.habitHistory[h.id]=(db.habitHistory[h.id]||[]).filter(d=>d!==today);
-  saveDB(db); renderHabits(); if(rtOpen) renderRoutine();
+  showConfirm('Bugünün tüm alışkanlık işaretleri silinsin mi?', ()=>{
+    const today=todayKey();
+    db.habitState={date:today,doneIds:[]};
+    db.habitHistory=db.habitHistory||{};
+    for(const h of (db.habits||[])) db.habitHistory[h.id]=(db.habitHistory[h.id]||[]).filter(d=>d!==today);
+    saveDB(db); renderHabits(); if(rtOpen) renderRoutine();
+  });
 });
 
 typeFilter.value='__preset__'; typeInput.value='gorev';
@@ -1779,553 +1911,5 @@ let rtimer=null;
 window.addEventListener('resize', ()=>{ if(mode!=='month') return; clearTimeout(rtimer); rtimer=setTimeout(render,120); });
 try { initApp(); } catch(err){ showErr('BAŞLATMA HATASI: ' + (err && err.message ? err.message : err)); }
 </script>
-</body>
-</html><!doctype html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#111111" />
-  <title>todoapp</title>
-
-  <link rel="icon" type="image/png" href="./icon-512.png">
-  <link rel="apple-touch-icon" href="./icon-512.png" />
-  <link rel="manifest" href="./manifest.webmanifest">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-:root{
-  --bg:#0f0f10; --card:#17171a; --muted:#a3a3a3; --text:#f5f5f5; --line:#2a2a2f; --accent:#7dd3fc;
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
-  --frame-termin:#fb7185; --frame-hedef:#60a5fa; --frame-gorev:#34d399;
-  --monthCellH: 120px;
-  --rtLine: rgba(255,255,255,.16);
-}
-*{ box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-html, body{ height:100%; }
-body{ margin:0; background:var(--bg); color:var(--text); }
-
-.wrap{ max-width:1440px; margin:0 auto; padding:16px; display:none; }
-header{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; }
-.left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-h1{ font-size:16px; margin:0; font-weight:650; letter-spacing:.2px; }
-
-.btn{ background:var(--card); border:1px solid var(--line); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer; font-size:13px; }
-.btn:hover{ border-color:#3a3a44; }
-.btn:active{ transform:translateY(1px); }
-.btn:disabled{ opacity:.4; cursor:default; }
-.btn.danger{ color:#fb7185; border-color:rgba(251,113,133,.35); }
-.btn.primary{ background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
-.btn.sm{ padding:5px 9px; font-size:11.5px; border-radius:10px; }
-
-.seg{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
-.seg button{ border:0; background:transparent; color:var(--muted); padding:8px 12px; cursor:pointer; font-size:13px; }
-.seg button.active{ color:var(--text); background:#1f1f24; }
-.seg.sm button{ padding:5px 10px; font-size:11.5px; }
-
-.bar{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin:10px 0 12px; flex-wrap:wrap; }
-.nav{ display:flex; gap:8px; align-items:center; }
-.title{ font-size:14px; color:var(--muted); }
-.filters{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-
-select, input[type="text"], input[type="search"], input[type="time"], input[type="number"],
-input[type="email"], input[type="password"]{
-  background:#101014; color:var(--text); border:1px solid var(--line);
-  border-radius:12px; padding:8px 10px; outline:none; font-size:13px;
-}
-textarea{ background:#101014; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px; outline:none; font-size:13px; resize:vertical; min-height:80px; }
-select:focus, input:focus, textarea:focus{ border-color:#3a3a44; }
-input[type="color"]{ width:44px; height:34px; border-radius:12px; border:1px solid var(--line); background:transparent; padding:0; }
-
-.main{ display:grid; grid-template-columns: 1fr 240px; gap:12px; align-items:start; }
-.main > div:first-child{ display:flex; flex-direction:column; min-height:0; }
-#calendarArea{ flex:1 1 auto; display:flex; flex-direction:column; min-height:0; padding-bottom:12px; border-bottom:1px solid var(--line); margin-bottom:12px; }
-
-.grid{ display:grid; gap:10px; }
-.month, .week{ grid-template-columns: repeat(7, 1fr); }
-.dow{ font-size:12px; color:var(--muted); padding:0 6px; }
-#dowRow.grid{ margin-bottom:6px; }
-
-.cell{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px; cursor:pointer; display:flex; flex-direction:column; gap:8px; overflow:hidden; min-width:0; }
-.cell:hover{ border-color:#3a3a44; }
-.cell.out{ opacity:.55; }
-.cell.sel{ outline:2px solid rgba(125,211,252,.35); border-color:rgba(125,211,252,.35); }
-.cell.dragOver{ outline:2px dashed rgba(125,211,252,.45); border-color:rgba(125,211,252,.45); }
-
-body.weekMode #grid.week{ flex:1 1 auto; grid-auto-rows: minmax(260px,1fr); }
-body.weekMode #grid.week .cell{ min-height:260px; height:100%; }
-body.weekMode #grid.week .cards{ flex:1 1 auto; min-height:0; overflow:auto; }
-
-body.monthMode .main{ grid-template-columns:1fr; }
-body.monthMode .side, body.monthMode #bottomInboxSlot{ display:none; }
-body.monthMode .main > div:first-child{ display:flex; flex-direction:row; gap:15px; height:calc(100dvh - 90px); min-height:0; overflow:hidden; }
-body.monthMode #calendarArea{ flex:1 1 auto; overflow:hidden; padding-bottom:0; border-bottom:0; margin-bottom:0; border-right:1px solid var(--line); padding-right:15px; }
-body.monthMode #grid.month{ flex:1 1 auto; min-height:0; }
-body.monthMode .cell.monthCell{ height:var(--monthCellH) !important; overflow:hidden; padding:4px; }
-
-.dateRow{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.dateLeft{ display:flex; align-items:center; gap:8px; min-width:0; }
-.date{ font-size:12px; color:var(--muted); }
-.count{ font-size:12px; color:var(--accent); }
-.plusBtn{ width:26px; height:26px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; flex:0 0 auto; }
-.plusBtn:hover{ border-color:#3a3a44; color:var(--text); }
-body.monthMode .date{ font-size:10px; font-weight:bold; opacity:.65; }
-body.monthMode .plusBtn{ width:18px; height:18px; border:none; border-radius:6px; }
-
-.cards{ display:flex; flex-direction:column; gap:6px; min-height:0; }
-body.monthMode .cards{ gap:2px; overflow:hidden; }
-
-.card{ border:2px solid var(--frameColor, var(--line)); border-radius:12px; padding:6px 8px; background:var(--fillColor, rgba(255,255,255,.04)); user-select:none; min-width:0; position:relative; }
-.card.done{ opacity:.55; }
-.cardRow{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
-.checkBtn{ width:18px; height:18px; display:grid; place-items:center; border-radius:7px; border:1px solid rgba(0,0,0,.25); background:rgba(0,0,0,.10); color:rgba(255,255,255,.85); cursor:pointer; flex:0 0 auto; font-size:11px; line-height:1; margin-top:1px; }
-.cardBody{ flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:6px; }
-.titleText{ font-size:12.8px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1 1 auto; }
-.timeText{ font-size:11px; color:rgba(255,255,255,.8); white-space:nowrap; flex:0 0 auto; }
-.noteIcon{ font-size:10px; margin-left:6px; opacity:.75; }
-body.monthMode .card{ border-width:1px; border-radius:8px; padding:4px 6px; min-height:24px; }
-body.monthMode .checkBtn{ width:14px; height:14px; border-radius:5px; font-size:9px; margin-top:0; }
-body.monthMode .titleText{ font-size:10.5px; }
-body.monthMode .timeText{ font-size:9px; background:rgba(0,0,0,.30); padding:1px 4px; border-radius:4px; color:#fff; opacity:1; }
-
-.side{ position:sticky; top:12px; display:flex; flex-direction:column; gap:12px; }
-.panelBox{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
-.panelHead{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.panelHead h2{ margin:0; font-size:14px; }
-.muted{ color:var(--muted); font-size:12px; }
-.inbox.dragOver{ outline:2px dashed rgba(125,211,252,.45); }
-.inboxList{ display:flex; flex-direction:column; gap:8px; overflow:auto; max-height:40vh; padding-right:2px; }
-
-.bottom{ background:transparent; border:0; padding:0; }
-.bottomGrid{ display:block; }
-body.weekMode .bottomGrid{ display:grid; grid-template-columns: 1fr 360px; gap:10px; align-items:start; }
-.panelLike{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); }
-body.monthMode .panelLike{ box-shadow:none; border:none; background:transparent; padding:0; }
-.bottomTop{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-.panelLike h2{ margin:0; font-size:14px; }
-
-form{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.w{ min-width:150px; }
-body.monthMode #addForm{ display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap:5px; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:12px; margin-top:10px; }
-body.monthMode #taskInput{ grid-column:1 / -1; }
-body.monthMode #timeInput{ grid-column:1 / 2; }
-body.monthMode #typeInput{ grid-column:2 / -1; }
-body.monthMode #tagInput{ grid-column:1 / 2; }
-body.monthMode #whereInput{ grid-column:2 / 3; }
-body.monthMode #addSubmit{ grid-column:3 / 4; }
-body.monthMode #addForm input, body.monthMode #addForm select, body.monthMode #addForm button{ height:28px; font-size:11px; padding:0 6px; width:100%; min-width:0; }
-body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; background:var(--accent); color:#000; border:none; }
-.list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
-
-/* ==================== RUTİN TABLOSU (overlay) ==================== */
-.rtOverlay{
-  position:fixed; inset:0; background:rgba(6,6,8,.72); backdrop-filter:blur(3px);
-  z-index:80; display:none; align-items:center; justify-content:center; padding:14px;
-}
-.rtOverlay.open{ display:flex; }
-.rtPanel{
-  width:min(1280px,100%); max-height:100%; display:flex; flex-direction:column;
-  background:var(--bg); border:1px solid var(--line); border-radius:18px;
-  box-shadow:var(--shadow); overflow:hidden;
-}
-.rtTop{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--line); }
-.rtTop h3{ margin:0; font-size:15px; font-weight:650; }
-.rtWeekLbl{ font-size:12px; color:var(--muted); min-width:170px; }
-
-.rtTools{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:9px 14px; border-bottom:1px solid var(--line); background:#121216; }
-.rtSep{ width:1px; height:22px; background:var(--line); }
-.swatches{ display:flex; gap:4px; align-items:center; }
-.sw{ width:20px; height:20px; border-radius:6px; border:1px solid rgba(255,255,255,.14); cursor:pointer; }
-.sw:hover{ transform:scale(1.12); }
-.sw.none{ background:
-  linear-gradient(45deg, transparent 45%, #fb7185 45%, #fb7185 55%, transparent 55%), #101014; }
-.rtHint{ font-size:11px; color:var(--muted); padding:8px 14px 12px; line-height:1.6; }
-
-.rtScroll{ overflow:auto; padding:8px 10px; flex:1 1 auto; min-height:0; }
-
-.rtGrid{
-  display:grid;
-  gap:1px;
-  background:var(--rtLine);            /* ızgara çizgileri gap'ten görünür */
-  border:1px solid var(--rtLine);
-  border-radius:10px;
-  overflow:hidden;
-  min-width:680px;
-  user-select:none;
-  outline:none;
-  height:calc(100vh - 210px);
-  min-height:420px;
-}
-.rtCorner, .rtHead, .rtHour{ background:#121216; }
-
-.rtHead{ padding:6px 4px; text-align:center; cursor:pointer; border-top:3px solid transparent; overflow:hidden; }
-.rtHead:hover{ background:#1a1a20; }
-.rtHead .hName{ font-size:12px; font-weight:650; display:inline-block; vertical-align:middle; }
-.rtHead .hDate{ font-size:10px; color:var(--muted); display:inline-block; vertical-align:middle; margin-left:6px; }
-.rtHead .hTheme{ display:block; font-size:9.5px; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rtHead.today .hName{ color:var(--accent); }
-
-.rtHour{ display:grid; place-items:center; font-size:10px; color:var(--muted); padding:0 5px; }
-
-.rtCell{
-  background:var(--card);
-  position:relative; cursor:cell; overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
-  padding:2px 4px;
-  min-height:0;                        /* KRİTİK: satır yüksekliğini aşmasın */
-}
-.rtCell .txt{
-  font-size:11.5px; line-height:1.2; text-align:center; width:100%;
-  overflow:hidden; text-overflow:ellipsis;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-}
-.rtCell.ghost .txt{ opacity:.55; }
-.rtCell.ghost{ background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 6px, transparent 6px 12px); }
-
-.rtCell.selected::before{
-  content:""; position:absolute; inset:0;
-  border:1px solid rgba(125,211,252,.55);
-  box-sizing:border-box; pointer-events:none; z-index:4;
-}
-.rtCell.anchorCell::before{ border:2px solid var(--accent); }
-
-.rtCell.done .txt{ opacity:.45; text-decoration:line-through; }
-.rtCell .tick{ position:absolute; top:2px; right:4px; font-size:9px; color:#34d399; }
-.rtCell .hlink{ position:absolute; top:3px; left:4px; width:5px; height:5px; border-radius:999px; background:var(--accent); opacity:.85; }
-
-.rtNowMarker{
-  border:1px solid rgba(251,113,133,.75);
-  box-sizing:border-box; pointer-events:none; z-index:5;
-}
-
-.rtCell input.editor{
-  position:absolute; inset:0; width:100%; height:100%; border:0; border-radius:0;
-  background:#0b0b0e; color:var(--text); font-size:11.5px; text-align:center; padding:2px 4px;
-}
-
-/* Modal */
-.overlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:90; }
-.modal{ width:min(720px,100%); background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px; box-shadow:var(--shadow); max-height:86vh; overflow:auto; }
-.modalTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.modalTop h3{ margin:0; font-size:14px; }
-.modalGrid{ display:grid; grid-template-columns: 1fr 150px 150px 1fr; gap:8px; margin-top:10px; }
-.modalGrid .full{ grid-column:1 / -1; }
-.modalActions{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:10px; }
-.fieldLbl{ font-size:10px; color:var(--muted); display:block; margin-bottom:3px; }
-.formRow{ display:grid; grid-template-columns: 1fr 44px auto; gap:8px; align-items:end; margin-top:10px; }
-
-.rowList{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-.rowItem{ display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; border:1px solid var(--line); background:#121216; padding:8px 10px; border-radius:14px; }
-.rowItem.dragOver{ outline:2px dashed rgba(125,211,252,.35); }
-.iconBtn{ width:36px; height:32px; display:grid; place-items:center; border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; }
-.iconBtn:hover{ border-color:#3a3a44; color:var(--text); }
-.tagName{ display:flex; align-items:center; gap:10px; min-width:0; }
-.dot{ width:10px; height:10px; border-radius:999px; display:inline-block; }
-
-.habitsList{ display:flex; flex-direction:column; gap:10px; }
-.habitRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border:1px solid var(--line); background:#121216; border-radius:14px; }
-.habitRow.dragging{ opacity:.6; }
-.habitRow.dragOver{ outline:2px dashed rgba(125,211,252,.35); }
-.habitRow label{ display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer; flex:1; }
-.habitRow span.name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.habitRow span.name:hover{ text-decoration:underline; color:var(--accent); }
-.habitStreak{ font-size:10px; color:var(--accent); background:rgba(125,211,252,.1); padding:2px 5px; border-radius:6px; margin-left:auto; margin-right:8px; flex-shrink:0; }
-.habitRow input[type="checkbox"]{ width:18px; height:18px; cursor:pointer; }
-.habitStats{ display:flex; gap:10px; margin-top:12px; justify-content:space-around; }
-.streakStat{ text-align:center; background:#1f1f24; border-radius:12px; padding:10px; flex:1; border:1px solid var(--line); }
-.streakStat .val{ font-size:20px; font-weight:bold; color:var(--accent); }
-.streakStat .lbl{ font-size:11px; color:var(--muted); }
-.habitCalendarControls{ display:flex; align-items:center; justify-content:space-between; margin-top:16px; margin-bottom:8px; }
-.habitMonthTitle{ font-weight:bold; font-size:14px; }
-.habitNavBtn{ background:var(--card); border:1px solid var(--line); color:var(--muted); width:28px; height:28px; border-radius:8px; cursor:pointer; display:grid; place-items:center; }
-.habitCalendarWrapper{ border:1px solid var(--line); border-radius:12px; background:#121216; padding:10px; }
-.habitDowRow{ display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; }
-.hDowCell{ text-align:center; font-size:10px; color:var(--muted); font-weight:600; }
-.habitCalendar{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-.hDay{ aspect-ratio:1; display:grid; place-items:center; font-size:11px; border-radius:6px; color:var(--muted); cursor:pointer; border:1px solid transparent; }
-.hDay:hover{ background:rgba(255,255,255,.05); }
-.hDay.empty{ pointer-events:none; }
-.hDay.done{ background:rgba(52,211,153,.2); color:#34d399; border:1px solid rgba(52,211,153,.3); font-weight:bold; }
-.hDay.today{ border-color:var(--accent); color:var(--text); font-weight:bold; }
-
-#ctxMenu{ position:fixed; z-index:120; display:none; min-width:220px; max-height:70vh; overflow:auto; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:6px; flex-direction:column; gap:2px; }
-#ctxMenu button{ background:transparent; border:0; color:var(--text); text-align:left; padding:8px 10px; border-radius:10px; cursor:pointer; font-size:13px; }
-#ctxMenu button:hover{ background:#1f1f24; }
-#ctxMenu button.danger{ color:#fb7185; }
-#ctxMenu .ctxHead{ font-size:11px; color:var(--muted); padding:6px 10px 8px; border-bottom:1px solid var(--line); margin-bottom:4px; }
-
-#authOverlay{ position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; padding:20px; }
-.authBox{ width:100%; max-width:360px; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:24px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px; }
-.authBox h2{ text-align:center; margin-bottom:8px; font-size:20px; }
-.authError{ color:#fb7185; font-size:13px; text-align:center; min-height:18px; }
-
-@media (max-width:900px){
-  .main{ grid-template-columns:1fr; }
-  .side{ position:static; }
-  body.weekMode .bottomGrid{ grid-template-columns:1fr; }
-  .modalGrid{ grid-template-columns:1fr 1fr; }
-  .rtOverlay{ padding:0; }
-  .rtPanel{ border-radius:0; height:100%; }
-  .rtGrid{ height:auto; }
-}
-  </style>
-</head>
-<body>
-
-<div id="errBar" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999;
-  background:#7f1d1d; color:#fff; font:12px/1.5 ui-monospace,monospace; padding:10px 14px;
-  white-space:pre-wrap; max-height:40vh; overflow:auto;"></div>
-
-<div id="authOverlay">
-  <div class="authBox">
-    <h2>todoapp</h2>
-    <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:12px;">Devam etmek için giriş yap</div>
-    <input type="email" id="authEmail" placeholder="E-posta adresi" />
-    <input type="password" id="authPass" placeholder="Şifre" />
-    <div class="authError" id="authError"></div>
-    <button id="btnLogin" class="btn primary" type="button">Giriş Yap</button>
-    <button id="btnSignup" class="btn" type="button">Kayıt Ol</button>
-    <button id="btnOffline" class="btn" type="button" style="font-size:12px; color:var(--muted);">Çevrimdışı devam et</button>
-  </div>
-</div>
-
-<div class="wrap" id="appWrap">
-  <header>
-    <div class="left">
-      <h1>todoapp <span style="font-size:11px; color:var(--accent); font-weight:normal;">Sync</span></h1>
-      <div class="seg">
-        <button id="btnWeek" class="active" type="button">Hafta</button>
-        <button id="btnMonth" type="button">Ay</button>
-      </div>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-      <span id="userEmailDisplay" style="font-size:12px; color:var(--muted);"></span>
-      <button id="btnRoutine" class="btn primary" type="button">Rutin tablosu</button>
-      <button id="tagSettingsBtn" class="btn" type="button">Tag Ayarları</button>
-      <button id="btnLogout" class="btn danger" type="button">Çıkış</button>
-      <button id="btnInstall" class="btn" type="button" style="display:none;">Yükle</button>
-    </div>
-  </header>
-
-  <div class="bar">
-    <div class="nav">
-      <button id="prev" class="btn" type="button">◀</button>
-      <button id="today" class="btn" type="button">Bugün</button>
-      <button id="next" class="btn" type="button">▶</button>
-    </div>
-    <div class="filters">
-      <div class="title" id="rangeTitle"></div>
-      <select id="tagFilter"><option value="__all__">Tag: Hepsi</option></select>
-      <select id="typeFilter">
-        <option value="__preset__">Tür: Görünüme göre</option>
-        <option value="__all__">Tür: Hepsi</option>
-        <option value="termin">Sadece termin</option>
-        <option value="hedef">Sadece hedef</option>
-        <option value="gorev">Sadece görev</option>
-      </select>
-      <input id="search" type="search" placeholder="Ara…" />
-    </div>
-  </div>
-
-  <div class="main">
-    <div>
-      <div id="calendarArea">
-        <div class="grid" id="dowRow"></div>
-        <div class="grid week" id="grid"></div>
-      </div>
-
-      <section class="bottom">
-        <div class="bottomGrid">
-          <div class="panelLike">
-            <div class="bottomTop">
-              <div>
-                <h2 id="panelTitle">Seçili gün</h2>
-                <div class="muted">Sıralama: Termin → Hedef → Görev • Saat • Tag</div>
-              </div>
-              <button id="clearDone" class="btn" type="button">Tamamlananları temizle</button>
-            </div>
-
-            <form id="addForm" autocomplete="off">
-              <input class="w" id="taskInput" type="text" placeholder="Başlık…" maxlength="120" />
-              <input class="w" id="timeInput" type="time" />
-              <select class="w" id="typeInput">
-                <option value="termin">Termin</option>
-                <option value="hedef">Hedef</option>
-                <option value="gorev">Görev</option>
-              </select>
-              <select class="w" id="tagInput"></select>
-              <select class="w" id="whereInput">
-                <option value="selected">Seçili güne</option>
-                <option value="inbox">Inbox</option>
-              </select>
-              <button id="addSubmit" class="btn" type="submit">Ekle</button>
-            </form>
-
-            <div class="list" id="taskList"></div>
-          </div>
-          <div id="bottomInboxSlot" class="panelLike"></div>
-        </div>
-      </section>
-    </div>
-
-    <aside class="side">
-      <div id="inbox" class="panelBox inbox">
-        <div class="panelHead">
-          <div><h2>Brain Dump</h2><div class="muted">Güne atanmamış kartlar</div></div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button id="inboxAdd" class="plusBtn" type="button">+</button>
-            <button id="clearInboxDone" class="btn sm" type="button">Temizle</button>
-          </div>
-        </div>
-        <div class="muted" id="inboxCount"></div>
-        <div id="inboxList" class="inboxList"></div>
-      </div>
-
-      <div class="panelBox">
-        <div class="panelHead">
-          <div><h2>Habits</h2><div class="muted" id="habitsSub">Her gün sıfırlanır</div></div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <button id="habitAddBtn" class="plusBtn" type="button">+</button>
-            <button id="habitResetBtn" class="btn sm" type="button">Reset</button>
-          </div>
-        </div>
-        <div class="habitsList" id="habitsList"></div>
-      </div>
-    </aside>
-  </div>
-</div>
-
-<!-- ============ RUTİN TABLOSU ============ -->
-<div id="rtOverlay" class="rtOverlay">
-  <div class="rtPanel">
-    <div class="rtTop">
-      <h3>Rutin tablosu</h3>
-      <div class="seg sm">
-        <button id="rtViewWeek" class="active" type="button">Bu hafta</button>
-        <button id="rtViewTpl" type="button">Şablon</button>
-      </div>
-      <div style="display:flex; gap:6px; align-items:center;" id="rtNav">
-        <button id="rtPrev" class="btn sm" type="button">◀</button>
-        <button id="rtToday" class="btn sm" type="button">Bu hafta</button>
-        <button id="rtNext" class="btn sm" type="button">▶</button>
-      </div>
-      <div class="rtWeekLbl" id="rtWeekLbl"></div>
-      <button id="rtClose" class="btn" type="button" style="margin-left:auto;">Kapat</button>
-    </div>
-
-    <div class="rtTools">
-      <div class="swatches" id="rtSwatches"></div>
-      <input type="color" id="rtCustomColor" value="#7dd3fc" title="Özel renk" style="width:34px;height:28px;border-radius:9px;" />
-      <div class="rtSep"></div>
-      <button id="rtMerge" class="btn sm" type="button">Birleştir</button>
-      <button id="rtUnmerge" class="btn sm" type="button">Ayır</button>
-      <div class="rtSep"></div>
-      <button id="rtTick" class="btn sm" type="button">✓ İşaretle</button>
-      <button id="rtLink" class="btn sm" type="button">Alışkanlığa bağla</button>
-      <button id="rtClear" class="btn sm" type="button">Temizle</button>
-      <div class="rtSep"></div>
-      <button id="rtToTpl" class="btn sm" type="button">Bu haftayı şablon yap</button>
-      <button id="rtResetWeek" class="btn sm" type="button">Şablona dön</button>
-      <button id="rtHours" class="btn sm" type="button">Saat aralığı</button>
-    </div>
-
-    <div class="rtScroll">
-      <div class="rtGrid" id="rtGrid" tabindex="0"></div>
-    </div>
-
-    <div class="rtHint" id="rtHint"></div>
-  </div>
-</div>
-
-<!-- Modal -->
-<div id="overlay" class="overlay">
-  <div class="modal">
-    <div class="modalTop">
-      <h3 id="modalTitle">Modal</h3>
-      <button id="modalClose" class="btn" type="button">Kapat</button>
-    </div>
-
-    <div id="quickAddSection">
-      <div class="muted" id="modalWhere"></div>
-      <div class="modalGrid">
-        <input id="mText" class="full" type="text" placeholder="Başlık…" maxlength="120" />
-        <textarea id="mNotes" class="full" rows="3" placeholder="Notlar..."></textarea>
-        <input id="mTime" type="time" />
-        <select id="mType">
-          <option value="termin">Termin</option><option value="hedef">Hedef</option><option value="gorev">Görev</option>
-        </select>
-        <select id="mTag"></select>
-        <div class="full muted">Enter = Kaydet / Ekle</div>
-      </div>
-      <div class="modalActions">
-        <button id="modalDelete" class="btn danger" type="button" style="display:none;">Sil</button>
-        <button id="modalSave" class="btn primary" type="button" style="margin-left:auto;">Ekle</button>
-      </div>
-    </div>
-
-    <div id="tagSettingsSection" style="display:none;">
-      <div class="muted">Tag sıralamasını sürükle-bırak ile değiştir.</div>
-      <div class="rowList" id="tagManager"></div>
-    </div>
-
-    <div id="daySection" style="display:none;">
-      <div class="muted" id="dayWhere"></div>
-      <div class="formRow">
-        <div><label class="fieldLbl">Gün teması</label><input id="dayName" type="text" placeholder="Ev günü / Derin çalışma / Dinlenme" maxlength="30" /></div>
-        <div><label class="fieldLbl">Renk</label><input id="dayColor" type="color" value="#7dd3fc" /></div>
-        <div style="display:flex; gap:8px;">
-          <button id="dayClear" class="btn danger" type="button">Kaldır</button>
-          <button id="daySave" class="btn primary" type="button">Kaydet</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="cfgSection" style="display:none;">
-      <div class="muted">Tablonun kaçtan kaça gösterileceği.</div>
-      <div class="formRow" style="grid-template-columns:1fr 1fr auto;">
-        <div><label class="fieldLbl">Başlangıç saati</label><input id="cfgStart" type="number" min="0" max="23" /></div>
-        <div><label class="fieldLbl">Bitiş saati</label><input id="cfgEnd" type="number" min="1" max="24" /></div>
-        <button id="cfgSave" class="btn primary" type="button">Uygula</button>
-      </div>
-    </div>
-
-    <div id="habitDetailSection" style="display:none;">
-      <div id="habitColorSlot"></div>
-      <div class="habitStats">
-        <div class="streakStat"><div class="val" id="currentStreak">0</div><div class="lbl">Mevcut Seri</div></div>
-        <div class="streakStat"><div class="val" id="maxStreak">0</div><div class="lbl">En Uzun Seri</div></div>
-      </div>
-      <div class="habitCalendarControls">
-        <button id="hbPrev" class="habitNavBtn" type="button">◀</button>
-        <div id="hbMonthTitle" class="habitMonthTitle"></div>
-        <button id="hbNext" class="habitNavBtn" type="button">▶</button>
-      </div>
-      <div class="habitCalendarWrapper">
-        <div class="habitDowRow">
-          <div class="hDowCell">Pzt</div><div class="hDowCell">Sal</div><div class="hDowCell">Çar</div>
-          <div class="hDowCell">Per</div><div class="hDowCell">Cum</div><div class="hDowCell">Cts</div><div class="hDowCell">Paz</div>
-        </div>
-        <div class="habitCalendar" id="habitCalendarGrid"></div>
-      </div>
-      <div style="text-align:center; font-size:11px; color:var(--muted); margin-top:8px;">Durumu değiştirmek için günün üzerine tıkla.</div>
-    </div>
-  </div>
-</div>
-
-<div id="confirmOverlay" class="overlay" style="z-index:100;">
-  <div class="modal" style="width:300px; max-width:90%;">
-    <h3 style="margin-top:0; text-align:center;">Emin misin?</h3>
-    <div id="confirmMsg" style="text-align:center; color:var(--muted); margin-bottom:16px;"></div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button id="confirmNo" class="btn" type="button">İptal</button>
-      <button id="confirmYes" class="btn danger" type="button">Evet</button>
-    </div>
-  </div>
-</div>
-
-<div id="ctxMenu"></div>
-
-<script src="./app.js" defer></script>
 </body>
 </html>
