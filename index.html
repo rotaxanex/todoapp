@@ -159,10 +159,15 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   linear-gradient(45deg, transparent 45%, #fb7185 45%, #fb7185 55%, transparent 55%), #101014; }
 .rtHint{ font-size:11px; color:var(--muted); padding:8px 14px 12px; line-height:1.6; }
 
-.rtScroll{ overflow:auto; padding:12px 14px; flex:1 1 auto; }
+.rtScroll{
+  overflow:hidden;
+  padding:8px 10px;
+  flex:1 1 auto;
+  min-height:0;
+}
+
 .rtGrid{
   display:grid;
-  height:100%;
   gap:1px;
   background:var(--line);
   border:1px solid var(--line);
@@ -171,6 +176,7 @@ body.monthMode #addSubmit{ width:auto; padding:0 10px; font-weight:600; backgrou
   min-width:680px;
   user-select:none;
   outline:none;
+  height:calc(100vh - 210px);
 }
 .rtCorner, .rtHead, .rtHour{ background:#121216; }
 .rtHead{ padding:7px 4px; text-align:center; cursor:pointer; border-top:3px solid transparent; }
